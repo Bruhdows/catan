@@ -68,7 +68,8 @@ export class GameEngine {
 
   constructor(options: EngineOptions) {
     this.rng = options.rng ?? mulberry32(`${options.seed}:engine`);
-    this.now = options.now ?? Date.now;    const board = generateBoard(options.boardMode, options.seed);
+    this.now = options.now ?? Date.now;
+    const board = generateBoard(options.boardMode, options.seed);
     const desertHex = [...board.hexes.values()].find((h) => h.terrain === "desert");
     const players: PlayerGame[] = options.players.map((p, index) => ({
       id: p.id,
@@ -478,10 +479,8 @@ export class GameEngine {
     if (s.pending.type !== "robberMove") return err("no-robber", "The robber cannot be moved now.");
     if (this.active.id !== player.id) return err("not-your-turn", "Only the active player moves the robber.");
     const hex = s.board.hexes.get(hexId);
-    if (!hex) return err("unknown-hex", "That tile does not exist.");
+    if (!hex || hex.terrain === "water") return err("unknown-hex", "Choose a land tile.");
     if (hexId === s.robberHex) return err("same-hex", "Move the robber to a different tile.");
-    s.robberHex = hexId;
-    this.log(`${player.name} moved the robber.`, "robber");
 
     const candidates = s.players.filter(
       (p) =>
@@ -491,10 +490,14 @@ export class GameEngine {
           (v) => p.settlements.includes(v) || p.cities.includes(v),
         ),
     );
+    // Validate every part of the command before mutating state. A rejected
+    // target must not leave the robber on a new hex without a revision bump.
+    if (victim && !candidates.some((c) => c.id === victim)) {
+      return err("bad-victim", "That player cannot be robbed here.");
+    }
+    s.robberHex = hexId;
+    this.log(`${player.name} moved the robber.`, "robber");
     if (victim) {
-      if (!candidates.some((c) => c.id === victim)) {
-        return err("bad-victim", "That player cannot be robbed here.");
-      }
       const afterRoll = s.pending.afterRoll ?? false;
       const events = this.executeSteal(player.id, victim);
       s.pending = { type: "none" };
@@ -995,16 +998,11 @@ export class GameEngine {
   private checkVictory(): void {
     const s = this.state;
     if (s.phase === "finished" || s.turnCount === 0) return;
-    let winner: PlayerGame | null = null;
-    let bestPoints = 0;
-    for (const p of s.players) {
-      const points = totalPoints(s, p);
-      if (points >= 10 && points > bestPoints) {
-        bestPoints = points;
-        winner = p;
-      }
-    }
-    if (!winner) return;
+    // Base-game victory may only be claimed by the player whose turn it is.
+    // Other players may pass ten points through award changes but must wait.
+    const winner = this.active;
+    const bestPoints = totalPoints(s, winner);
+    if (bestPoints < 10) return;
     s.phase = "finished";
     s.finishedAt = this.now();
     s.winnerId = winner.id;
