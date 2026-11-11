@@ -159,6 +159,7 @@ describe("command gateway", () => {
     const b = lobby.applyCommand(actor, { type: "placeSettlement", vertex }, undefined, "cmd-1");
     expect(a.ok).toBe(true);
     expect(b.ok).toBe(true);
+    if (!b.ok) throw new Error(b.message);
     expect(b.events).toEqual([]); // replay, not a second action
   });
 
