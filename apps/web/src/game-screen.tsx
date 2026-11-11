@@ -48,7 +48,8 @@ export function GamePage(){
  useEffect(()=>{if(auth&&lobby?.state==="lobby")navigate("/lobby/"+auth.code,{replace:true});},[auth?.code,lobby?.state,navigate]);
  useEffect(()=>{if(!game)return;const p=game.pending;if(p.type==="setup")setMode(p.needsRoad?"road":"settlement");else if(p.type==="roadBuilding")setMode("road");else if(p.type==="robberMove")setMode("robber");else setMode(null);},[game?.pending.type,game?.pending.type==="setup"?game.pending.needsRoad:undefined,game?.phase]);
  const me=game?.players.find(p=>p.id===auth?.playerId);
- const active=game?.pending.type==="setup" ? game.players.find(x=>x.id===game.pending.player) : game?.players[game.turnIndex];
+ const setupActorId=game?.pending.type==="setup" ? game.pending.player : null;
+ const active=setupActorId ? game?.players.find(x=>x.id===setupActorId) : game?.players[game.turnIndex];
  const mine=Boolean(game&&me&&active?.id===me.id&&!auth?.spectator);
  const p=game?.pending;
  const setupMine=p?.type==="setup"&&p.player===me?.id;
