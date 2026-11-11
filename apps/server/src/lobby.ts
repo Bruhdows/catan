@@ -299,21 +299,24 @@ export class Lobby {
     if (this.engine.state.phase === "finished") {
       return { ok: false, error: "game-over", message: "The game has finished." };
     }
-    if (commandId) {
-      if (this.commandIds.has(commandId)) {
-        return { ok: true, events: [] };
-      }
-      this.commandIds.set(commandId, this.engine.state.rev);
-      if (this.commandIds.size > 500) {
-        const oldest = [...this.commandIds.entries()].sort((a, b) => a[1] - b[1])[0]?.[0];
-        if (oldest) this.commandIds.delete(oldest);
-      }
+    const idempotencyKey = commandId ? `${playerId}:${commandId}` : null;
+    if (idempotencyKey && this.commandIds.has(idempotencyKey)) {
+      return { ok: true, events: [] };
     }
     if (rev !== undefined && rev !== this.engine.state.rev) {
       return { ok: false, error: "stale-rev", message: "Your view is out of date — refreshing." };
     }
     const outcome = this.engine.applyCommand(playerId, command);
     if (!outcome.ok) return outcome;
+    // Only successful commands are idempotent. Invalid commands must be
+    // retryable after the player corrects their state or input.
+    if (idempotencyKey) {
+      this.commandIds.set(idempotencyKey, this.engine.state.rev);
+      if (this.commandIds.size > 500) {
+        const oldest = this.commandIds.keys().next().value;
+        if (oldest) this.commandIds.delete(oldest);
+      }
+    }
     if (currentPhase(this.engine) === "finished") this.state = "finished";
     this.touch();
     return { ok: true, events: outcome.events };
