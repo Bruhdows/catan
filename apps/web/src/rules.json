@@ -1,0 +1,369 @@
+[
+  {
+    "slug": "getting-started",
+    "title": "Getting started",
+    "summary": "The objective, game flow and what victory looks like.",
+    "sections": [
+      [
+        "The race to ten",
+        "The first player to reach 10 victory points on their own turn wins. Settlements earn one point, cities earn two, the Longest Road and Largest Army awards are worth two each, and some development cards hide victory points."
+      ],
+      [
+        "A turn at a glance",
+        "On your turn, roll two dice, collect resources from matching terrain, trade with players or harbors, build structures and optionally play a development card. Finish by ending your turn."
+      ],
+      [
+        "Building the island",
+        "The board changes throughout the match. Establish productive intersections, connect your roads and upgrade key settlements. You do not need to conquer territory to win."
+      ]
+    ]
+  },
+  {
+    "slug": "the-board",
+    "title": "The island board",
+    "summary": "Hexes, intersections, roads, number tokens and harbors.",
+    "sections": [
+      [
+        "Terrain and numbers",
+        "The standard island has 19 terrain hexes, including one desert. Resource-producing hexes carry number tokens. A token receives resources when its number matches the sum of two dice."
+      ],
+      [
+        "Intersections and paths",
+        "Settlements and cities occupy the corners between tiles. Roads occupy the edges joining corners. Several tiles meet at one intersection; a single building can produce from all adjacent productive tiles."
+      ],
+      [
+        "Harbors",
+        "Coastal ports improve bank trading. Generic ports exchange three cards of one resource for one different card. Resource-specific ports allow a two-for-one exchange of their designated resource."
+      ]
+    ]
+  },
+  {
+    "slug": "resources",
+    "title": "Resources & production",
+    "summary": "Everything you need to trade, build and grow.",
+    "sections": [
+      [
+        "Five resources",
+        "Forests produce lumber, hills produce brick, pasture produces wool, fields produce grain and mountains produce ore. Desert produces no resources."
+      ],
+      [
+        "Dice production",
+        "When dice are rolled, each settlement adjacent to a matching unblocked tile receives one resource of that terrain; an adjacent city receives two. A seven does not produce resources."
+      ],
+      [
+        "Bank limits",
+        "The bank begins with 19 cards of each resource. When production demand cannot be met, apply the official supply-shortage rule. Trading and construction return cards to the bank."
+      ]
+    ]
+  },
+  {
+    "slug": "setup",
+    "title": "Starting settlements",
+    "summary": "Place two settlements and two roads in snake order.",
+    "sections": [
+      [
+        "First round",
+        "Players take turns placing a settlement at an unoccupied legal intersection and a directly connected road. Starting placements are free."
+      ],
+      [
+        "Second round",
+        "The order reverses. For four players it is A, B, C, D, D, C, B, A. Each player receives the resources touching their second starting settlement."
+      ],
+      [
+        "Distance rule",
+        "A settlement may not be placed directly next to another settlement or city. There must always be at least one empty intersection in between."
+      ]
+    ]
+  },
+  {
+    "slug": "turns",
+    "title": "Your turn",
+    "summary": "Dice, trading, building and ending your turn.",
+    "sections": [
+      [
+        "Roll the dice",
+        "At the start of a normal turn roll the dice. If the result is not seven, the matching tiles generate resources."
+      ],
+      [
+        "Take actions",
+        "After production, you may build as often as your resources allow and negotiate domestic trades. You can also trade with the bank through your best available harbor ratio."
+      ],
+      [
+        "Development cards",
+        "Ordinarily you may play at most one action development card on your turn, and it cannot be one you bought during that same turn. Knights can be played before the roll when permitted."
+      ],
+      [
+        "End turn",
+        "Finish your turn only after resolving mandatory effects such as discards, robber movement or legal free-road placements."
+      ]
+    ]
+  },
+  {
+    "slug": "roads",
+    "title": "Building roads",
+    "summary": "Connect your settlements and reach valuable intersections.",
+    "sections": [
+      [
+        "Cost",
+        "A road costs one brick and one lumber, and you can have at most 15 road pieces in play."
+      ],
+      [
+        "Connectivity",
+        "Roads must connect to your own settlement, city or existing road. You cannot build on an occupied edge or extend through an intersection blocked by another player's settlement or city."
+      ],
+      [
+        "Strategies",
+        "Roads do not grant points by themselves, but they open land and can compete for the Longest Road award. Planning beyond one turn helps avoid dead ends."
+      ]
+    ]
+  },
+  {
+    "slug": "settlements",
+    "title": "Settlements",
+    "summary": "Claim legal intersections and expand resource production.",
+    "sections": [
+      [
+        "Cost",
+        "A settlement costs brick, lumber, wool and grain—one card of each. You can keep at most five settlements built simultaneously."
+      ],
+      [
+        "Placement",
+        "Outside initial setup, the site must connect to your road network. The distance rule always applies, and the intersection must be empty."
+      ],
+      [
+        "Production",
+        "Each settlement contributes one victory point and one resource from each adjacent matching producing tile when its number is rolled."
+      ]
+    ]
+  },
+  {
+    "slug": "cities",
+    "title": "Cities",
+    "summary": "Upgrade settlements for stronger production and more points.",
+    "sections": [
+      [
+        "Cost and placement",
+        "A city costs two grain and three ore. Upgrade your own settlement, returning the settlement piece to your supply."
+      ],
+      [
+        "Benefits",
+        "Cities produce twice the resources of settlements and count for two victory points instead of one. You can have up to four cities at once."
+      ],
+      [
+        "Prioritization",
+        "A city on frequently rolled numbers can transform your economy. Consider your resource bottleneck, not only the total probability of its tiles."
+      ]
+    ]
+  },
+  {
+    "slug": "trading",
+    "title": "Trading with players",
+    "summary": "Negotiate balanced deals with the other settlers.",
+    "sections": [
+      [
+        "Who may trade",
+        "Only the active player may initiate or finalize domestic trades. Other players can respond to offers involving that player, not trade independently while waiting."
+      ],
+      [
+        "Making an offer",
+        "Choose the resources you give and the resources you request, then select a trade partner. The partner can accept, reject or propose a counteroffer."
+      ],
+      [
+        "Finalizing",
+        "Both participants must consent to exactly the same terms. Resources are rechecked immediately before transferring so stale or impossible offers cannot execute."
+      ],
+      [
+        "Negotiation",
+        "A useful trade helps you make an immediate build while keeping the opponent's potential gain in mind. Everyone's hand counts are public, but specific cards are private."
+      ]
+    ]
+  },
+  {
+    "slug": "harbors",
+    "title": "Maritime trading",
+    "summary": "Exchange with the bank at 4:1, 3:1 or 2:1.",
+    "sections": [
+      [
+        "Standard trading",
+        "Every player may exchange four cards of one resource type for one card of another, provided the bank has the card."
+      ],
+      [
+        "Generic ports",
+        "Own a settlement or city on a generic harbor intersection to trade any one resource at 3:1."
+      ],
+      [
+        "Specialized ports",
+        "A resource harbor grants 2:1 trades for that specific resource only. Your most favorable applicable ratio is used."
+      ]
+    ]
+  },
+  {
+    "slug": "development-cards",
+    "title": "Development cards",
+    "summary": "Knights, special actions and hidden victory points.",
+    "sections": [
+      [
+        "Purchasing",
+        "A development card costs one wool, one grain and one ore. The base deck contains 14 Knights, 2 Road Building, 2 Year of Plenty, 2 Monopoly and 5 Victory Point cards."
+      ],
+      [
+        "Knight",
+        "Move the robber and steal from an eligible opponent. Played Knights count toward Largest Army; Knights still held in hand do not."
+      ],
+      [
+        "Road Building",
+        "Place up to two legal road pieces without paying their usual resource cost, subject to the road limit and available legal edges."
+      ],
+      [
+        "Year of Plenty",
+        "Take two resources of your choice from the bank, subject to availability."
+      ],
+      [
+        "Monopoly",
+        "Name a resource type and take all cards of that resource from your opponents."
+      ],
+      [
+        "Victory points",
+        "Victory Point cards remain private until the appropriate winning reveal. Their points count toward your real total."
+      ]
+    ]
+  },
+  {
+    "slug": "robber",
+    "title": "The robber & seven",
+    "summary": "Discarding, blocking production and stealing cards.",
+    "sections": [
+      [
+        "When seven is rolled",
+        "Players holding more than seven resource cards each discard half their hand, rounded down. The active player then moves the robber."
+      ],
+      [
+        "Moving the robber",
+        "Move the robber to a different land hex. Its tile cannot produce resources while blocked."
+      ],
+      [
+        "Stealing",
+        "If other players have a settlement or city adjacent to the robber's new location and hold resources, select an eligible player to steal one random resource card."
+      ],
+      [
+        "Knight actions",
+        "Playing a Knight follows the robber-moving and stealing procedure without causing the discard effect of rolling seven."
+      ]
+    ]
+  },
+  {
+    "slug": "longest-road",
+    "title": "Longest Road",
+    "summary": "How paths, branches, loops and interruptions work.",
+    "sections": [
+      [
+        "Qualifying",
+        "The first player to establish a continuous road of at least five segments earns two victory points."
+      ],
+      [
+        "Longest trail",
+        "Count a continuous route without reusing a road segment. Branches are alternatives, not additive. A loop can contribute all of its segments if traversal is legal."
+      ],
+      [
+        "Blocked paths",
+        "A rival settlement or city interrupts your road at that intersection. A road reaching it may count as the final segment, but your route cannot continue through it."
+      ],
+      [
+        "Award transfer",
+        "A challenger must exceed the current holder's length. Ties ordinarily leave the holder in place. When the holder loses eligibility, resolve the new leader according to the rules."
+      ]
+    ]
+  },
+  {
+    "slug": "largest-army",
+    "title": "Largest Army",
+    "summary": "Use played Knights to gain two victory points.",
+    "sections": [
+      [
+        "Qualifying",
+        "Play at least three Knight cards to qualify for the two-point Largest Army award."
+      ],
+      [
+        "Beating the holder",
+        "Another player gains the award only by playing more Knights than the current holder."
+      ],
+      [
+        "Held cards do not count",
+        "Buying or holding Knights does not advance the award; only played Knights count."
+      ]
+    ]
+  },
+  {
+    "slug": "winning",
+    "title": "Victory & scoring",
+    "summary": "Track public and private points to reach ten.",
+    "sections": [
+      [
+        "Scoring",
+        "Each settlement grants one point; each city two; Longest Road and Largest Army two each; Victory Point cards grant one each."
+      ],
+      [
+        "Public and private totals",
+        "Players can see board points and public awards. Other players' hidden Victory Point development cards stay secret."
+      ],
+      [
+        "When victory occurs",
+        "The first eligible active player with at least ten points wins on their own turn. The game ends and further commands are disabled."
+      ]
+    ]
+  },
+  {
+    "slug": "common-mistakes",
+    "title": "Common mistakes",
+    "summary": "Answers to the questions new settlers ask most.",
+    "sections": [
+      [
+        "Why can't I settle there?",
+        "Another building may be too close, your road network may not connect, or the corner is already occupied."
+      ],
+      [
+        "Why didn't that tile produce?",
+        "The number must match the dice, and the robber must not be blocking the tile. Bank shortages may also prevent distribution."
+      ],
+      [
+        "Why can't I play this card?",
+        "A development card bought this turn cannot be played as an action card immediately. You also normally cannot play multiple action cards in one turn."
+      ],
+      [
+        "Does road count equal Longest Road?",
+        "No. The award uses your longest continuous legal trail, not your total number of built road segments."
+      ],
+      [
+        "What happens when I refresh?",
+        "Your guest session token should restore the same seat and its private hand; reconnecting must not reset an active match."
+      ]
+    ]
+  },
+  {
+    "slug": "strategy",
+    "title": "Beginner strategy",
+    "summary": "Build a balanced economy and make thoughtful trades.",
+    "sections": [
+      [
+        "Aim for diverse production",
+        "Choose intersections spanning several resources rather than relying entirely on one terrain type."
+      ],
+      [
+        "Consider probability",
+        "Six and eight appear more often than two and twelve. Number diversity also protects you from dry turns."
+      ],
+      [
+        "Protect your flexibility",
+        "Plan roads toward multiple future intersections, and avoid stretching so far that you cannot afford new settlements."
+      ],
+      [
+        "Trade with intention",
+        "Make each trade support a specific build. Ports can turn a surplus resource into a dependable source of others."
+      ],
+      [
+        "Adapt your path to victory",
+        "Cities, development cards, Longest Road and Largest Army can all matter. Follow what your economy and position make practical."
+      ]
+    ]
+  }
+]
