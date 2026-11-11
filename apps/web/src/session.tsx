@@ -35,16 +35,6 @@ function saveSession(auth: Auth | null) {
   if (auth) localStorage.setItem("hexhaven.session", JSON.stringify(auth));
   else localStorage.removeItem("hexhaven.session");
 }
-function ack<T>(event: string, payload?: unknown): Promise<AckResult<T>> {
-  return new Promise((resolve) => {
-    if (!socket.connected) { resolve({ ok: false, error: "offline", message: "Connection lost. Reconnecting…" }); return; }
-    const cb = (result: AckResult<T>) => resolve(result);
-    if (payload === undefined) socket.timeout(8000).emit(event, cb);
-    else socket.timeout(8000).emit(event, payload, cb);
-    // Socket.IO acknowledgments with timeout invoke (error, result).
-    // The callback above is intentionally replaced by emitWithAck below in commands.
-  });
-}
 async function request<T>(event: string, payload?: unknown): Promise<AckResult<T>> {
   try {
     if (!socket.connected) return { ok: false, error: "offline", message: "Reconnecting to the server…" };
@@ -56,7 +46,6 @@ async function request<T>(event: string, payload?: unknown): Promise<AckResult<T
     return { ok: false, error: "timeout", message: "The server did not respond. Try again." };
   }
 }
-void ack; // Retain typed ack helper for protocol reference; use emitWithAck for timeouts.
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<Auth | null>(() => savedSession());
@@ -93,8 +82,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       });
     };
     const onDisconnect = () => setConnected(false);
-    const onLobby = (view: LobbyView) => setLobby(view);
-    const onGame = (view: GameView) => setGame((prev) => !prev || view.rev >= prev.rev ? view : prev);
+    const onLobby = (view: LobbyView) => { setLobby(view); if (view.state === "lobby") { setGame(null); setEvents([]); } };
+    const onGame = (view: GameView) => setGame((prev) => !prev || view.seed !== prev.seed || view.rev >= prev.rev ? view : prev);
     const onEvent = (event: GameEvent) => setEvents((prev) => [...prev.slice(-50), event]);
     const onError = (err: { message: string }) => setError(err.message);
     socket.on("connect", onConnect);
