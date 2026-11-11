@@ -199,7 +199,7 @@ async function rollToMain(actor: TestClient, clients: TestClient[], step: number
     expect(move.ok).toBe(true);
     await until(() => actor.view.phase === "main" || actor.view.pending.type === "robberSteal", 3000, "post-robber state");
     if ((actor.view.pending as { type: string }).type === "robberSteal") {
-      const pending = actor.view.pending as { type: "robberSteal"; candidates: string[] };
+      const pending = actor.view.pending as unknown as { type: "robberSteal"; candidates: string[] };
       const steal = await ack(actor, "game:command", { command: { type: "selectVictim", player: pending.candidates[0]! }, commandId: `steal-${step}` });
       expect(steal.ok).toBe(true);
       await until(() => actor.view.phase === "main", 3000, "post-steal main");
@@ -365,7 +365,7 @@ describe("socket integration", () => {
     expect(host.lobbyStates.at(-1)!.players).toHaveLength(2); // no duplicate seat
 
     // Leaving in the lobby removes the seat entirely.
-    guest2.socket.emit("lobby:leave");
+    send(guest2, "lobby:leave");
     await until(() => host.lobbyStates.at(-1)!.players.every((p) => p.id === host.auth.playerId), 3000, "seat removed");
     host.socket.disconnect();
   });
