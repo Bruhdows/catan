@@ -36,7 +36,7 @@ export function RulebookPage() {
         {filtered.length===0&&<p className="no-results">No matching chapters.</p>}
       </nav>
       <article className="rules-article">{active?<><span className="article-kicker">CHAPTER {String(currentIndex+1).padStart(2,"0")} OF {chapters.length}</span><h2>{active.title}</h2><p className="article-lead">{active.summary}</p>
-          {active.sections.map(([heading,body],i)=><section className="rule-section" key={heading+i}><h3>{heading}</h3><p>{body}</p></section>)}
+          {active.sections.map(([heading,body],i)=><section className="rule-section" key={i}><h3>{heading}</h3><p>{body}</p></section>)}
           {active.slug==="resources"&&<div className="rules-example"><strong>Building costs at a glance</strong><div className="rules-cost-grid">{COST_CARDS.map(item=>{const Icon=item.icon;return <div key={item.name}><strong><Icon size={17}/> {item.name}</strong><Cost cost={item.cost}/></div>})}</div></div>}
           {active.slug==="settlements"&&<div className="rules-example"><strong>Remember the distance rule</strong><p>Every settlement needs one empty corner between it and the nearest settlement or city, regardless of who owns them.</p></div>}
           {active.slug==="robber"&&<div className="rules-example"><strong>After a seven</strong><p>Discard if you have eight or more resource cards, then move the robber and pick an eligible player to steal from.</p></div>}

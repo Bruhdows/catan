@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, CircleHelp, Coins, Crown, Dices, House, Landmark, MapPinned, Mountain, Route, ScrollText, Shield, Swords, Wheat } from "lucide-react";
+import { Check, CircleHelp, Coins, Crown, Dices, House, Landmark, MapPinned, Mountain, Route, ScrollText, Shield, Swords, Wheat, Users } from "lucide-react";
 import { COSTS, RESOURCES, canAfford, emptyHand, type DevCardType, type GameCommand, type GameView, type Resource, type ResourceHand, type TradeOffer } from "@hexhaven/shared";
 import { Cost, FieldSelect, Hint, RESOURCE_META, RESOURCE_OPTIONS, ResourceIcon, ResourceToken, Stepper, PlayerAvatar } from "./design";
 import type { BoardAction } from "./board-view";

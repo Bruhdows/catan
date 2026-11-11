@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { BookOpen, Check, ChevronRight, Coins, Copy, Crown, Dices, Hexagon, History, House, LogOut, MapPin, RotateCcw, Route, ScrollText, Shield, Swords, Trophy, Volume2, VolumeX, X } from "lucide-react";
+import { BookOpen, Check, ChevronRight, CircleHelp, Coins, Copy, Crown, Dices, Hexagon, History, House, LogOut, MapPin, RotateCcw, Route, ScrollText, Shield, Swords, Trophy, Volume2, VolumeX, X } from "lucide-react";
 import { RESOURCES, emptyHand, type GameCommand, type GameView, type ResourceHand } from "@hexhaven/shared";
 import { BoardView, legalBoardTargets, type BoardAction } from "./board-view";
 import { BuildPanel, CardsPanel, DiscardPicker, HistoryPanel, TradePanel } from "./game-panels";
