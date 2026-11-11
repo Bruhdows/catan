@@ -38,7 +38,16 @@ test("three players create a lobby, set up the island, reconnect and read rules"
       const vertex = page.locator(".vertex-target").first();
       await expect(vertex).toBeVisible();
       await vertex.click();
-      const edge = page.locator(".edge-target").first();
+      // Vertical SVG lines have a zero-width bounding box and Playwright
+      // marks them hidden even though the browser can hit-test their stroke.
+      // Choose an actual diagonal road to exercise pointer interaction.
+      const edgeIndex = await page.locator(".edge-target").evaluateAll((lines) =>
+        lines.findIndex((line) =>
+          Math.abs(Number(line.getAttribute("x1")) - Number(line.getAttribute("x2"))) > 1
+        ),
+      );
+      expect(edgeIndex).toBeGreaterThanOrEqual(0);
+      const edge = page.locator(".edge-target").nth(edgeIndex);
       await expect(edge).toBeVisible();
       await edge.click();
     }
