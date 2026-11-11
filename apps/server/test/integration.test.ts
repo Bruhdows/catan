@@ -308,11 +308,16 @@ describe("socket integration", () => {
     for (let i = 0; i < 8; i++) {
       hostPlayer.devCards.push({ id: `vp-${i}`, type: "victoryPoint", boughtTurn: 0 });
     }
-    // Any accepted command recomputes awards + victory; end the host's turn
-    // only if they are active, otherwise let the active player end it.
-    const activeId = engine.state.players[engine.state.turnIndex]!.id;
-    const finisher = [host, alice].find((c) => c.auth.playerId === activeId) ?? host;
-    const finish = await ack(finisher, "game:command", { command: { type: "endTurn" }, commandId: "finish-1" });
+    // Check victory through an accepted command while the prospective winner
+    // is active. Ending the turn first correctly forfeits the immediate claim.
+    engine.state.turnIndex = hostPlayer.index;
+    engine.state.phase = "main";
+    engine.state.pending = { type: "none" };
+    hostPlayer.resources.brick += 4;
+    const finish = await ack(host, "game:command", {
+      command: { type: "bankTrade", give: "brick", get: "lumber" },
+      commandId: "finish-1",
+    });
     expect(finish.ok).toBe(true);
     await until(() => host.view.phase === "finished", 5000, "finished phase");
     expect(host.view.winnerId).toBe(hostSeat.id);
@@ -324,9 +329,15 @@ describe("socket integration", () => {
     const reset = await ack(host, "lobby:reset");
     expect(reset.ok).toBe(true);
     await until(() => host.lobby.state === "lobby", 3000, "reset to lobby");
-    for (const client of [host, alice]) {
+    // The third seat remains reserved through the finished match. Rejoin
+    // that seat and ready it, otherwise the host cannot legitimately rematch.
+    const bobAgain = await connect();
+    const returnBob = await ack<SessionAuth>(bobAgain, "lobby:join", { code, token: bobSeat.token });
+    expect(returnBob.ok).toBe(true);
+    for (const client of [host, alice, bobAgain]) {
       send(client, "lobby:ready", { ready: true });
     }
+    await until(() => host.lobby.players.every((p) => p.ready), 3000, "rematch ready");
     const rematch = await ack(host, "lobby:start");
     expect(rematch.ok).toBe(true);
     await until(() => host.view.phase === "setup" && host.view.seed !== "", 5000, "rematch setup");
@@ -334,6 +345,7 @@ describe("socket integration", () => {
 
     host.socket.disconnect();
     alice.socket.disconnect();
+    bobAgain.socket.disconnect();
   });
 
   it("keeps seats through lobby-state disconnects via token", async () => {
