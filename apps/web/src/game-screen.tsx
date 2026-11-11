@@ -41,9 +41,8 @@ export function GamePage(){
  const setupMine=p?.type==="setup"&&p.player===me?.id;
  const canBuild=mine&&game?.phase==="main"&&p?.type==="none";
  const canRoll=mine&&game?.phase==="roll"&&p?.type==="none";
- const resources=game?.you?.resources??maximum; // overwritten below for spectators
  const hand=game?.you?.resources??fresh();
- const allowed=useMemo(()=>game?legalBoardTargets(game,mode,auth?.playerId):new Set<string>(),[game,mode,auth?.playerId]);
+ const allowed=useMemo(()=>game&&(game.phase==="setup"?setupMine:mine)?legalBoardTargets(game,mode,auth?.playerId):new Set<string>(),[game,mode,auth?.playerId,setupMine,mine]);
  const act=async(cmd:GameCommand)=>{const success=await command(cmd);if(success&&cmd.type!=="rollDice"&&cmd.type!=="discard"&&cmd.type!=="moveRobber"&&cmd.type!=="selectVictim"&&p?.type==="none")setMode(null);return success;};
  const onVertex=(v:string)=>{if(!allowed.has(v))return;if(mode==="settlement")void act({type:"placeSettlement",vertex:v});if(mode==="city")void act({type:"upgradeCity",vertex:v});};
  const onEdge=(e:string)=>{if(allowed.has(e)&&mode==="road")void act({type:"placeRoad",edge:e});};
