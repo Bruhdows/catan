@@ -45,15 +45,16 @@ export function JoinPage({ create = false }: { create?: boolean }) {
   const [name,setName] = useState(() => localStorage.getItem("hexhaven.name") || "");
   const [code,setCode] = useState(pathCode || "");
   const [spectator,setSpectator] = useState(false);
+  const [submitted,setSubmitted] = useState(false);
   useEffect(() => { if(pathCode) setCode(pathCode.toUpperCase()); },[pathCode]);
   async function submit(e:FormEvent) {
     e.preventDefault();const display=name.trim(); if (!display) return;
     localStorage.setItem("hexhaven.name",display);
     const ok=create ? await createLobby(display) : await join(code.trim().toUpperCase(),display,spectator);
-    if (!ok) return; // successful auth triggers navigation via the effect below
+    if (ok) setSubmitted(true); // successful auth triggers navigation via the effect below
   }
   const session=useSession();
-  useEffect(()=>{if(session.auth && session.lobby){navigate(session.lobby.state === "lobby" ? `/lobby/${session.auth.code}` : `/game/${session.auth.code}`,{replace:true});}},[session.auth?.code,session.lobby?.state,navigate]);
+  useEffect(()=>{if(submitted && session.auth && session.lobby){navigate(session.lobby.state === "lobby" ? `/lobby/${session.auth.code}` : `/game/${session.auth.code}`,{replace:true});}},[submitted,session.auth?.code,session.lobby?.state,navigate]);
   return <main className="entry-page"><section className="entry-panel"><div className="eyebrow"><Hexagon size={15}/>{create ? "START AN ADVENTURE" : "A SEAT AT THE TABLE"}</div><h1>{create ? "Gather your crew." : "Join the island."}</h1><p>{create ? "Create a private table and invite up to three friends. No registration, no waiting." : "Enter your invitation code and get ready to claim your place."}</p><form onSubmit={submit} className="entry-form"><label>Your nickname<input maxLength={20} required autoFocus value={name} onChange={e=>setName(e.target.value)} placeholder="What should we call you?"/></label>{!create && <label>Lobby code<input maxLength={6} required value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="ABC123" className="code-field"/></label>}{!create && <label className="checkbox-row"><input type="checkbox" checked={spectator} onChange={e=>setSpectator(e.target.checked)}/> Join as spectator</label>}<button type="submit" className="button primary large full" disabled={busy || !name.trim() || (!create && code.trim().length!==6)}>{busy ? "Connecting…" : create ? "Create private lobby" : "Join the table"} <ArrowRight size={17}/></button></form><div className="entry-switch">{create ? "Have an invite?" : "Want to host?"} <Link to={create ? "/join" : "/create"}>{create ? "Join a game" : "Create a game"}</Link></div></section><div className="entry-art"><IslandPreview/></div></main>;
 }
 export function LobbyPage() {
