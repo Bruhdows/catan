@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import {
   BANK_SUPPLY,
   COSTS,
@@ -38,6 +39,24 @@ export interface EnginePlayerSeed {
   color: PlayerColor;
 }
 
+/** Cryptographically secure live-game randomness; board seeds remain public.
+ * Tests may inject deterministic sources, but real dice/decks/steals never
+ * depend on a seed sent to clients. */
+function secureRng(): Rng {
+  return {
+    next: () => randomInt(0x100000000) / 0x100000000,
+    int: (max: number) => randomInt(max),
+    shuffle: <T>(items: readonly T[]): T[] => {
+      const out = [...items];
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = randomInt(i + 1);
+        [out[i], out[j]] = [out[j]!, out[i]!];
+      }
+      return out;
+    },
+  };
+}
+
 export interface EngineOptions {
   seed: string;
   boardMode: BoardMode;
@@ -45,6 +64,8 @@ export interface EngineOptions {
   now?: () => number;
   /** Injectable random source for deterministic tests. */
   rng?: Rng;
+  /** Independent deck RNG for deterministic tests; secure by default. */
+  deckRng?: Rng;
 }
 
 export type CommandOutcome =
@@ -67,7 +88,7 @@ export class GameEngine {
   private now: () => number;
 
   constructor(options: EngineOptions) {
-    this.rng = options.rng ?? mulberry32(`${options.seed}:engine`);
+    this.rng = options.rng ?? secureRng();
     this.now = options.now ?? Date.now;
     const board = generateBoard(options.boardMode, options.seed);
     const desertHex = [...board.hexes.values()].find((h) => h.terrain === "desert");
@@ -101,7 +122,7 @@ export class GameEngine {
       rev: 0,
       dice: null,
       bank: { brick: BANK_SUPPLY, lumber: BANK_SUPPLY, wool: BANK_SUPPLY, grain: BANK_SUPPLY, ore: BANK_SUPPLY },
-      devDeck: this.shuffleDevDeck(mulberry32(`${options.seed}:deck`)),
+      devDeck: this.shuffleDevDeck(options.deckRng ?? secureRng()),
       robberHex: desertHex?.id ?? board.topology.landHexes[0]!,
       pending: { type: "setup", step: 0, player: setupSequence[0]!, needsRoad: false, vertex: null },
       offers: [],
@@ -128,10 +149,10 @@ export class GameEngine {
 
   /** Restores a saved state (e.g. after a server restart). The board is
    * regenerated deterministically; past dice rolls are not replayed, future
-   * randomness continues from a seed derived from the saved revision. */
+   * randomness uses a fresh secure source on resume. */
   static fromSaved(state: GameState, now?: () => number): GameEngine {
     const engine = Object.create(GameEngine.prototype) as GameEngine;
-    engine.rng = mulberry32(`${state.seed}:resume:${state.rev}`);
+    engine.rng = secureRng();
     engine.now = now ?? Date.now;
     engine.state = state;
     return engine;
