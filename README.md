@@ -20,7 +20,7 @@ React 19, Vite, Tailwind CSS 4, TypeScript, Fastify 5, Socket.IO, Zod, Vitest an
 Node.js 22 recommended.
 
 ```bash
-npm install --no-package-lock
+npm ci
 npm run dev
 ```
 
@@ -38,7 +38,7 @@ npm run build
 
 The integration test uses actual socket clients and a real Fastify server. A browser E2E suite and deployment shakeout are still required before production claims can be made.
 
-**Dependency lockfile:** The initial backend repository tracked a lockfile generated before the web workspace existed. Regenerate `package-lock.json` with a fresh `npm install` and commit it before switching CI to `npm ci`.
+**Dependency lockfile:** The workspace lockfile is committed. Use `npm ci` for reproducible installs.
 
 ## Production
 
