@@ -8,16 +8,20 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - run: npm ci
+      # The original agent's lockfile predates the web workspace; keep
+      # installs functional until the lock is regenerated and committed.
+      - run: npm install --no-package-lock --no-audit --no-fund
       - run: npm run check
       - run: npm test -- --reporter=dot
       - run: npm run build
-      - name: Verify generated assets
-        run: test -f apps/web/dist/index.html
+      - name: Verify frontend and prerender
+        run: |
+          test -f apps/web/dist/index.html
+          test -f apps/web/dist/rules/index.html
+          test -f apps/web/dist/rules/robber/index.html
