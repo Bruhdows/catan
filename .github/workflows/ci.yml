@@ -1,7 +1,7 @@
 name: Verify
 on:
   push:
-    branches: [main, review/critical-rules-fixes]
+    branches: [main]
   pull_request:
 permissions:
   contents: read
