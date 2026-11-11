@@ -151,7 +151,12 @@ export function longestRoadLength(state: GameState, playerId: string): number {
       if (used.has(edgeIdStr)) continue;
       const [a, b] = endpoints.get(edgeIdStr)!;
       const next = a === vertexId ? b : a;
-      if (isBlocked(next)) continue;
+      // A rival building terminates a trail at this endpoint, but the
+      // final incident road still counts toward its length.
+      if (isBlocked(next)) {
+        best = Math.max(best, length + 1);
+        continue;
+      }
       used.add(edgeIdStr);
       visit(next, length + 1);
       used.delete(edgeIdStr);

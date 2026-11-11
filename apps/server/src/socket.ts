@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { Server, type Socket } from "socket.io";
 import {
   codeSchema,
@@ -27,7 +28,7 @@ const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function randomCode(): string {
   let code = "";
   for (let i = 0; i < 6; i++) {
-    code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    code += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
   }
   return code;
 }
@@ -46,8 +47,9 @@ export function registerSocketHandlers(io: Io): void {
     if (!meta) return null;
     const lobby = lobbyStore.get(meta.code);
     if (!lobby) return null;
-    if (!meta.spectator && !lobby.seats.has(meta.playerId)) return null;
-    if (meta.spectator && !lobby.spectators.has(meta.playerId)) return null;
+    // Only the latest socket owning a reconnected session may act.
+    if (!meta.spectator && lobby.seats.get(meta.playerId)?.socketId !== socketId) return null;
+    if (meta.spectator && lobby.spectators.get(meta.playerId)?.socketId !== socketId) return null;
     return { lobby, meta };
   };
 
@@ -78,7 +80,7 @@ export function registerSocketHandlers(io: Io): void {
     for (const socketId of room) {
       const socket = io.sockets.sockets.get(socketId);
       const meta = socket ? socketMeta.get(socketId) : undefined;
-      if (!socket || !meta) continue;
+      if (!socket || !meta || !getEntry(socketId)) continue;
       sendGameView(socket, lobby, meta);
     }
   }
@@ -93,7 +95,7 @@ export function registerSocketHandlers(io: Io): void {
       if (!room) continue;
       for (const socketId of room) {
         const meta = socketMeta.get(socketId);
-        if (meta && meta.playerId === to) {
+        if (meta && meta.playerId === to && getEntry(socketId)) {
           io.sockets.sockets.get(socketId)?.emit("game:private-event", event);
         }
       }
@@ -101,15 +103,18 @@ export function registerSocketHandlers(io: Io): void {
   }
 
   function joinLobbyRoom(socket: ClientSocket, lobby: Lobby, meta: SocketMeta): void {
+    // A socket may only belong to one lobby at a time.
+    if (socketMeta.has(socket.id)) leaveLobby(socket);
     socketMeta.set(socket.id, meta);
     socket.join(roomOf(lobby.code));
   }
 
   function leaveLobby(socket: ClientSocket): void {
+    const meta = socketMeta.get(socket.id);
     const entry = getEntry(socket.id);
     socketMeta.delete(socket.id);
+    if (meta) socket.leave(roomOf(meta.code));
     if (!entry) return;
-    socket.leave(roomOf(entry.lobby.code));
     const detached = entry.lobby.detachBySocket(socket.id);
     if (detached?.kind === "seat" && entry.lobby.state === "lobby") {
       entry.lobby.listener({ type: "state" });
@@ -160,7 +165,12 @@ export function registerSocketHandlers(io: Io): void {
         if (reconnected?.kind === "seat") {
           const meta: SocketMeta = { code: lobby.code, playerId: reconnected.seat.id, spectator: false };
           joinLobbyRoom(socket, lobby, meta);
+          const previousSocketId = reconnected.seat.socketId;
           lobby.attach(reconnected.seat, socket.id);
+          if (previousSocketId && previousSocketId !== socket.id) {
+            socketMeta.delete(previousSocketId);
+            io.sockets.sockets.get(previousSocketId)?.disconnect(true);
+          }
           lobby.listener({ type: "state" });
           sendGameView(socket, lobby, meta);
           io.to(roomOf(lobby.code)).emit("lobby:state", lobby.view());
@@ -169,7 +179,12 @@ export function registerSocketHandlers(io: Io): void {
         if (reconnected?.kind === "spectator") {
           const meta: SocketMeta = { code: lobby.code, playerId: reconnected.spectator.id, spectator: true };
           joinLobbyRoom(socket, lobby, meta);
+          const previousSocketId = reconnected.spectator.socketId;
           lobby.attachSpectator(reconnected.spectator, socket.id);
+          if (previousSocketId && previousSocketId !== socket.id) {
+            socketMeta.delete(previousSocketId);
+            io.sockets.sockets.get(previousSocketId)?.disconnect(true);
+          }
           sendGameView(socket, lobby, meta);
           return ok(ack, authOf(lobby, reconnected.spectator.id, reconnected.spectator.token, true));
         }
@@ -177,7 +192,7 @@ export function registerSocketHandlers(io: Io): void {
 
       const isSpectatorRequest = spectator === true || lobby.state !== "lobby" || lobby.seats.size >= lobby.view().maxPlayers;
       if (isSpectatorRequest) {
-        if (!lobby.settings.allowSpectators && lobby.state === "playing") {
+        if (!lobby.settings.allowSpectators) {
           return fail(ack, "spectators-off", "This lobby does not allow spectators.");
         }
         const parsedName = nameSchema.safeParse(name ?? "Spectator");
@@ -251,7 +266,13 @@ export function registerSocketHandlers(io: Io): void {
     socket.on("lobby:kick", ({ playerId }) => {
       const entry = getEntry(socket.id);
       if (!entry) return;
+      const targetSocketId = entry.lobby.seats.get(String(playerId))?.socketId;
       if (entry.lobby.kick(entry.meta.playerId, String(playerId))) {
+        if (targetSocketId) {
+          io.sockets.sockets.get(targetSocketId)?.emit("lobby:error", { message: "The host removed you from this lobby." });
+          socketMeta.delete(targetSocketId);
+          io.sockets.sockets.get(targetSocketId)?.disconnect(true);
+        }
         entry.lobby.listener({ type: "state" });
         io.to(roomOf(entry.lobby.code)).emit("lobby:state", entry.lobby.view());
       }
@@ -303,6 +324,7 @@ export function registerSocketHandlers(io: Io): void {
       const { command, rev, commandId } = parsed.data;
       const result = entry.lobby.applyCommand(entry.meta.playerId, command, rev, commandId);
       if (!result.ok) return fail(ack, result.error, result.message);
+      entry.lobby.listener({ type: "game" }); // schedule durable snapshot for every accepted mutation
       emitEvents(io, entry.lobby, result.events);
       broadcastGame(io, entry.lobby);
       // A finishing match also changes the lobby state; tell the room.

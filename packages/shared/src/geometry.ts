@@ -218,7 +218,7 @@ export function hexToPixel(a: Axial, size: number): { x: number; y: number } {
   return { x, y };
 }
 
-export const CORNER_ANGLES: readonly number[] = [30, 90, 150, 210, 270, 330];
+export const CORNER_ANGLES: readonly number[] = [330, 270, 210, 150, 90, 30];
 
 /** Pixel position of corner `i` of the hex at `a`. */
 export function cornerPixel(a: Axial, i: number, size: number): { x: number; y: number } {

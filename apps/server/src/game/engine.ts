@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import {
   BANK_SUPPLY,
   COSTS,
@@ -38,6 +39,24 @@ export interface EnginePlayerSeed {
   color: PlayerColor;
 }
 
+/** Cryptographically secure live-game randomness; board seeds remain public.
+ * Tests may inject deterministic sources, but real dice/decks/steals never
+ * depend on a seed sent to clients. */
+function secureRng(): Rng {
+  return {
+    next: () => randomInt(0x100000000) / 0x100000000,
+    int: (max: number) => randomInt(max),
+    shuffle: <T>(items: readonly T[]): T[] => {
+      const out = [...items];
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = randomInt(i + 1);
+        [out[i], out[j]] = [out[j]!, out[i]!];
+      }
+      return out;
+    },
+  };
+}
+
 export interface EngineOptions {
   seed: string;
   boardMode: BoardMode;
@@ -45,6 +64,8 @@ export interface EngineOptions {
   now?: () => number;
   /** Injectable random source for deterministic tests. */
   rng?: Rng;
+  /** Independent deck RNG for deterministic tests; secure by default. */
+  deckRng?: Rng;
 }
 
 export type CommandOutcome =
@@ -67,8 +88,9 @@ export class GameEngine {
   private now: () => number;
 
   constructor(options: EngineOptions) {
-    this.rng = options.rng ?? mulberry32(`${options.seed}:engine`);
-    this.now = options.now ?? Date.now;    const board = generateBoard(options.boardMode, options.seed);
+    this.rng = options.rng ?? secureRng();
+    this.now = options.now ?? Date.now;
+    const board = generateBoard(options.boardMode, options.seed);
     const desertHex = [...board.hexes.values()].find((h) => h.terrain === "desert");
     const players: PlayerGame[] = options.players.map((p, index) => ({
       id: p.id,
@@ -100,7 +122,7 @@ export class GameEngine {
       rev: 0,
       dice: null,
       bank: { brick: BANK_SUPPLY, lumber: BANK_SUPPLY, wool: BANK_SUPPLY, grain: BANK_SUPPLY, ore: BANK_SUPPLY },
-      devDeck: this.shuffleDevDeck(mulberry32(`${options.seed}:deck`)),
+      devDeck: this.shuffleDevDeck(options.deckRng ?? secureRng()),
       robberHex: desertHex?.id ?? board.topology.landHexes[0]!,
       pending: { type: "setup", step: 0, player: setupSequence[0]!, needsRoad: false, vertex: null },
       offers: [],
@@ -127,10 +149,10 @@ export class GameEngine {
 
   /** Restores a saved state (e.g. after a server restart). The board is
    * regenerated deterministically; past dice rolls are not replayed, future
-   * randomness continues from a seed derived from the saved revision. */
+   * randomness uses a fresh secure source on resume. */
   static fromSaved(state: GameState, now?: () => number): GameEngine {
     const engine = Object.create(GameEngine.prototype) as GameEngine;
-    engine.rng = mulberry32(`${state.seed}:resume:${state.rev}`);
+    engine.rng = secureRng();
     engine.now = now ?? Date.now;
     engine.state = state;
     return engine;
@@ -395,12 +417,19 @@ export class GameEngine {
       for (const r of Object.keys(g) as Resource[]) demand.set(r, (demand.get(r) ?? 0) + g[r]);
     }
     const shortage = [...demand.entries()].filter(([r, amount]) => s.bank[r] < amount);
+    const shorted = new Set<Resource>(shortage.map(([r]) => r));
     const finalGains: { playerId: string; hand: ResourceHand }[] = [];
     for (const [playerIdStr, g] of gains) {
       const paid = emptyHand();
       for (const r of Object.keys(g) as Resource[]) {
-        if (shortage.some(([sr]) => sr === r)) continue;
-        paid[r] = g[r];
+        if (!shorted.has(r)) {
+          paid[r] = g[r];
+          continue;
+        }
+        // Official exception: if exactly one player is due this resource,
+        // award that player whatever remains in the bank.
+        const recipients = [...gains.values()].filter((hand) => hand[r] > 0).length;
+        if (recipients === 1) paid[r] = Math.min(g[r], s.bank[r]);
       }
       if (handTotal(paid) === 0) continue;
       finalGains.push({ playerId: playerIdStr, hand: paid });
@@ -425,7 +454,7 @@ export class GameEngine {
       this.log(`${p.name} received ${parts.map((r) => `${g.hand[r]} ${r}`).join(", ")}.`, "roll");
     }
     if (shortage.length > 0) {
-      this.log(`The bank ran short of ${shortage.map(([r]) => r).join(", ")} — nobody received it.`, "system");
+      this.log(`The bank ran short of ${shortage.map(([r]) => r).join(", ")} — production was reduced according to the supply rules.`, "system");
     }
     events.push({ kind: "produced", gains: finalGains });
     s.phase = "main";
@@ -478,10 +507,8 @@ export class GameEngine {
     if (s.pending.type !== "robberMove") return err("no-robber", "The robber cannot be moved now.");
     if (this.active.id !== player.id) return err("not-your-turn", "Only the active player moves the robber.");
     const hex = s.board.hexes.get(hexId);
-    if (!hex) return err("unknown-hex", "That tile does not exist.");
+    if (!hex || hex.terrain === "water") return err("unknown-hex", "Choose a land tile.");
     if (hexId === s.robberHex) return err("same-hex", "Move the robber to a different tile.");
-    s.robberHex = hexId;
-    this.log(`${player.name} moved the robber.`, "robber");
 
     const candidates = s.players.filter(
       (p) =>
@@ -491,10 +518,14 @@ export class GameEngine {
           (v) => p.settlements.includes(v) || p.cities.includes(v),
         ),
     );
+    // Validate every part of the command before mutating state. A rejected
+    // target must not leave the robber on a new hex without a revision bump.
+    if (victim && !candidates.some((c) => c.id === victim)) {
+      return err("bad-victim", "That player cannot be robbed here.");
+    }
+    s.robberHex = hexId;
+    this.log(`${player.name} moved the robber.`, "robber");
     if (victim) {
-      if (!candidates.some((c) => c.id === victim)) {
-        return err("bad-victim", "That player cannot be robbed here.");
-      }
       const afterRoll = s.pending.afterRoll ?? false;
       const events = this.executeSteal(player.id, victim);
       s.pending = { type: "none" };
@@ -995,16 +1026,11 @@ export class GameEngine {
   private checkVictory(): void {
     const s = this.state;
     if (s.phase === "finished" || s.turnCount === 0) return;
-    let winner: PlayerGame | null = null;
-    let bestPoints = 0;
-    for (const p of s.players) {
-      const points = totalPoints(s, p);
-      if (points >= 10 && points > bestPoints) {
-        bestPoints = points;
-        winner = p;
-      }
-    }
-    if (!winner) return;
+    // Base-game victory may only be claimed by the player whose turn it is.
+    // Other players may pass ten points through award changes but must wait.
+    const winner = this.active;
+    const bestPoints = totalPoints(s, winner);
+    if (bestPoints < 10) return;
     s.phase = "finished";
     s.finishedAt = this.now();
     s.winnerId = winner.id;

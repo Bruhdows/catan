@@ -34,7 +34,8 @@ export function projectGame(
     roads: p.roads,
     settlements: p.settlements,
     cities: p.cities,
-    publicPoints: publicPoints(state, p),
+    // Reveal full scores only after the match, never during live play.
+    publicPoints: state.phase === "finished" ? totalPoints(state, p) : publicPoints(state, p),
     hasLongestRoad: state.awards.longestRoad.playerId === p.id,
     hasLargestArmy: state.awards.largestArmy.playerId === p.id,
     pieces: {

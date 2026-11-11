@@ -76,6 +76,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
     app.log.info(`${signal} received — shutting down`);
     try {
       await app.close();
+      lobbyStore.flush();
     } finally {
       process.exit(0);
     }

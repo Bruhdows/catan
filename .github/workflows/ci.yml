@@ -1,0 +1,76 @@
+name: Verify
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+      - run: npm test -- --reporter=dot
+      - run: npm run build
+      - name: Verify frontend and prerender
+        run: |
+          test -f apps/web/dist/index.html
+          test -f apps/web/dist/rules/index.html
+          test -f apps/web/dist/rules/robber/index.html
+
+  container:
+    runs-on: ubuntu-latest
+    needs: verify
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production Docker image
+        run: docker build -t hexhaven:test .
+      - name: Start production server
+        run: docker run -d --rm --name hexhaven-smoke -p 3000:3000 hexhaven:test
+      - name: Smoke test API and static pages
+        run: |
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health > /tmp/health.json; then break; fi
+            sleep 2
+          done
+          grep -q '"ok":true' /tmp/health.json
+          curl --fail --silent http://127.0.0.1:3000/ > /tmp/home.html
+          grep -q "Hexhaven" /tmp/home.html
+          curl --fail --silent http://127.0.0.1:3000/rules/robber > /tmp/rules.html
+          grep -q "The robber" /tmp/rules.html
+      - name: Show logs on failure
+        if: failure()
+        run: docker logs hexhaven-smoke || true
+      - name: Clean up
+        if: always()
+        run: docker stop hexhaven-smoke || true
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

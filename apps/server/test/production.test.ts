@@ -108,6 +108,39 @@ describe("dice and production", () => {
     expect(handTotal(p0.resources)).toBe(before);
   });
 
+  it("gives the last remaining resource to a sole recipient when bank is short", () => {
+    const engine = preparedEngine("shortage-sole", diceScript(5));
+    clearBuildings(engine);
+    settleOn(engine, "p0", 5, true);
+    const hex = [...engine.state.board.hexes.values()].find((h) => h.number === 5)!;
+    const terrainToResource = { forest: "lumber", hills: "brick", pasture: "wool", fields: "grain", mountains: "ore" } as const;
+    if (!(hex.terrain in terrainToResource)) throw new Error("unexpected terrain");
+    const resource = terrainToResource[hex.terrain as keyof typeof terrainToResource];
+    engine.state.bank[resource] = 1;
+    const player = playerById(engine.state, "p0")!;
+    const before = player.resources[resource];
+    const outcome = engine.applyCommand("p0", { type: "rollDice" });
+    expect(outcome.ok).toBe(true);
+    expect(player.resources[resource]).toBe(before + 1);
+    expect(engine.state.bank[resource]).toBe(0);
+  });
+
+  it("does not distribute a shorted resource when multiple players are owed it", () => {
+    const engine = preparedEngine("shortage-many", diceScript(5));
+    clearBuildings(engine);
+    settleOn(engine, "p0", 5);
+    settleOn(engine, "p1", 5);
+    const hex = [...engine.state.board.hexes.values()].find((h) => h.number === 5)!;
+    const terrainToResource = { forest: "lumber", hills: "brick", pasture: "wool", fields: "grain", mountains: "ore" } as const;
+    const resource = terrainToResource[hex.terrain as keyof typeof terrainToResource];
+    engine.state.bank[resource] = 1;
+    const before = engine.state.players.map((p) => p.resources[resource]);
+    const outcome = engine.applyCommand("p0", { type: "rollDice" });
+    expect(outcome.ok).toBe(true);
+    expect(engine.state.players.map((p) => p.resources[resource])).toEqual(before);
+    expect(engine.state.bank[resource]).toBe(1);
+  });
+
   it("keeps global resource conservation across a full turn cycle", () => {
     const engine = preparedEngine("prod-conservation", diceScript(8));
     const s = engine.state;

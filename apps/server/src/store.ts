@@ -84,6 +84,13 @@ class LobbyStore {
     return this.lobbies.size;
   }
 
+  /** Flush debounced snapshots before shutdown, including active matches. */
+  flush(): void {
+    for (const timer of this.pendingSaves.values()) clearTimeout(timer);
+    this.pendingSaves.clear();
+    for (const lobby of this.lobbies.values()) this.writeSnapshot(lobby);
+  }
+
   private scheduleSave(lobby: Lobby): void {
     if (!this.snapshotDir) return;
     const existing = this.pendingSaves.get(lobby.code);

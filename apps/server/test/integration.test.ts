@@ -19,17 +19,17 @@ let app: FastifyInstance;
 let io: Server<never, ServerToClientEvents>;
 let port = 0;
 
-type ClientToServer = Parameters<Parameters<Server<never, ServerToClientEvents>["on"]>[1]>[0] extends never
-  ? never
-  : {
-      "lobby:create": (payload: { name: string; color?: PlayerColor }, ack: (res: Ack) => void) => void;
-      "lobby:join": (payload: { code: string; name?: string; token?: string; color?: PlayerColor; spectator?: boolean }, ack: (res: Ack) => void) => void;
-      "lobby:ready": (payload: { ready: boolean }) => void;
-      "lobby:start": (ack: (res: Ack) => void) => void;
-      "lobby:reset": (ack: (res: Ack) => void) => void;
-      "game:command": (payload: { command: Record<string, unknown>; commandId?: string }, ack: (res: Ack) => void) => void;
-      "game:sync": () => void;
-    };
+type ClientToServer = {
+  "lobby:create": unknown;
+  "lobby:join": unknown;
+  "lobby:leave": unknown;
+  "lobby:ready": unknown;
+  "lobby:settings": unknown;
+  "lobby:start": unknown;
+  "lobby:reset": unknown;
+  "game:command": unknown;
+  "game:sync": unknown;
+};
 
 type Ack = { ok: true; data: unknown } | { ok: false; error: string; message?: string };
 
@@ -108,17 +108,17 @@ function ack<T = unknown>(client: TestClient, event: keyof ClientToServer, paylo
       clearTimeout(timer);
       resolve(result as { ok: true; data: T } | { ok: false; error: string; message?: string });
     };
-    if (payload === undefined) {
-      client.socket.emit(event as never, reply as never);
-    } else {
-      client.socket.emit(event as never, payload as never, reply as never);
-    }
+    const emit = client.socket.emit.bind(client.socket) as (...args: unknown[]) => void;
+    if (payload === undefined) emit(event, reply);
+    else emit(event, payload, reply);
   });
 }
 
 /** Fire-and-forget for events without an ack (lobby:ready, lobby:leave). */
 function send(client: TestClient, event: keyof ClientToServer, payload?: unknown): void {
-  client.socket.emit(event as never, payload as never);
+  const emit = client.socket.emit.bind(client.socket) as (...args: unknown[]) => void;
+  if (payload === undefined) emit(event);
+  else emit(event, payload);
 }
 
 async function until(fn: () => boolean, ms = 3000, what = "condition"): Promise<void> {
@@ -199,8 +199,8 @@ async function rollToMain(actor: TestClient, clients: TestClient[], step: number
     const move = await ack(actor, "game:command", { command: { type: "moveRobber", hex: target.id }, commandId: `robber-${step}` });
     expect(move.ok).toBe(true);
     await until(() => actor.view.phase === "main" || actor.view.pending.type === "robberSteal", 3000, "post-robber state");
-    if (actor.view.pending.type === "robberSteal") {
-      const pending = actor.view.pending as { type: "robberSteal"; candidates: string[] };
+    if ((actor.view.pending as { type: string }).type === "robberSteal") {
+      const pending = actor.view.pending as unknown as { type: "robberSteal"; candidates: string[] };
       const steal = await ack(actor, "game:command", { command: { type: "selectVictim", player: pending.candidates[0]! }, commandId: `steal-${step}` });
       expect(steal.ok).toBe(true);
       await until(() => actor.view.phase === "main", 3000, "post-steal main");
@@ -309,11 +309,16 @@ describe("socket integration", () => {
     for (let i = 0; i < 8; i++) {
       hostPlayer.devCards.push({ id: `vp-${i}`, type: "victoryPoint", boughtTurn: 0 });
     }
-    // Any accepted command recomputes awards + victory; end the host's turn
-    // only if they are active, otherwise let the active player end it.
-    const activeId = engine.state.players[engine.state.turnIndex]!.id;
-    const finisher = [host, alice].find((c) => c.auth.playerId === activeId) ?? host;
-    const finish = await ack(finisher, "game:command", { command: { type: "endTurn" }, commandId: "finish-1" });
+    // Check victory through an accepted command while the prospective winner
+    // is active. Ending the turn first correctly forfeits the immediate claim.
+    engine.state.turnIndex = hostPlayer.index;
+    engine.state.phase = "main";
+    engine.state.pending = { type: "none" };
+    hostPlayer.resources.brick += 4;
+    const finish = await ack(host, "game:command", {
+      command: { type: "bankTrade", give: "brick", get: "lumber" },
+      commandId: "finish-1",
+    });
     expect(finish.ok).toBe(true);
     await until(() => host.view.phase === "finished", 5000, "finished phase");
     expect(host.view.winnerId).toBe(hostSeat.id);
@@ -325,9 +330,15 @@ describe("socket integration", () => {
     const reset = await ack(host, "lobby:reset");
     expect(reset.ok).toBe(true);
     await until(() => host.lobby.state === "lobby", 3000, "reset to lobby");
-    for (const client of [host, alice]) {
+    // The third seat remains reserved through the finished match. Rejoin
+    // that seat and ready it, otherwise the host cannot legitimately rematch.
+    const bobAgain = await connect();
+    const returnBob = await ack<SessionAuth>(bobAgain, "lobby:join", { code, token: bobSeat.token });
+    expect(returnBob.ok).toBe(true);
+    for (const client of [host, alice, bobAgain]) {
       send(client, "lobby:ready", { ready: true });
     }
+    await until(() => host.lobby.players.every((p) => p.ready), 3000, "rematch ready");
     const rematch = await ack(host, "lobby:start");
     expect(rematch.ok).toBe(true);
     await until(() => host.view.phase === "setup" && host.view.seed !== "", 5000, "rematch setup");
@@ -335,6 +346,7 @@ describe("socket integration", () => {
 
     host.socket.disconnect();
     alice.socket.disconnect();
+    bobAgain.socket.disconnect();
   });
 
   it("keeps seats through lobby-state disconnects via token", async () => {
@@ -366,8 +378,24 @@ describe("socket integration", () => {
     expect(host.lobbyStates.at(-1)!.players).toHaveLength(2); // no duplicate seat
 
     // Leaving in the lobby removes the seat entirely.
-    guest2.socket.emit("lobby:leave");
+    send(guest2, "lobby:leave");
     await until(() => host.lobbyStates.at(-1)!.players.every((p) => p.id === host.auth.playerId), 3000, "seat removed");
+    host.socket.disconnect();
+  });
+
+  it("blocks spectators in all lobby states when spectators are disabled", async () => {
+    const host = await connect();
+    const created = await ack<SessionAuth & { lobby: LobbyView }>(host, "lobby:create", { name: "No spectators" });
+    expect(created.ok).toBe(true);
+    if (!created.ok) throw new Error("could not create lobby");
+    const code = created.data.code;
+    send(host, "lobby:settings", { settings: { boardMode: "random", allowSpectators: false } });
+    await until(() => host.lobbyStates.at(-1)?.settings.allowSpectators === false, 3000, "spectators disabled");
+    const guest = await connect();
+    const refused = await ack(guest, "lobby:join", { code, name: "Watcher", spectator: true });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) expect(refused.error).toBe("spectators-off");
+    guest.socket.disconnect();
     host.socket.disconnect();
   });
 
