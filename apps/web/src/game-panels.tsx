@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Check, CircleHelp, Coins, Crown, Dices, House, Landmark, MapPinned, Mountain, Route, ScrollText, Shield, Swords, Wheat, Users } from "lucide-react";
+import { Check, Coins, Crown, House, Landmark, MapPinned, Route, ScrollText, Shield, Swords, Wheat, Users } from "lucide-react";
 import { COSTS, RESOURCES, canAfford, emptyHand, type DevCardType, type GameCommand, type GameView, type Resource, type ResourceHand, type TradeOffer } from "@hexhaven/shared";
-import { Cost, FieldSelect, Hint, RESOURCE_META, RESOURCE_OPTIONS, ResourceIcon, ResourceToken, Stepper, PlayerAvatar } from "./design";
+import { Cost, FieldSelect, RESOURCE_META, RESOURCE_OPTIONS, ResourceIcon, ResourceToken, Stepper } from "./design";
 import type { BoardAction } from "./board-view";
 
 type Send = (command: GameCommand) => Promise<boolean>;
@@ -15,30 +15,27 @@ export function BuildPanel({ game, meId, hand, canBuild, mode, onMode, send }: {
 }) {
   const me = game.players.find(p => p.id === meId);
   const items = [
-    { id: "road", title: "Road", sub: "Extend your network", cost: COSTS.road, count: me?.pieces.roads ?? 0, icon: Route },
-    { id: "settlement", title: "Settlement", sub: "Worth 1 VP · collect resources", cost: COSTS.settlement, count: me?.pieces.settlements ?? 0, icon: House },
-    { id: "city", title: "City", sub: "Worth 2 VP (upgrade +1) · double output", cost: COSTS.city, count: me?.pieces.cities ?? 0, icon: Crown },
+    { id: "road", title: "Road", sub: "", cost: COSTS.road, count: me?.pieces.roads ?? 0, icon: Route },
+    { id: "settlement", title: "Settlement", sub: "1 VP", cost: COSTS.settlement, count: me?.pieces.settlements ?? 0, icon: House },
+    { id: "city", title: "City", sub: "2 VP · double production", cost: COSTS.city, count: me?.pieces.cities ?? 0, icon: Crown },
   ] as const;
   return <div className="panel-content">
-    <Hint icon={<MapPinned size={20}/>} title="Build on the island">
-      Choose a piece, then click a glowing spot on the board.
-    </Hint>
     <div className="build-options">{items.map(item => {
       const Icon = item.icon;
       const enabled = canBuild && canAfford(hand, item.cost) && item.count > 0;
       return <button type="button" key={item.id} className={"build-option " + (mode === item.id ? "is-selected" : "")}
         disabled={!enabled} aria-pressed={mode===item.id} onClick={()=>onMode(mode===item.id ? null : item.id)}>
         <span className={"piece-illustration piece-"+item.id}><Icon size={27} strokeWidth={2.2}/></span>
-        <span className="build-option-copy"><strong>{item.title}</strong><small>{!canBuild?"Wait for your building phase":item.count<=0?"No pieces remaining":!canAfford(hand,item.cost)?"Missing resources":item.sub} · {item.count} left</small><Cost cost={item.cost} hand={hand}/></span>
+        <span className="build-option-copy"><strong>{item.title}</strong><small>{!canBuild ? item.sub : item.count <= 0 ? "No pieces left" : !canAfford(hand,item.cost) ? "Need resources" : item.sub}{item.sub && item.count > 0 && canBuild && canAfford(hand,item.cost) ? " · " : ""}{item.count} left</small><Cost cost={item.cost} hand={hand}/></span>
         {mode===item.id && <Check size={19} className="build-selected-icon"/>}
       </button>;
     })}</div>
     <div className="panel-divider"/>
-    <div className="panel-row-title"><span>Development card</span><small>{game.devDeckCount} left</small></div>
+    
     <button className="buy-dev-button" disabled={!canBuild || !canAfford(hand,COSTS.development) || game.devDeckCount<=0} onClick={()=>void send({type:"buyDevelopment"})}>
-      <ScrollText size={23}/><span><strong>Buy a mystery card</strong><Cost hand={hand} cost={COSTS.development}/></span><span className="buy-dev-arrow">+</span>
+      <ScrollText size={23}/><span><strong>Buy development card</strong><Cost hand={hand} cost={COSTS.development}/><small>{game.devDeckCount} in deck</small></span><span className="buy-dev-arrow">+</span>
     </button>
-    {!canBuild && <p className="muted small">Building is available after rolling, on your turn.</p>}
+    {!canBuild && <p className="muted small">You can build after rolling on your turn.</p>}
   </div>;
 }
 
@@ -105,27 +102,24 @@ export function TradePanel({game,meId,canTrade,hand,send}:{
     if(ok)reset();
   };
   const counter=(o:TradeOffer)=>{setKind("players");setCounterId(o.id);setTarget(o.from);setOffer({...o.get});setRequest({...o.give});};
-  const offersWaiting=myOffers.some(o=>o.to===meId&&o.status==="pending"&&!o.counter);
   // Replying to the active player is permitted even when it is not our turn.
   const canSendOffer=counterId?game.phase==="main"&&game.pending.type==="none"&&myOffers.some(o=>o.id===counterId&&o.to===meId):canTrade;
   return <div className="panel-content">
     <div className="switcher" role="tablist" aria-label="Trade type"><button type="button" role="tab" aria-selected={kind==="players"} className={kind==="players"?"selected":""} onClick={()=>setKind("players")}><Users size={16}/> Players</button><button type="button" role="tab" aria-selected={kind==="bank"} className={kind==="bank"?"selected":""} onClick={()=>setKind("bank")}><Landmark size={16}/> Bank & ports</button></div>
-    {offersWaiting&&<span className="incoming-banner">You have a trade offer waiting below.</span>}
+    
+    {myOffers.length>0&&<section className="trade-offers-top"><h3 className="panel-h3">Offers <span className="count-bubble">{myOffers.length}</span></h3><div className="offers-list">{[...myOffers].sort((a,b)=>Number(b.to===meId&&b.status==="pending")-Number(a.to===meId&&a.status==="pending")).map(o=><OfferCard key={o.id} game={game} offer={o} meId={meId} canTrade={canTrade} send={send} onCounter={counter}/>)}</div></section>}
     {kind==="players"?<>
       <FieldSelect label="Trade with" value={target} onChange={setTarget} disabled={Boolean(counterId)} options={[{value:"",label:"Choose a player" },...others.map(p=>({value:p.id,label:p.name}))]}/>
-      <div className="trade-columns"><QuantityPicker label="YOU GIVE" hand={offer} max={hand} onChange={setOffer}/><QuantityPicker label="YOU GET" hand={request} max={MAX} onChange={setRequest}/></div>
-      <button className="button primary full" disabled={!canSendOffer||!target||!total(offer)||!total(request)} onClick={()=>void sendOffer()}><Coins size={17}/>{counterId?"Send counteroffer":"Propose trade"}</button>
+      <div className="trade-columns"><QuantityPicker label="Give" hand={offer} max={hand} onChange={setOffer}/><QuantityPicker label="Get" hand={request} max={MAX} onChange={setRequest}/></div>
+      <button className="button primary full" disabled={!canSendOffer||!target||!total(offer)||!total(request)} onClick={()=>void sendOffer()}><Coins size={17}/>{counterId?"Send counteroffer":"Offer trade"}</button>
       {counterId&&<button className="button ghost full" onClick={reset}>Cancel counter</button>}
-      <p className="muted small">Both players must agree on the exact resources before the exchange is completed.</p>
     </>:<>
-      <Hint title="Maritime trade" icon={<Landmark size={20}/>}>Trade four matching cards for one, or use a better harbor rate if you have a port.</Hint>
       <FieldSelect label="Give to the bank" value={giveBank} onChange={v=>setGiveBank(v as Resource)} options={RESOURCE_OPTIONS}/>
-      <div className="bank-ratio"><ResourceToken resource={giveBank} amount={ratio}/><span className="bank-arrow">→</span><strong>1 resource</strong></div>
+      <div className="bank-ratio"><ResourceToken resource={giveBank} amount={ratio}/><span className="bank-arrow">→</span><ResourceToken resource={getBank} amount={1}/></div>
       <FieldSelect label="Get from the bank" value={getBank} onChange={v=>setGetBank(v as Resource)} options={RESOURCE_OPTIONS}/>
-      <button className="button primary full" disabled={!canTrade||giveBank===getBank||hand[giveBank]<ratio||game.bank[getBank]<1} onClick={()=>void send({type:"bankTrade",give:giveBank,get:getBank})}><Landmark size={17}/> Trade {ratio} for 1</button>
-      <p className="muted small">Your current exchange rate is {ratio}:1 for {RESOURCE_META[giveBank].label.toLowerCase()}.</p>
+      <button className="button primary full" disabled={!canTrade||giveBank===getBank||hand[giveBank]<ratio||game.bank[getBank]<1} onClick={()=>void send({type:"bankTrade",give:giveBank,get:getBank})}><Landmark size={17}/> Trade with bank</button>
     </>}
-    {myOffers.length>0&&<><div className="panel-divider"/><h3 className="panel-h3">Trade offers <span className="count-bubble">{myOffers.length}</span></h3><div className="offers-list">{myOffers.map(o=><OfferCard key={o.id} game={game} offer={o} meId={meId} canTrade={canTrade} send={send} onCounter={counter}/>)}</div></>}
+    
   </div>;
 }
 
@@ -149,8 +143,8 @@ export function CardsPanel({game,meId,canPlay,send}:{game:GameView;meId?:string;
     if(type==="yearOfPlenty"){const hand=EMPTY();hand[first]++;hand[second]++;await send({type:"playYearOfPlenty",resources:hand});}
     setExpanded(null);
   };
-  return <div className="panel-content"><Hint title="Development cards" icon={<ScrollText size={20}/>}>You can play one action card per turn, starting the turn after you bought it.</Hint>
-    {cards.length===0&&<div className="empty-cards"><ScrollText size={38}/><h3>Nothing in your hand yet</h3><p>Buy cards in the Build menu using wool, grain and ore.</p></div>}
+  return <div className="panel-content">
+    {cards.length===0&&<p className="muted small">No development cards. Buy one in Build.</p>}
     <div className="dev-card-list">{cards.map(card=>{
       const info=CARD_INFO[card.type],Icon=info.icon;
       const locked=card.boughtTurn>=game.turnCount;
@@ -170,13 +164,13 @@ export function CardsPanel({game,meId,canPlay,send}:{game:GameView;meId?:string;
 }
 
 export function HistoryPanel({game}:{game:GameView}) {
-  return <div className="panel-content"><p className="muted small">The latest moves on your island.</p><div className="history-list">{game.log.slice().reverse().map((entry,index)=><div className="history-entry" key={entry.rev+"-"+index}><span className="history-turn">TURN {entry.turn}</span><p>{entry.text}</p></div>)}</div></div>;
+  return <div className="panel-content"><div className="history-list">{game.log.slice().reverse().map((entry,index)=><div className="history-entry" key={entry.rev+"-"+index}><span className="history-turn">TURN {entry.turn}</span><p>{entry.text}</p></div>)}</div></div>;
 }
 
 export function DiscardPicker({hand,count,send}:{hand:ResourceHand;count:number;send:Send}) {
   const [selection,setSelection]=useState<ResourceHand>(EMPTY);
-  return <div className="forced-picker"><Hint title="A seven was rolled" icon={<Dices size={19}/>}>You must discard {count} resource cards before play continues.</Hint>
-    <QuantityPicker label="CHOOSE CARDS TO DISCARD" hand={selection} max={hand} onChange={setSelection}/>
+  return <div className="forced-picker"><p className="muted small">Choose {count} resource cards.</p>
+    <QuantityPicker label="Cards to discard" hand={selection} max={hand} onChange={setSelection}/>
     <div className="discard-footer"><span>{total(selection)} / {count} selected</span><button className="button primary" disabled={total(selection)!==count} onClick={async()=>{if(await send({type:"discard",resources:selection}))setSelection(EMPTY());}}>Discard cards</button></div>
   </div>;
 }
