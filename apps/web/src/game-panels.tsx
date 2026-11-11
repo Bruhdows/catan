@@ -61,9 +61,11 @@ function OfferCard({ game, offer, meId, canTrade, send, onCounter }: {
   const to=game.players.find(p=>p.id===offer.to);
   const outgoing=offer.from===meId;
   const counter=offer.counter;
+  const giveLabel=counter?(outgoing?"They give":"You give"):(outgoing?"You give":"They give");
+  const getLabel=counter?(outgoing?"You give":"They give"):(outgoing?"You get":"You give");
   return <div className="offer-card">
     <div className="offer-header"><span className="offer-direction">{outgoing?"You → "+to?.name:from?.name+" → You"}</span><span className={"offer-status "+(offer.status==="accepted"?"accepted":"")}>{counter?"Counteroffer":offer.status}</span></div>
-    <div className="offer-exchange"><div><small>{counter?"They give":outgoing?"You give":"They give"}</small><HandSummary hand={counter?counter.give:offer.give}/></div><span className="exchange-arrows">⇄</span><div><small>{counter?"You give":outgoing?"You get":"You give"}</small><HandSummary hand={counter?counter.get:offer.get}/></div></div>
+    <div className="offer-exchange"><div><small>{giveLabel}</small><HandSummary hand={counter?counter.give:offer.give}/></div><span className="exchange-arrows">⇄</span><div><small>{getLabel}</small><HandSummary hand={counter?counter.get:offer.get}/></div></div>
     <div className="offer-actions">
       {!outgoing&&offer.status==="pending"&&!counter&&<>
         <button className="button primary small" onClick={()=>void send({type:"respondTrade",offerId:offer.id,response:"accept"})}>Accept</button>
@@ -104,13 +106,15 @@ export function TradePanel({game,meId,canTrade,hand,send}:{
   };
   const counter=(o:TradeOffer)=>{setKind("players");setCounterId(o.id);setTarget(o.from);setOffer({...o.get});setRequest({...o.give});};
   const offersWaiting=myOffers.some(o=>o.to===meId&&o.status==="pending"&&!o.counter);
+  // Replying to the active player is permitted even when it is not our turn.
+  const canSendOffer=counterId?game.phase==="main"&&game.pending.type==="none"&&myOffers.some(o=>o.id===counterId&&o.to===meId):canTrade;
   return <div className="panel-content">
     <div className="switcher" role="tablist" aria-label="Trade type"><button type="button" role="tab" aria-selected={kind==="players"} className={kind==="players"?"selected":""} onClick={()=>setKind("players")}><Users size={16}/> Players</button><button type="button" role="tab" aria-selected={kind==="bank"} className={kind==="bank"?"selected":""} onClick={()=>setKind("bank")}><Landmark size={16}/> Bank & ports</button></div>
     {offersWaiting&&<span className="incoming-banner">You have a trade offer waiting below.</span>}
     {kind==="players"?<>
       <FieldSelect label="Trade with" value={target} onChange={setTarget} disabled={Boolean(counterId)} options={[{value:"",label:"Choose a player" },...others.map(p=>({value:p.id,label:p.name}))]}/>
       <div className="trade-columns"><QuantityPicker label="YOU GIVE" hand={offer} max={hand} onChange={setOffer}/><QuantityPicker label="YOU GET" hand={request} max={MAX} onChange={setRequest}/></div>
-      <button className="button primary full" disabled={!canTrade||!target||!total(offer)||!total(request)} onClick={()=>void sendOffer()}><Coins size={17}/>{counterId?"Send counteroffer":"Propose trade"}</button>
+      <button className="button primary full" disabled={!canSendOffer||!target||!total(offer)||!total(request)} onClick={()=>void sendOffer()}><Coins size={17}/>{counterId?"Send counteroffer":"Propose trade"}</button>
       {counterId&&<button className="button ghost full" onClick={reset}>Cancel counter</button>}
       <p className="muted small">Both players must agree on the exact resources before the exchange is completed.</p>
     </>:<>

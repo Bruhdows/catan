@@ -88,6 +88,7 @@ export function GamePage(){
   const send=async(cmd:GameCommand)=>{
     const ok=await command(cmd);
     if(ok && ["placeRoad","placeSettlement","upgradeCity"].includes(cmd.type)&&game?.pending.type==="none")setMode(null);
+    if(ok&&cmd.type==="buyDevelopment")setPanel("cards");
     return ok;
   };
   const changeMode=(next:BoardAction)=>{setMode(next);if(next)setPanel(null);};

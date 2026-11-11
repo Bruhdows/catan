@@ -18,6 +18,13 @@ export const RESOURCE_META: Record<Resource, { label: string; short: string; ico
 };
 
 export function ResourceIcon({ resource, size = 18, className = "" }: { resource: Resource; size?: number; className?: string }) {
+  if (resource === "wool") {
+    return <svg aria-hidden="true" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 10a3.3 3.3 0 0 1 3.6-4.6 4 4 0 0 1 6.7.3 3.2 3.2 0 0 1 3 4.8 4 4 0 0 1-.2 5.7 4.2 4.2 0 0 1-6.5 1.5A4.3 4.3 0 0 1 5 15.6 3.2 3.2 0 0 1 5 10Z"/>
+      <path d="M15.5 9.7c2.1-2.2 5.5-1.3 5.5 1.6v3c0 1.6-2.4 2.7-4 1.7M8 18v3M15 18v3"/>
+      <circle cx="19" cy="12" r=".9" fill="currentColor" stroke="none"/>
+    </svg>;
+  }
   const Icon = RESOURCE_META[resource].icon;
   return <Icon size={size} strokeWidth={2} aria-hidden="true" className={className}/>;
 }

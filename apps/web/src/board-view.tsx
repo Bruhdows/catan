@@ -144,7 +144,7 @@ export function BoardView({game,mode,selectable,onVertex,onEdge,onHex}:Props) {
           <polygon points={hexPoints(p.x,p.y,56.5)} fill={theme.base} stroke={active?"#fff6ab":theme.border} strokeWidth={active?5:2} className="terrain-fill"/>
           <polygon points={hexPoints(p.x,p.y-2,49)} fill={theme.light} fillOpacity=".45" pointerEvents="none"/>
           <g opacity=".42" pointerEvents="none">
-            {[-1,0,1].map((i)=><g key={i} transform={"translate("+(p.x+i*19-15)+" "+(p.y-28+(i%2)*8)+")"}><Icon width={27} height={27} stroke={theme.ink} strokeWidth={1.8} fill="none"/></g>)}
+            {[-1,0,1].map((i)=><g key={i} transform={"translate("+(p.x+i*19-15)+" "+(p.y-28+(i%2)*8)+")"}>{hex.terrain==="pasture"?<g color={theme.ink}><ResourceIcon resource="wool" size={27}/></g>:<Icon width={27} height={27} stroke={theme.ink} strokeWidth={1.8} fill="none"/>}</g>)}
           </g>
           {hex.number!==null&&<>
             <circle cx={p.x} cy={p.y+12} r="20" fill="#b9986c" opacity=".27" pointerEvents="none"/>
