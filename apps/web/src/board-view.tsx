@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent, type PointerEvent, type WheelEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent, type PointerEvent, type WheelEvent } from "react";
 import { BrickWall, Cloud, Compass, Mountain, RotateCcw, Trees, Wheat, ZoomIn, ZoomOut, type LucideIcon } from "lucide-react";
 import { cornerIndexForVertex, cornerPixel, hexToPixel, parseHexKey, tokenPips, type GameView, type Resource } from "@hexhaven/shared";
 import { PLAYER_COLORS, ResourceIcon } from "./design";
@@ -97,9 +97,17 @@ function Robber({x,y}:{x:number;y:number}) {
 function keyboard(e:KeyboardEvent<SVGGElement>,handler:()=>void) { if(e.key==="Enter"||e.key===" "){e.preventDefault();handler();} }
 
 export function BoardView({game,mode,selectable,onVertex,onEdge,onHex}:Props) {
-  const [zoom,setZoom]=useState(1);
+  const [zoom,setZoom]=useState(()=>typeof window!=="undefined"&&window.matchMedia("(max-width: 660px)").matches?1.2:1);
   const [offset,setOffset]=useState({x:0,y:0});
   const [drag,setDrag]=useState<{x:number;y:number;startX:number;startY:number}|null>(null);
+  // The same island should occupy more of the available width on portrait screens.
+  // Reset only when crossing the mobile breakpoint, never on a game revision.
+  useEffect(()=>{
+    const media=window.matchMedia("(max-width: 660px)");
+    const update=()=>{setZoom(media.matches?1.2:1);setOffset({x:0,y:0});};
+    media.addEventListener("change",update);
+    return ()=>media.removeEventListener("change",update);
+  },[]);
   const vertexPositions=useMemo(()=>positions(game),[game.board]);
   const roads=new Map<string,string>();
   const buildings=new Map<string,{color:string;city:boolean}>();
