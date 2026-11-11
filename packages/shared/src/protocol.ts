@@ -101,7 +101,7 @@ export const gameCommandSchema: z.ZodType<GameCommand> = z.discriminatedUnion("t
 export const commandEnvelopeSchema = z.object({
   command: gameCommandSchema,
   /** Optional expected revision for optimistic concurrency control. */
-  rev: z.number().int().positive().optional(),
+  rev: z.number().int().nonnegative().optional(),
   /** Optional idempotency key; replays are acknowledged without re-execution. */
   commandId: z.string().max(64).optional(),
 });
