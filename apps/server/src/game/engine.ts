@@ -396,12 +396,19 @@ export class GameEngine {
       for (const r of Object.keys(g) as Resource[]) demand.set(r, (demand.get(r) ?? 0) + g[r]);
     }
     const shortage = [...demand.entries()].filter(([r, amount]) => s.bank[r] < amount);
+    const shorted = new Set<Resource>(shortage.map(([r]) => r));
     const finalGains: { playerId: string; hand: ResourceHand }[] = [];
     for (const [playerIdStr, g] of gains) {
       const paid = emptyHand();
       for (const r of Object.keys(g) as Resource[]) {
-        if (shortage.some(([sr]) => sr === r)) continue;
-        paid[r] = g[r];
+        if (!shorted.has(r)) {
+          paid[r] = g[r];
+          continue;
+        }
+        // Official exception: if exactly one player is due this resource,
+        // award that player whatever remains in the bank.
+        const recipients = [...gains.values()].filter((hand) => hand[r] > 0).length;
+        if (recipients === 1) paid[r] = Math.min(g[r], s.bank[r]);
       }
       if (handTotal(paid) === 0) continue;
       finalGains.push({ playerId: playerIdStr, hand: paid });
@@ -426,7 +433,7 @@ export class GameEngine {
       this.log(`${p.name} received ${parts.map((r) => `${g.hand[r]} ${r}`).join(", ")}.`, "roll");
     }
     if (shortage.length > 0) {
-      this.log(`The bank ran short of ${shortage.map(([r]) => r).join(", ")} — nobody received it.`, "system");
+      this.log(`The bank ran short of ${shortage.map(([r]) => r).join(", ")} — production was reduced according to the supply rules.`, "system");
     }
     events.push({ kind: "produced", gains: finalGains });
     s.phase = "main";
