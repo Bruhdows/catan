@@ -58,6 +58,38 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await host.getByRole("button", { name: "Roll dice" }).click();
     await expect(host.locator(".dice-pair")).toBeVisible();
 
+    // The board stays visible while each game action opens its own panel.
+    await host.getByRole("button", { name: "Build", exact: true }).click();
+    await expect(host.getByRole("heading", { name: "Build something" })).toBeVisible();
+    await host.screenshot({ path: "test-results/island-build-panel.png" });
+
+    await host.getByRole("button", { name: "Trade", exact: true }).click();
+    await expect(host.getByRole("heading", { name: "Make a trade" })).toBeVisible();
+    await host.getByRole("combobox", { name: "Trade with" }).selectOption({ label: "Alice" });
+    await expect(host.getByRole("combobox", { name: "Trade with" })).toHaveValue(
+      (await alice.evaluate(() => JSON.parse(localStorage.getItem("hexhaven.session") || "{}"))).playerId,
+    );
+    await host.getByRole("tab", { name: "Bank & ports" }).click();
+    await expect(host.getByRole("combobox", { name: "Give to the bank" })).toBeVisible();
+    await expect(host.getByRole("combobox", { name: "Get from the bank" })).toBeVisible();
+
+    await host.getByRole("button", { name: "Cards", exact: true }).click();
+    await expect(host.getByRole("heading", { name: "Your development cards" })).toBeVisible();
+    await host.getByRole("button", { name: "Log", exact: true }).click();
+    await expect(host.getByRole("heading", { name: "Match history" })).toBeVisible();
+    await host.getByRole("button", { name: "Log", exact: true }).click();
+
+    // The same scene must remain usable on a phone-sized viewport.
+    await host.setViewportSize({ width: 390, height: 844 });
+    await expect(host.locator(".game-board")).toBeVisible();
+    await host.screenshot({ path: "test-results/island-mobile-board.png" });
+    await expect(host.getByRole("button", { name: "Trade", exact: true })).toBeVisible();
+    await host.getByRole("button", { name: "Trade", exact: true }).click();
+    await expect(host.getByRole("combobox", { name: "Trade with" })).toBeVisible();
+    await host.screenshot({ path: "test-results/island-mobile.png" });
+    const width = await host.evaluate(() => ({ actual: document.documentElement.scrollWidth, viewport: innerWidth }));
+    expect(width.actual).toBeLessThanOrEqual(width.viewport + 2);
+
     await host.goto("/rules/robber");
     await expect(host.getByRole("heading", { name: "The robber & seven" })).toBeVisible();
     await expect(host.getByText("When seven is rolled")).toBeVisible();
