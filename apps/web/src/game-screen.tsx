@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { BookOpen, Check, Coins, Copy, Dices, Hammer, Landmark, LogOut, MapPin, MessageSquare, RotateCcw, ScrollText, Shield, Swords, Trophy, Users, X } from "lucide-react";
 import { COSTS, RESOURCES, emptyHand, type GameCommand, type Resource, type ResourceHand, type DevCardType } from "@hexhaven/shared";
 import { useSession } from "./session";
 import { COLORS } from "./pages";
+import { playCue } from "./sound";
 import { BoardView, legalBoardTargets, type BoardAction } from "./board-view";
 
 const ICONS: Record<Resource, string> = { brick:"▥",lumber:"♠",wool:"✿",grain:"✦",ore:"◆" };
@@ -29,8 +30,20 @@ export function GamePage(){
  const [bankFrom,setBankFrom]=useState<Resource>("brick"),[bankTo,setBankTo]=useState<Resource>("lumber");
  const [choice,setChoice]=useState<Resource>("brick"),[choiceTwo,setChoiceTwo]=useState<Resource>("grain");
  const [discard,setDiscard]=useState<ResourceHand>(fresh);
- const [audio,setAudio]=useState(false);
+ const [audio,setAudio]=useState(()=>localStorage.getItem("hexhaven.audio")==="yes");
+ const prevSoundRevision=useRef<{seed:string;rev:number}|null>(null);
  const [sidebar,setSidebar]=useState(true);
+ useEffect(()=>{
+  if(!game) return;
+  const previous=prevSoundRevision.current;
+  prevSoundRevision.current={seed:game.seed,rev:game.rev};
+  if(!audio||!previous||previous.seed!==game.seed||previous.rev===game.rev)return;
+  if(game.phase==="finished")playCue("victory");
+  else if(game.dice&&game.phase==="main"&&game.log.at(-1)?.tone==="roll")playCue("roll");
+  else if(game.log.at(-1)?.tone==="trade")playCue("trade");
+  else if(game.log.at(-1)?.tone==="action")playCue("build");
+  else if(game.phase==="roll")playCue("turn");
+ },[game?.rev,game?.seed,audio]);
  useEffect(()=>{if(!auth&&code){const name=localStorage.getItem("hexhaven.name");if(name)void join(code,name);}},[auth?.code,code]);
  useEffect(()=>{if(auth&&lobby?.state==="lobby")navigate("/lobby/"+auth.code,{replace:true});},[auth?.code,lobby?.state,navigate]);
  useEffect(()=>{if(!game)return;const p=game.pending;if(p.type==="setup")setMode(p.needsRoad?"road":"settlement");else if(p.type==="roadBuilding")setMode("road");else if(p.type==="robberMove")setMode("robber");else if(game.phase!=="main")setMode(null);},[game?.pending.type,game?.pending.type==="setup"?game.pending.needsRoad:undefined,game?.phase]);
@@ -72,7 +85,7 @@ export function GamePage(){
  const myOffers=game.offers.filter(x=>x.from===me?.id||x.to===me?.id);
  const gameOver=game.phase==="finished";
  return <main className="game-page">
-  <div className="game-topbar"><div><small className="section-label">ROOM {lobby.code} · TURN {game.turnCount||"SETUP"}</small><h2>{phase}</h2></div><div className="game-turn">{active&&<><span className="mini-avatar" style={{background:COLORS[active.color]}}>{active.name.slice(0,1).toUpperCase()}</span><span><small>ACTIVE PLAYER</small><b>{active.name}</b></span></>}</div><div className="game-top-actions"><button className="icon-button" title="Copy invite link" onClick={()=>void navigator.clipboard.writeText(window.location.origin+"/join/"+code)}><Copy size={18}/></button><Link className="icon-button" title="Rulebook" to="/rules"><BookOpen size={18}/></Link><button className="icon-button" title="Toggle sound" onClick={()=>setAudio(!audio)}>{audio?"♪":"♫"}</button><button className="icon-button" title="Toggle panels" onClick={()=>setSidebar(!sidebar)}><Users size={18}/></button></div></div>
+  <div className="game-topbar"><div><small className="section-label">ROOM {lobby.code} · TURN {game.turnCount||"SETUP"}</small><h2>{phase}</h2></div><div className="game-turn">{active&&<><span className="mini-avatar" style={{background:COLORS[active.color]}}>{active.name.slice(0,1).toUpperCase()}</span><span><small>ACTIVE PLAYER</small><b>{active.name}</b></span></>}</div><div className="game-top-actions"><button className="icon-button" title="Copy invite link" onClick={()=>void navigator.clipboard.writeText(window.location.origin+"/join/"+code)}><Copy size={18}/></button><Link className="icon-button" title="Rulebook" to="/rules"><BookOpen size={18}/></Link><button className="icon-button" title="Toggle sound" onClick={()=>{setAudio(!audio);localStorage.setItem("hexhaven.audio",audio?"no":"yes");if(!audio)playCue("turn");}}>{audio?"♪":"♫"}</button><button className="icon-button" title="Toggle panels" onClick={()=>setSidebar(!sidebar)}><Users size={18}/></button></div></div>
   <div className={"game-layout"+(!sidebar?" panels-collapsed":"")}>
    <aside className="game-sidebar player-panel"><div className="section-label">PLAYERS</div><div className="player-stack">{game.players.map(x=><div key={x.id} className={"opponent"+(active?.id===x.id?" on-turn":"")}><span className="mini-avatar" style={{background:COLORS[x.color]}}>{x.name.charAt(0).toUpperCase()}</span><div><b>{x.name}{x.id===me?.id?" (you)":""}</b><small>{x.publicPoints} visible VP · {x.resourceCount} cards · {x.devCount} dev</small></div><span className={"tiny-dot"+(x.connected?" connected":"")}/>{x.hasLongestRoad&&<MapPin size={15}/>} {x.hasLargestArmy&&<Shield size={15}/>}</div>)}</div>
    <section className="dice-panel">{game.dice&&<div className="dice-pair"><span>{game.dice[0]}</span><span>{game.dice[1]}</span><b>= {game.dice[0]+game.dice[1]}</b></div>}{canRoll?<button className="button primary full" onClick={()=>void act({type:"rollDice"})} disabled={busy||!connected}><Dices size={17}/> Roll dice</button>:<p>{setupMine?"Place your highlighted "+(p?.type==="setup"&&p.needsRoad?"road":"settlement")+" on the board.":mine?"Resolve the highlighted action.":"Waiting for "+active?.name}</p>}{canBuild&&<button className="button secondary full" onClick={()=>void act({type:"endTurn"})} disabled={busy}>End turn →</button>}</section><div className="small-log"><div className="section-label">RECENT EVENTS</div>{game.log.slice(-6).reverse().map((x,i)=><p key={i}>{x.text}</p>)}</div></aside>
