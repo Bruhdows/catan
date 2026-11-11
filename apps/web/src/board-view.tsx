@@ -1,83 +1,211 @@
-import { useMemo, useState } from "react";
-import { cornerIndexForVertex, cornerPixel, hexToPixel, parseHexKey, type GameView } from "@hexhaven/shared";
-import { COLORS } from "./pages";
+import { useMemo, useState, type KeyboardEvent, type PointerEvent, type WheelEvent } from "react";
+import { BrickWall, Cloud, Compass, Mountain, RotateCcw, Trees, Wheat, ZoomIn, ZoomOut, type LucideIcon } from "lucide-react";
+import { cornerIndexForVertex, cornerPixel, hexToPixel, parseHexKey, tokenPips, type GameView, type Resource } from "@hexhaven/shared";
+import { PLAYER_COLORS, ResourceIcon } from "./design";
 
 export type BoardAction = "road" | "settlement" | "city" | "robber" | null;
-type Props = { game: GameView; mode: BoardAction; selectable: Set<string>; onVertex: (id:string)=>void; onEdge:(id:string)=>void; onHex:(id:string)=>void };
-const TERRAIN:Record<string,{fill:string;stroke:string;label:string;symbol:string}> = {
- forest:{fill:"#497b64",stroke:"#719b73",label:"Forest",symbol:"♠"},
- hills:{fill:"#b77759",stroke:"#d89972",label:"Hills",symbol:"◆"},
- pasture:{fill:"#a9b979",stroke:"#bfd098",label:"Pasture",symbol:"✿"},
- fields:{fill:"#d7bb6b",stroke:"#e3d08e",label:"Fields",symbol:"✦"},
- mountains:{fill:"#8496a0",stroke:"#aab9bd",label:"Mountains",symbol:"▲"},
- desert:{fill:"#d3b58c",stroke:"#e4cfa8",label:"Desert",symbol:"◌"},
- water:{fill:"#2c6274",stroke:"#39778a",label:"Water",symbol:""}
+type Props = {
+  game: GameView;
+  mode: BoardAction;
+  selectable: Set<string>;
+  onVertex: (id: string) => void;
+  onEdge: (id: string) => void;
+  onHex: (id: string) => void;
 };
-const S=62;
-const corners=(x:number,y:number)=>Array.from({length:6},(_,i)=>{const a=(i*60+30)*Math.PI/180;return `${(x+S*Math.cos(a)).toFixed(2)},${(y+S*Math.sin(a)).toFixed(2)}`}).join(" ");
-function vertexPositions(game:GameView){
- const positions=new Map<string,{x:number;y:number}>();
- for(const v of game.board.vertices){
-   const first=game.board.landHexes.find(h=>h.vertices.includes(v.id));
-   if(!first)continue;
-   const i=cornerIndexForVertex(first.axial,v.id);
-   if(i>=0) positions.set(v.id,cornerPixel(first.axial,i,S));
- }
- return positions;
+
+type TileTheme = { base: string; light: string; border: string; ink: string; name: string; icon: LucideIcon };
+const THEMES: Record<string, TileTheme> = {
+  forest: { base: "#55aa72", light: "#80ca8b", border: "#36865e", ink: "#275f45", name: "Forest · Lumber", icon: Trees },
+  hills: { base: "#eb9b72", light: "#f9bc94", border: "#c97655", ink: "#995d41", name: "Hills · Brick", icon: BrickWall },
+  pasture: { base: "#b6da7b", light: "#d1e79a", border: "#84b25b", ink: "#648544", name: "Pasture · Wool", icon: Cloud },
+  fields: { base: "#f1c768", light: "#ffe19a", border: "#d4a147", ink: "#a57a32", name: "Fields · Grain", icon: Wheat },
+  mountains: { base: "#9fb4c0", light: "#d6e2dd", border: "#748c9a", ink: "#627987", name: "Mountains · Ore", icon: Mountain },
+  desert: { base: "#e9c99b", light: "#f8e0b4", border: "#cfac78", ink: "#ad885b", name: "Desert", icon: Compass },
+};
+const SIZE=62;
+
+function hexPoints(x:number,y:number,r=SIZE) {
+  return Array.from({length:6},(_,i)=>{const a=(i*60+30)*Math.PI/180;return (x+r*Math.cos(a)).toFixed(2)+","+(y+r*Math.sin(a)).toFixed(2)}).join(" ");
 }
-function isLand(game:GameView,v:{hexes:string[]}){return v.hexes.some(h=>game.board.landHexes.some(land=>land.id===h));}
-export function legalBoardTargets(game:GameView,mode:BoardAction,myId:string | undefined):Set<string>{
- const result=new Set<string>();if(!myId || !mode)return result;
- const me=game.players.find(p=>p.id===myId);if(!me)return result;
- const ownBuilding=new Set([...me.settlements,...me.cities]);
- const ownRoads=new Set(me.roads);
- const allBuildings=new Set(game.players.flatMap(p=>[...p.settlements,...p.cities]));
- const allRoads=new Set(game.players.flatMap(p=>p.roads));
- const blocked=new Set(game.players.filter(p=>p.id!==myId).flatMap(p=>[...p.settlements,...p.cities]));
- const verts=new Map(game.board.vertices.map(v=>[v.id,v]));
- const pending=game.pending;
- if(mode==="robber"){
-   for(const h of game.board.landHexes)if(h.id!==game.robberHex)result.add(h.id);
- } else if(mode==="city"){
-   for(const v of me.settlements)result.add(v);
- } else if(mode==="settlement"){
-   for(const v of game.board.vertices){
-     if(!isLand(game,v)||allBuildings.has(v.id)||v.neighbors.some(n=>allBuildings.has(n)))continue;
-     if(pending.type==="setup" || me.roads.some(id=>{const e=game.board.edges.find(e=>e.id===id);return e?.a===v.id||e?.b===v.id;}))result.add(v.id);
-   }
- } else if(mode==="road"){
-   if(pending.type==="setup"){
-     if(!pending.needsRoad||!pending.vertex)return result;
-     for(const e of game.board.edges)if((e.a===pending.vertex||e.b===pending.vertex)&&!allRoads.has(e.id))result.add(e.id);
-   } else for(const e of game.board.edges){
-     if(allRoads.has(e.id))continue;
-     const connects=(id:string)=>!blocked.has(id) && (ownBuilding.has(id)||game.board.edges.some(r=>ownRoads.has(r.id)&&(r.a===id||r.b===id)));
-     if(connects(e.a)||connects(e.b))result.add(e.id);
-   }
- }
- void verts;
- return result;
+function positions(game: GameView) {
+  const map=new Map<string,{x:number;y:number}>();
+  const land=new Map(game.board.landHexes.map(h=>[h.id,h]));
+  for(const v of game.board.vertices) {
+    const h=v.hexes.map(id=>land.get(id)).find(Boolean);
+    if(!h)continue;
+    const i=cornerIndexForVertex(h.axial,v.id);
+    if(i>=0)map.set(v.id,cornerPixel(h.axial,i,SIZE));
+  }
+  return map;
 }
-export function BoardView({game,mode,selectable,onVertex,onEdge,onHex}:Props){
- const [zoom,setZoom]=useState(1);
- const [offset,setOffset]=useState({x:0,y:0});
- const pos=useMemo(()=>vertexPositions(game),[game.board]);
- const occup=new Map<string,{color:string;city:boolean}>();
- for(const p of game.players) {for(const v of p.settlements)occup.set(v,{color:COLORS[p.color],city:false});for(const v of p.cities)occup.set(v,{color:COLORS[p.color],city:true});}
- const roads=new Map<string,string>();
- for(const p of game.players)for(const e of p.roads)roads.set(e,COLORS[p.color]);
- const range=540/zoom;
- const viewBox=`${-range+offset.x} ${-range*.79+offset.y} ${range*2} ${range*1.58}`;
- const wheel=(e:React.WheelEvent<SVGSVGElement>)=>{ if(!e.ctrlKey)return;e.preventDefault();setZoom(z=>Math.max(.8,Math.min(2.1,z+(e.deltaY<0?.1:-.1)))); };
- const [drag,setDrag]=useState<{x:number;y:number;originX:number;originY:number}|null>(null);
- return <div className="board-wrap"><div className="board-tools"><span>THE ISLAND</span><div><button aria-label="Zoom out" onClick={()=>setZoom(z=>Math.max(.8,z-.16))}>−</button><button aria-label="Reset map" onClick={()=>{setZoom(1);setOffset({x:0,y:0})}}>⌖</button><button aria-label="Zoom in" onClick={()=>setZoom(z=>Math.min(2.1,z+.16))}>+</button></div></div>
- <svg className="game-board" viewBox={viewBox} onWheel={wheel} onPointerDown={e=>{if(!(e.target as Element).closest(".board-selectable,.edge-target,.vertex-target")){e.currentTarget.setPointerCapture(e.pointerId);setDrag({x:e.clientX,y:e.clientY,originX:offset.x,originY:offset.y});}}} onPointerMove={e=>{if(drag){const rect=e.currentTarget.getBoundingClientRect();setOffset({x:drag.originX-(e.clientX-drag.x)*range*2/rect.width,y:drag.originY-(e.clientY-drag.y)*range*1.58/rect.height})}}} onPointerUp={()=>setDrag(null)} aria-label="Interactive island board" role="img">
- <defs><pattern id="ocean" patternUnits="userSpaceOnUse" width="42" height="42"><path d="M0 22 Q12 13 24 22 T48 22" fill="none" stroke="#78acb1" strokeOpacity=".12" strokeWidth="1.4"/></pattern><filter id="tile-shadow"><feDropShadow dx="1" dy="2" stdDeviation="3" floodOpacity=".24"/></filter><filter id="piece-shadow"><feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity=".42"/></filter></defs>
- <rect x="-1200" y="-1200" width="2400" height="2400" fill="#214c5c"/><rect x="-1200" y="-1200" width="2400" height="2400" fill="url(#ocean)"/>
- {game.board.seaHexes.map(id=>{const p=hexToPixel(parseHexKey(id),S);return <polygon key={id} points={corners(p.x,p.y)} fill="#316579" stroke="#39758b" strokeWidth="2" opacity=".78"/>})}
- {game.board.landHexes.map(h=>{const p=hexToPixel(h.axial,S),t=TERRAIN[h.terrain]!,active=mode==="robber"&&selectable.has(h.id);return <g key={h.id} className={active?"board-selectable":""} onClick={()=>active&&onHex(h.id)} role={active?"button":undefined} aria-label={active?"Move robber to "+t.label:undefined}><polygon points={corners(p.x,p.y)} fill={t.fill} stroke={active?"#fff6c8":t.stroke} strokeWidth={active?5:3} filter="url(#tile-shadow)" className={active?"hex-clickable":""}/><polygon points={corners(p.x,p.y)} fill="none" stroke="#152c2c" strokeOpacity=".13" strokeWidth="12"/><text x={p.x-26} y={p.y-20} fontSize="35" fill={t.stroke} opacity=".32">{t.symbol}</text><text x={p.x+13} y={p.y+30} fontSize="31" fill={t.stroke} opacity=".24">{t.symbol}</text>{h.number!=null&&<g><circle cx={p.x} cy={p.y} r="18" fill="#f7ead0" stroke="#88745c" strokeWidth="2"/><text x={p.x} y={p.y+4} fill={[6,8].includes(h.number)?"#af4334":"#4a4135"} fontWeight="800" fontSize="16" textAnchor="middle">{h.number}</text><text x={p.x} y={p.y+13} fill="#867159" fontSize="5" textAnchor="middle">{"•".repeat(h.number===2||h.number===12?1:6-Math.abs(7-h.number))}</text></g>}{game.robberHex===h.id&&<g transform={`translate(${p.x+28} ${p.y-25})`} filter="url(#piece-shadow)"><circle r="13" fill="#26313b" stroke="#f0cf8a" strokeWidth="2"/><path d="M-5 7V-4a5 5 0 0 1 10 0V7Z" fill="#d2bd91"/></g>}</g>})}
- {game.board.ports.map(port=>{const a=pos.get(port.vertices[0]),b=pos.get(port.vertices[1]);if(!a||!b)return null;const x=(a.x+b.x)/2,y=(a.y+b.y)/2;const k=port.landHex.split(",").map(Number);const land=hexToPixel({q:k[0]!,r:k[1]!},S);const dx=x-land.x,dy=y-land.y;const d=Math.hypot(dx,dy)||1;return <g key={port.id} transform={`translate(${x+dx/d*25} ${y+dy/d*25})`}><circle r="15" fill="#eed9af" stroke="#786447" strokeWidth="2"/><text textAnchor="middle" y="-1" fontWeight="bold" fontSize="10" fill="#3e3a34">{port.ratio}:1</text><text textAnchor="middle" y="9" fontSize="7" fill="#3e3a34">{port.resource?.slice(0,3)??"ANY"}</text></g>})}
- {game.board.edges.map(e=>{const a=pos.get(e.a),b=pos.get(e.b);if(!a||!b)return null;const owned=roads.get(e.id),allowed=mode==="road"&&selectable.has(e.id);return <g key={e.id}><line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={allowed?"#f7e6af":"transparent"} strokeOpacity={allowed?.22:0} strokeWidth={allowed?24:8} pointerEvents={allowed?"stroke":"none"} className={allowed?"edge-target":""} onClick={()=>allowed&&onEdge(e.id)}/>{owned&&<><line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#162a34" strokeWidth="13" strokeLinecap="round"/><line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={owned} strokeWidth="8" strokeLinecap="round"/></>}{allowed&&<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fff1b0" strokeDasharray="4 6" strokeWidth="8" strokeLinecap="round" className="placement-hint" pointerEvents="none"/>}</g>})}
- {game.board.vertices.map(v=>{const p=pos.get(v.id);if(!p)return null;const owned=occup.get(v.id),allowed=(mode==="settlement"||mode==="city")&&selectable.has(v.id);if(!owned&&!allowed)return null;return <g key={v.id} transform={`translate(${p.x} ${p.y})`} onClick={()=>allowed&&onVertex(v.id)} className={allowed?"vertex-target":""} role={allowed?"button":undefined} aria-label={allowed?(mode==="city"?"Upgrade city":"Build settlement"):undefined} filter="url(#piece-shadow)">{allowed&&<circle r="14" fill="#fff3b4" fillOpacity=".5" stroke="#fff3b4" strokeWidth="2" className="placement-hint"/>}{owned&&<g><path d={owned.city?"M-12 10V-7L-3-14 6-6 12-10 12 10Z":"M-10 10V-3L0-12 10-3V10Z"} fill={owned.color} stroke="#25313b" strokeWidth="2.5"/><rect x="-3" y="1" width="6" height="9" fill="#243543" fillOpacity=".55"/>{owned.city&&<rect x="5" y="-3" width="4" height="5" fill="#f9e7b9"/>}</g>}{allowed&&<circle r="18" fill="transparent"/>}</g>})}
- </svg><div className="board-legend">Drag on the sea to pan · Ctrl + scroll to zoom · <span>Click glowing spots to place</span></div></div>;
+
+export function legalBoardTargets(game:GameView, mode:BoardAction, myId:string|undefined):Set<string> {
+  const result=new Set<string>();
+  if(!myId||!mode)return result;
+  const me=game.players.find(p=>p.id===myId);
+  if(!me)return result;
+  const ownBuildings=new Set([...me.settlements,...me.cities]);
+  const occupiedBuildings=new Set(game.players.flatMap(p=>[...p.settlements,...p.cities]));
+  const occupiedRoads=new Set(game.players.flatMap(p=>p.roads));
+  const opponentBuildings=new Set(game.players.filter(p=>p.id!==myId).flatMap(p=>[...p.settlements,...p.cities]));
+  const ownRoads=new Set(me.roads);
+  const edges=game.board.edges;
+  const pending=game.pending;
+  if(mode==="robber"){
+    for(const hex of game.board.landHexes)if(hex.id!==game.robberHex)result.add(hex.id);
+  } else if(mode==="city"){
+    for(const vertex of me.settlements)result.add(vertex);
+  } else if(mode==="settlement"){
+    for(const vertex of game.board.vertices){
+      if(occupiedBuildings.has(vertex.id)||vertex.neighbors.some(n=>occupiedBuildings.has(n)))continue;
+      if(pending.type==="setup"||edges.some(e=>ownRoads.has(e.id)&&(e.a===vertex.id||e.b===vertex.id)))result.add(vertex.id);
+    }
+  } else if(mode==="road"){
+    if(pending.type==="setup"){
+      if(!pending.needsRoad||!pending.vertex)return result;
+      for(const e of edges)if(!occupiedRoads.has(e.id)&&(e.a===pending.vertex||e.b===pending.vertex))result.add(e.id);
+    } else for(const e of edges) {
+      if(occupiedRoads.has(e.id))continue;
+      const connected=(v:string)=>!opponentBuildings.has(v)&&(ownBuildings.has(v)||edges.some(existing=>ownRoads.has(existing.id)&&(existing.a===v||existing.b===v)));
+      if(connected(e.a)||connected(e.b))result.add(e.id);
+    }
+  }
+  return result;
+}
+
+function Settlement({x,y,city,color}:{x:number;y:number;city:boolean;color:string}){
+  return <g transform={"translate("+x+" "+y+")"} className="board-piece" filter="url(#piece-shadow)">
+    {city?<>
+      <path d="M-14 10V-8L-6-15L1-9L8-15L15-8V10Z" fill={color} stroke="#334c4d" strokeWidth="2.8" strokeLinejoin="round"/>
+      <rect x="-4" y="0" width="8" height="10" rx="1.5" fill="#334c4d" opacity=".65"/>
+      <path d="M-10-3L-6-7L-1-3" stroke="#fff1cd" strokeWidth="2" fill="none"/>
+    </>:<>
+      <path d="M-11 10V-3L0-14L11-3V10Z" fill={color} stroke="#30494b" strokeLinejoin="round" strokeWidth="2.8"/>
+      <path d="M-11-3L0-14L11-3" fill="none" stroke="#ffefd1" strokeWidth="2.5" strokeLinecap="round"/>
+      <rect x="-3" y="1" width="6" height="9" rx="1" fill="#30494b" opacity=".65"/>
+    </>}
+  </g>;
+}
+
+function Robber({x,y}:{x:number;y:number}) {
+  return <g transform={"translate("+(x+27)+" "+(y-27)+")"} filter="url(#piece-shadow)">
+    <ellipse rx="12" ry="5" cy="12" fill="#303e3d" opacity=".25"/>
+    <path d="M-8 12L-5 0A9 9 0 0 1-7-9A9 9 0 0 1 7-9A9 9 0 0 1 5 0L8 12Z" fill="#3e4f52" stroke="#fff7df" strokeWidth="1.7"/>
+    <circle cy="-9" r="5" fill="#39484a" stroke="#fff7df" strokeWidth="1.7"/>
+  </g>;
+}
+function keyboard(e:KeyboardEvent<SVGGElement>,handler:()=>void) { if(e.key==="Enter"||e.key===" "){e.preventDefault();handler();} }
+
+export function BoardView({game,mode,selectable,onVertex,onEdge,onHex}:Props) {
+  const [zoom,setZoom]=useState(1);
+  const [offset,setOffset]=useState({x:0,y:0});
+  const [drag,setDrag]=useState<{x:number;y:number;startX:number;startY:number}|null>(null);
+  const vertexPositions=useMemo(()=>positions(game),[game.board]);
+  const roads=new Map<string,string>();
+  const buildings=new Map<string,{color:string;city:boolean}>();
+  for(const player of game.players){
+    for(const id of player.roads)roads.set(id,PLAYER_COLORS[player.color]);
+    for(const id of player.settlements)buildings.set(id,{color:PLAYER_COLORS[player.color],city:false});
+    for(const id of player.cities)buildings.set(id,{color:PLAYER_COLORS[player.color],city:true});
+  }
+  const range=405/zoom;
+  const viewBox=(-range+offset.x)+" "+(-range*0.80+offset.y)+" "+(range*2)+" "+(range*1.60);
+  const onWheel=(e:WheelEvent<SVGSVGElement>)=>{if(e.ctrlKey||e.metaKey)e.preventDefault();setZoom(z=>Math.max(.72,Math.min(2.3,z+(e.deltaY<0?.10:-.10))));};
+  const onDown=(e:PointerEvent<SVGSVGElement>)=>{
+    if((e.target as Element).closest(".hex-selectable,.edge-target,.vertex-target"))return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag({x:e.clientX,y:e.clientY,startX:offset.x,startY:offset.y});
+  };
+  const onMove=(e:PointerEvent<SVGSVGElement>)=>{
+    if(!drag)return;
+    const rect=e.currentTarget.getBoundingClientRect();
+    setOffset({x:drag.startX-(e.clientX-drag.x)*range*2/rect.width,y:drag.startY-(e.clientY-drag.y)*range*1.6/rect.height});
+  };
+  return <div className="island-stage">
+    <svg className="game-board" viewBox={viewBox} role="group" aria-label="Interactive island board" onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={()=>setDrag(null)} onPointerCancel={()=>setDrag(null)}>
+      <defs>
+        <radialGradient id="ocean-light"><stop stopColor="#81d6e4"/><stop offset=".7" stopColor="#54b8d6"/><stop offset="1" stopColor="#318dae"/></radialGradient>
+        <pattern id="ocean-foam" width="40" height="35" patternUnits="userSpaceOnUse"><path d="M-3 17Q7 11 17 17T40 17" fill="none" stroke="#dcfcfa" strokeWidth="1.5" strokeOpacity=".22"/></pattern>
+        <filter id="tile-depth" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="3" floodColor="#286c82" floodOpacity=".24"/></filter>
+        <filter id="piece-shadow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="1" dy="3" stdDeviation="2" floodColor="#233d4e" floodOpacity=".43"/></filter>
+        <filter id="placement-glow" x="-100%" y="-100%" width="300%" height="300%"><feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#fff6a4" floodOpacity=".9"/></filter>
+      </defs>
+      <rect x="-1300" y="-1300" width="2600" height="2600" fill="url(#ocean-light)"/>
+      <rect x="-1300" y="-1300" width="2600" height="2600" fill="url(#ocean-foam)"/>
+      {game.board.seaHexes.map(id=>{const p=hexToPixel(parseHexKey(id),SIZE);return <polygon key={id} points={hexPoints(p.x,p.y,60)} fill="#ffffff" fillOpacity=".07" stroke="#f2ffff" strokeOpacity=".18" strokeWidth="2"/>;})}
+      {game.board.landHexes.map(hex=>{
+        const p=hexToPixel(hex.axial,SIZE),theme=THEMES[hex.terrain]!,Icon=theme.icon;
+        const active=mode==="robber"&&selectable.has(hex.id);
+        const click=()=>onHex(hex.id);
+        const pips=hex.number?tokenPips(hex.number):0;
+        return <g key={hex.id} className={active?"hex-selectable":""} role={active?"button":undefined} aria-label={active?"Move robber to "+theme.name:undefined} tabIndex={active?0:undefined} onKeyDown={active?e=>keyboard(e,click):undefined} onClick={active?click:undefined}>
+          <title>{theme.name}{hex.number?" · "+hex.number:""}{game.robberHex===hex.id?" · Robber here":""}</title>
+          <polygon points={hexPoints(p.x,p.y,61)} fill="#fff7dc" stroke="#fff3d1" strokeWidth="4" filter="url(#tile-depth)"/>
+          <polygon points={hexPoints(p.x,p.y,56.5)} fill={theme.base} stroke={active?"#fff6ab":theme.border} strokeWidth={active?5:2} className="terrain-fill"/>
+          <polygon points={hexPoints(p.x,p.y-2,49)} fill={theme.light} fillOpacity=".45" pointerEvents="none"/>
+          <g opacity=".42" pointerEvents="none">
+            {[-1,0,1].map((i)=><g key={i} transform={"translate("+(p.x+i*19-15)+" "+(p.y-28+(i%2)*8)+")"}><Icon width={27} height={27} stroke={theme.ink} strokeWidth={1.8} fill="none"/></g>)}
+          </g>
+          {hex.number!==null&&<>
+            <circle cx={p.x} cy={p.y+12} r="20" fill="#b9986c" opacity=".27" pointerEvents="none"/>
+            <circle cx={p.x} cy={p.y+10} r="19" fill="#fff8e6" stroke="#dcbf93" strokeWidth="1.7" pointerEvents="none"/>
+            <text x={p.x} y={p.y+14} textAnchor="middle" fontSize="17" fontWeight="900" fill={hex.number===6||hex.number===8?"#be4d46":"#37484b"} pointerEvents="none">{hex.number}</text>
+            {Array.from({length:pips},(_,i)=><circle key={i} cx={p.x-(pips-1)*3.6+i*7.2} cy={p.y+22.5} r="1.6" fill={hex.number===6||hex.number===8?"#ca6156":"#876c51"} pointerEvents="none"/>)}
+          </>}
+          {active&&<polygon points={hexPoints(p.x,p.y,51)} fill="#ffe98e" fillOpacity=".16" stroke="#fff2a5" strokeWidth="3" className="terrain-target" pointerEvents="none"/>}
+          {game.robberHex===hex.id&&<Robber x={p.x} y={p.y}/>}
+        </g>;
+      })}
+      {game.board.ports.map(port=>{
+        const a=vertexPositions.get(port.vertices[0]),b=vertexPositions.get(port.vertices[1]);
+        if(!a||!b)return null;
+        const midX=(a.x+b.x)/2,midY=(a.y+b.y)/2;
+        const h=game.board.landHexes.find(h=>h.id===port.landHex);
+        if(!h)return null;
+        const center=hexToPixel(h.axial,SIZE);
+        const dx=midX-center.x,dy=midY-center.y,d=Math.hypot(dx,dy)||1;
+        const x=midX+dx/d*34,y=midY+dy/d*34;
+        return <g key={port.id} className="harbor-token">
+          <title>{port.resource?port.resource+" harbor: 2 for 1":"General harbor: 3 for 1"}</title>
+          <path d={"M"+a.x+" "+a.y+"L"+x+" "+y+"L"+b.x+" "+b.y} fill="none" stroke="#ffe4ab" strokeWidth="3" strokeDasharray="4 4" opacity=".8"/>
+          <circle cx={x} cy={y} r="20" fill="#fff5d3" stroke="#d8ab71" strokeWidth="3" filter="url(#piece-shadow)"/>
+          <text textAnchor="middle" x={x} y={y-1} fontSize="12" fontWeight="900" fill="#765637">{port.ratio}:1</text>
+          {port.resource?<g transform={"translate("+(x-6)+" "+(y+3)+")"}><ResourceIcon resource={port.resource as Resource} size={12}/></g>:<text x={x} y={y+9} textAnchor="middle" fontSize="8" fontWeight="800" fill="#8c6840">ANY</text>}
+        </g>;
+      })}
+      {game.board.edges.map(edge=>{
+        const a=vertexPositions.get(edge.a),b=vertexPositions.get(edge.b);
+        if(!a||!b)return null;
+        const owned=roads.get(edge.id),active=mode==="road"&&selectable.has(edge.id);
+        const click=()=>onEdge(edge.id);
+        return <g key={edge.id} role={active?"button":undefined} tabIndex={active?0:undefined} onKeyDown={active?e=>keyboard(e,click):undefined} aria-label={active?"Place road":undefined}>
+          {owned&&<>
+            <line x1={a.x} y1={a.y+2} x2={b.x} y2={b.y+2} stroke="#294a56" strokeOpacity=".4" strokeWidth="15" strokeLinecap="round"/>
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fff4d7" strokeWidth="13" strokeLinecap="round"/>
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={owned} strokeWidth="9" strokeLinecap="round"/>
+          </>}
+          {active&&<>
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fff9b7" strokeWidth="10" strokeDasharray="5 5" strokeLinecap="round" className="road-hint" pointerEvents="none"/>
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fff5a8" strokeOpacity=".05" strokeWidth="26" pointerEvents="stroke" className="edge-target" onClick={click}/>
+          </>}
+        </g>;
+      })}
+      {game.board.vertices.map(v=>{
+        const p=vertexPositions.get(v.id);
+        if(!p)return null;
+        const built=buildings.get(v.id),active=(mode==="settlement"||mode==="city")&&selectable.has(v.id);
+        if(!built&&!active)return null;
+        const click=()=>onVertex(v.id);
+        return <g key={v.id} transform={"translate("+p.x+" "+p.y+")"} className={active?"vertex-target":""} tabIndex={active?0:undefined} role={active?"button":undefined} aria-label={active?(mode==="city"?"Upgrade city":"Build settlement"):undefined} onKeyDown={active?e=>keyboard(e,click):undefined} onClick={active?click:undefined}>
+          {active&&<><circle r="18" fill="#fff3a8" fillOpacity=".62" stroke="#fff8cc" strokeWidth="2.5" className="vertex-hint" filter="url(#placement-glow)"/><circle r="20" fill="transparent"/></>}
+          {built&&<Settlement x={0} y={0} city={built.city} color={built.color}/>}
+        </g>;
+      })}
+    </svg>
+    <div className="board-zoom" role="group" aria-label="Board view controls">
+      <button aria-label="Zoom in" onClick={()=>setZoom(z=>Math.min(2.3,z+.18))}><ZoomIn size={17}/></button>
+      <button aria-label="Reset map" onClick={()=>{setZoom(1);setOffset({x:0,y:0})}}><RotateCcw size={16}/></button>
+      <button aria-label="Zoom out" onClick={()=>setZoom(z=>Math.max(.72,z-.18))}><ZoomOut size={17}/></button>
+    </div>
+  </div>;
 }
