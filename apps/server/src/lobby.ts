@@ -283,6 +283,7 @@ export class Lobby {
     const players: EnginePlayerSeed[] = [...this.seats.values()]
       .sort((a, b) => PLAYER_COLORS.indexOf(a.color) - PLAYER_COLORS.indexOf(b.color))
       .map((s) => ({ id: s.id, name: s.name, color: s.color }));
+    this.commandIds.clear();
     this.engine = new GameEngine({
       seed: seed ?? `${this.code}-${Date.now()}`,
       boardMode: this.settings.boardMode,
@@ -332,6 +333,7 @@ export class Lobby {
   resetToLobby(hostId: string): boolean {
     if (hostId !== this.hostId || this.state !== "finished") return false;
     this.engine = null;
+    this.commandIds.clear();
     this.state = "lobby";
     for (const seat of this.seats.values()) seat.ready = false;
     this.touch();
