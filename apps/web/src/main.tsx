@@ -5,6 +5,7 @@ import { SessionProvider } from "./session";
 import { HomePage, JoinPage, LobbyPage, GamePage, Shell } from "./pages";
 import { RulebookPage } from "./rulebook";
 import "./style.css";
+import "./game.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
