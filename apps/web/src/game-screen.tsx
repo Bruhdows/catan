@@ -98,6 +98,11 @@ export function GamePage(){
    {tab==="log"&&<><div className="section-label">MATCH HISTORY</div>{game.log.slice().reverse().map((e,i)=><p className="history-line" key={i}><small>TURN {e.turn}</small><span>{e.text}</span></p>)}</>}
    </div></aside>
   </div>
+  <div className="mobile-turn-strip">
+    <span>{game.dice ? `Last roll: ${game.dice[0]} + ${game.dice[1]}` : (setupMine ? "Place your starting pieces" : "Awaiting the next move")}</span>
+    {canRoll && <button className="button primary" disabled={!connected||busy} onClick={()=>void act({type:"rollDice"})}><Dices size={15}/> Roll dice</button>}
+    {canBuild && <button className="button primary" disabled={!connected||busy} onClick={()=>void act({type:"endTurn"})}>End turn →</button>}
+  </div>
   <div className="hand-footer"><div className="hand-identity"><span className="mini-avatar" style={{background:me?COLORS[me.color]:"#cfbd99"}}>{me?.name.slice(0,1).toUpperCase()||"?"}</span><span><b>{me?.name||"Spectator"}</b><small>{game.you?String(game.you.totalPoints)+" total VP":"Watching the game"}</small></span></div><div className="hand-cards">{RESOURCES.map(r=><div className={"hand-card hand-"+r} key={r}><span>{ICONS[r]}</span><span><small>{NAMES[r]}</small><b>{hand[r]}</b></span></div>)}</div><div className="hand-total"><b>{sum(hand)}</b><small>CARDS</small></div></div>
   {p?.type==="discard"&&p.players.some(x=>x.playerId===me?.id)&&<div className="dialog-backdrop"><section className="game-dialog"><h2>Discard resources</h2><p>The robber strikes. Discard exactly {p.players.find(x=>x.playerId===me?.id)?.count} cards.</p><Picker label="DISCARD" value={discard} max={hand} onChange={setDiscard}/><button className="button primary full" disabled={sum(discard)!==p.players.find(x=>x.playerId===me?.id)?.count} onClick={async()=>{if(await act({type:"discard",resources:discard}))setDiscard(fresh())}}>Confirm discard</button></section></div>}
   {p?.type==="robberSteal"&&mine&&<div className="dialog-backdrop"><section className="game-dialog"><h2>Choose someone to rob</h2><p>Steal one random resource card from a neighboring player.</p>{p.candidates.map(id=><button className="button secondary full" key={id} onClick={()=>void act({type:"selectVictim",player:id})}>{game.players.find(x=>x.id===id)?.name}</button>)}</section></div>}
