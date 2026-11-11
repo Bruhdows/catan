@@ -82,7 +82,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       });
     };
     const onDisconnect = () => setConnected(false);
-    const onLobby = (view: LobbyView) => { setLobby(view); if (view.state === "lobby") { setGame(null); setEvents([]); } };
+    const onLobby = (view: LobbyView) => {
+      setLobby(view);
+      const previous = authRef.current;
+      if (previous?.code === view.code) saveSession({ ...previous, lobby: view });
+      if (view.state === "lobby") { setGame(null); setEvents([]); }
+    };
     const onGame = (view: GameView) => setGame((prev) => !prev || view.seed !== prev.seed || view.rev >= prev.rev ? view : prev);
     const onEvent = (event: GameEvent) => setEvents((prev) => [...prev.slice(-50), event]);
     const onError = (err: { message: string }) => setError(err.message);
