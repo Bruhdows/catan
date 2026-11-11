@@ -46,9 +46,9 @@ export function GamePage(){
  },[game?.rev,game?.seed,audio]);
  useEffect(()=>{if(!auth&&code){const name=localStorage.getItem("hexhaven.name");if(name)void join(code,name);}},[auth?.code,code]);
  useEffect(()=>{if(auth&&lobby?.state==="lobby")navigate("/lobby/"+auth.code,{replace:true});},[auth?.code,lobby?.state,navigate]);
- useEffect(()=>{if(!game)return;const p=game.pending;if(p.type==="setup")setMode(p.needsRoad?"road":"settlement");else if(p.type==="roadBuilding")setMode("road");else if(p.type==="robberMove")setMode("robber");else if(game.phase!=="main")setMode(null);},[game?.pending.type,game?.pending.type==="setup"?game.pending.needsRoad:undefined,game?.phase]);
+ useEffect(()=>{if(!game)return;const p=game.pending;if(p.type==="setup")setMode(p.needsRoad?"road":"settlement");else if(p.type==="roadBuilding")setMode("road");else if(p.type==="robberMove")setMode("robber");else setMode(null);},[game?.pending.type,game?.pending.type==="setup"?game.pending.needsRoad:undefined,game?.phase]);
  const me=game?.players.find(p=>p.id===auth?.playerId);
- const active=game?.players[game.turnIndex];
+ const active=game?.pending.type==="setup" ? game.players.find(x=>x.id===game.pending.player) : game?.players[game.turnIndex];
  const mine=Boolean(game&&me&&active?.id===me.id&&!auth?.spectator);
  const p=game?.pending;
  const setupMine=p?.type==="setup"&&p.player===me?.id;
