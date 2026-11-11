@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { Server, type Socket } from "socket.io";
 import {
   codeSchema,
@@ -27,7 +28,7 @@ const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function randomCode(): string {
   let code = "";
   for (let i = 0; i < 6; i++) {
-    code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    code += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
   }
   return code;
 }
@@ -46,8 +47,9 @@ export function registerSocketHandlers(io: Io): void {
     if (!meta) return null;
     const lobby = lobbyStore.get(meta.code);
     if (!lobby) return null;
-    if (!meta.spectator && !lobby.seats.has(meta.playerId)) return null;
-    if (meta.spectator && !lobby.spectators.has(meta.playerId)) return null;
+    // Only the latest socket owning a reconnected session may act.
+    if (!meta.spectator && lobby.seats.get(meta.playerId)?.socketId !== socketId) return null;
+    if (meta.spectator && lobby.spectators.get(meta.playerId)?.socketId !== socketId) return null;
     return { lobby, meta };
   };
 
@@ -78,7 +80,7 @@ export function registerSocketHandlers(io: Io): void {
     for (const socketId of room) {
       const socket = io.sockets.sockets.get(socketId);
       const meta = socket ? socketMeta.get(socketId) : undefined;
-      if (!socket || !meta) continue;
+      if (!socket || !meta || !getEntry(socketId)) continue;
       sendGameView(socket, lobby, meta);
     }
   }
@@ -93,7 +95,7 @@ export function registerSocketHandlers(io: Io): void {
       if (!room) continue;
       for (const socketId of room) {
         const meta = socketMeta.get(socketId);
-        if (meta && meta.playerId === to) {
+        if (meta && meta.playerId === to && getEntry(socketId)) {
           io.sockets.sockets.get(socketId)?.emit("game:private-event", event);
         }
       }
