@@ -16,8 +16,8 @@ export function BuildPanel({ game, meId, hand, canBuild, mode, onMode, send }: {
   const me = game.players.find(p => p.id === meId);
   const items = [
     { id: "road", title: "Road", sub: "Extend your network", cost: COSTS.road, count: me?.pieces.roads ?? 0, icon: Route },
-    { id: "settlement", title: "Settlement", sub: "+1 point · collect resources", cost: COSTS.settlement, count: me?.pieces.settlements ?? 0, icon: House },
-    { id: "city", title: "City", sub: "+2 points · double production", cost: COSTS.city, count: me?.pieces.cities ?? 0, icon: Crown },
+    { id: "settlement", title: "Settlement", sub: "Worth 1 VP · collect resources", cost: COSTS.settlement, count: me?.pieces.settlements ?? 0, icon: House },
+    { id: "city", title: "City", sub: "Worth 2 VP (upgrade +1) · double output", cost: COSTS.city, count: me?.pieces.cities ?? 0, icon: Crown },
   ] as const;
   return <div className="panel-content">
     <Hint icon={<MapPinned size={20}/>} title="Build on the island">
@@ -29,7 +29,7 @@ export function BuildPanel({ game, meId, hand, canBuild, mode, onMode, send }: {
       return <button type="button" key={item.id} className={"build-option " + (mode === item.id ? "is-selected" : "")}
         disabled={!enabled} aria-pressed={mode===item.id} onClick={()=>onMode(mode===item.id ? null : item.id)}>
         <span className={"piece-illustration piece-"+item.id}><Icon size={27} strokeWidth={2.2}/></span>
-        <span className="build-option-copy"><strong>{item.title}</strong><small>{item.sub} · {item.count} left</small><Cost cost={item.cost} hand={hand}/></span>
+        <span className="build-option-copy"><strong>{item.title}</strong><small>{!canBuild?"Wait for your building phase":item.count<=0?"No pieces remaining":!canAfford(hand,item.cost)?"Missing resources":item.sub} · {item.count} left</small><Cost cost={item.cost} hand={hand}/></span>
         {mode===item.id && <Check size={19} className="build-selected-icon"/>}
       </button>;
     })}</div>

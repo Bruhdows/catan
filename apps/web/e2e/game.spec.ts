@@ -82,6 +82,7 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     // The same scene must remain usable on a phone-sized viewport.
     await host.setViewportSize({ width: 390, height: 844 });
     await expect(host.locator(".game-board")).toBeVisible();
+    await host.screenshot({ path: "test-results/island-mobile-board.png" });
     await expect(host.getByRole("button", { name: "Trade", exact: true })).toBeVisible();
     await host.getByRole("button", { name: "Trade", exact: true }).click();
     await expect(host.getByRole("combobox", { name: "Trade with" })).toBeVisible();

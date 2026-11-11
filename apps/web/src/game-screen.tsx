@@ -42,7 +42,7 @@ function HandBar({hand,privatePoints}:{hand:ResourceHand;privatePoints:number|nu
     {RESOURCES.map(resource=><div className={"inventory-card resource-"+resource} key={resource} title={RESOURCE_META[resource].label+": "+hand[resource]}>
       <span className="inventory-card-illustration"><ResourceIcon resource={resource} size={25}/></span>
       <span className="inventory-card-name">{RESOURCE_META[resource].short}</span>
-      <strong className="inventory-count">{hand[resource]}</strong>
+      <strong className="inventory-count" key={hand[resource]}>{hand[resource]}</strong>
     </div>)}
     <div className="inventory-points"><Crown size={16} fill="currentColor"/><b>{privatePoints??"–"}</b><small>VP</small></div>
   </div>;

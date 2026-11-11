@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
-import { ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, Copy, Hexagon, LogOut, Menu, Play, ShieldCheck, Sparkles, Users, X, WifiOff, Trees, Mountain, Wheat, Cloud, BrickWall } from "lucide-react";
+import { ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, Copy, Hexagon, LogOut, Menu, Play, ShieldCheck, Sparkles, Trophy, Users, X, WifiOff, Trees, Mountain, Wheat, Cloud, BrickWall } from "lucide-react";
 import { hexSpiral, hexToPixel, type PlayerColor } from "@hexhaven/shared";
 import { FieldSelect, PlayerAvatar, PLAYER_COLORS } from "./design";
 import { useSession } from "./session";
@@ -64,7 +64,7 @@ export function HomePage() {
         <div className="hero-actions"><Link to="/create" className="button primary large"><Play size={19} fill="currentColor"/> Create a game <ArrowRight size={19}/></Link><Link to="/join" className="button secondary large"><Users size={19}/> Join with code</Link></div>
         <Link className="learn-link" to="/rules"><BookOpen size={17}/> First time playing? Learn the rules <ChevronRight size={16}/></Link>
       </div>
-      <div className="home-island"><IslandPreview/><span className="island-sticker sticker-one">✦ Every island is different</span><span className="island-sticker sticker-two">🏆 First to 10 points!</span></div>
+      <div className="home-island"><IslandPreview/><span className="island-sticker sticker-one">✦ Every island is different</span><span className="island-sticker sticker-two"><Trophy size={16}/> First to 10 points!</span></div>
     </section>
     <div className="home-shortcuts"><span><Check size={16}/> No account needed</span><span><Check size={16}/> Private rooms</span><span><Check size={16}/> Real-time turns</span></div>
   </main>;
