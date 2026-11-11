@@ -192,7 +192,7 @@ export function registerSocketHandlers(io: Io): void {
 
       const isSpectatorRequest = spectator === true || lobby.state !== "lobby" || lobby.seats.size >= lobby.view().maxPlayers;
       if (isSpectatorRequest) {
-        if (!lobby.settings.allowSpectators && lobby.state === "playing") {
+        if (!lobby.settings.allowSpectators) {
           return fail(ack, "spectators-off", "This lobby does not allow spectators.");
         }
         const parsedName = nameSchema.safeParse(name ?? "Spectator");
