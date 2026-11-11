@@ -24,6 +24,7 @@ type ClientToServer = {
   "lobby:join": unknown;
   "lobby:leave": unknown;
   "lobby:ready": unknown;
+  "lobby:settings": unknown;
   "lobby:start": unknown;
   "lobby:reset": unknown;
   "game:command": unknown;
@@ -379,6 +380,22 @@ describe("socket integration", () => {
     // Leaving in the lobby removes the seat entirely.
     send(guest2, "lobby:leave");
     await until(() => host.lobbyStates.at(-1)!.players.every((p) => p.id === host.auth.playerId), 3000, "seat removed");
+    host.socket.disconnect();
+  });
+
+  it("blocks spectators in all lobby states when spectators are disabled", async () => {
+    const host = await connect();
+    const created = await ack<SessionAuth & { lobby: LobbyView }>(host, "lobby:create", { name: "No spectators" });
+    expect(created.ok).toBe(true);
+    if (!created.ok) throw new Error("could not create lobby");
+    const code = created.data.code;
+    send(host, "lobby:settings", { settings: { boardMode: "random", allowSpectators: false } });
+    await until(() => host.lobbyStates.at(-1)?.settings.allowSpectators === false, 3000, "spectators disabled");
+    const guest = await connect();
+    const refused = await ack(guest, "lobby:join", { code, name: "Watcher", spectator: true });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) expect(refused.error).toBe("spectators-off");
+    guest.socket.disconnect();
     host.socket.disconnect();
   });
 
