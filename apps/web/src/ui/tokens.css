@@ -1,0 +1,76 @@
+/* Hexhaven design tokens — one source of truth for materials, color and motion. */
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+  /* Typography */
+  --font-ui: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+
+  /* Sea & island */
+  --sea-900: #0d4660;
+  --sea-700: #16688a;
+  --sea-500: #2087a5;
+  --sea-300: #52aac0;
+  --sand: #ecd9ac;
+  --sand-deep: #d6bd88;
+
+  /* Interface materials */
+  --parchment: #f8f1de;
+  --parchment-2: #f1e7cd;
+  --paper: #fdfaf0;
+  --wood: #8a5a33;
+  --wood-deep: #5f3d22;
+  --wood-soft: #b3855b;
+  --ink: #33291e;
+  --ink-2: #5d4e3c;
+  --ink-3: #8d7a61;
+  --line: #e3d6b9;
+  --line-soft: #ece1c8;
+  --honey: #eaa63e;
+  --honey-deep: #b97f1e;
+  --alert: #b8473c;
+  --alert-soft: #f4dcd2;
+  --ok: #4c8f5c;
+
+  /* Player colors (match packages/shared PLAYER_COLORS semantics) */
+  --pl-crimson: #d24b40;
+  --pl-azure: #2f7fc9;
+  --pl-amber: #dd922b;
+  --pl-ivory: #efe6d0;
+
+  /* Terrain hues */
+  --t-forest: #3d8a58;
+  --t-forest-deep: #2c7046;
+  --t-pasture: #97bf63;
+  --t-pasture-deep: #7aa24d;
+  --t-fields: #e3b44b;
+  --t-fields-deep: #c2913a;
+  --t-hills: #c76b43;
+  --t-hills-deep: #a55333;
+  --t-mountains: #8497a8;
+  --t-mountains-deep: #62768a;
+  --t-desert: #d9b877;
+  --t-desert-deep: #bb9a5c;
+
+  /* Resource hues */
+  --r-brick: #c96a4b;
+  --r-lumber: #4f9159;
+  --r-wool: #8aa94f;
+  --r-grain: #d9a43a;
+  --r-ore: #7189a8;
+
+  /* Shape, elevation, motion */
+  --radius-sm: 9px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --shadow-1: 0 1px 2px rgba(56, 40, 18, 0.18), 0 4px 14px rgba(18, 66, 86, 0.14);
+  --shadow-2: 0 2px 4px rgba(56, 40, 18, 0.2), 0 12px 30px rgba(13, 58, 78, 0.24);
+  --dur-1: 0.12s;
+  --dur-2: 0.2s;
+  --dur-3: 0.35s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-1: 0s; --dur-2: 0s; --dur-3: 0s; }
+}
