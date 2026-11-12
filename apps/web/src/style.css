@@ -92,3 +92,14 @@
   .lobby-code { font-size: 22px; }
   .lobby-seat { min-height: 56px; }
 }
+
+
+/* Only actionable connection warnings, room roles and search results remain. */
+.host-crown { display:inline-block; color:#c19451; margin-left:6px; vertical-align:-2px; }
+.rules-layout.is-searching { grid-template-columns:minmax(0,1fr); max-width:920px; }
+.rules-layout.is-searching .rules-nav { display:none; }
+.rules-layout.is-searching .rules-article { max-width:none; }
+.rules-layout.is-searching .rule-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+@media(max-width:700px) {
+  .rules-layout.is-searching .rule-cards { grid-template-columns:1fr; }
+}
