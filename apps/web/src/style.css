@@ -17,3 +17,54 @@
 
 .island-sticker{display:inline-flex;align-items:center;gap:7px}
 .rules-cost-grid strong{display:flex;align-items:center;gap:6px}
+
+
+/*
+ * Game UI copy hierarchy:
+ * one functional title per screen, no superheading chips or decorative slogans.
+ * Field labels name controls; status appears only when it changes an action.
+ */
+.brand { font-weight: 900; letter-spacing: -.045em; }
+.home-copy h1 { font-size: clamp(43px, 5.2vw, 73px); line-height: 1.09; }
+.home-copy p { max-width: 505px; font-weight: 650; }
+.home-island .island-preview { filter: drop-shadow(0 16px 13px #348c9430); }
+.hero-actions { margin: 24px 0 17px; }
+.learn-link { font-size: 13px; }
+.field-label { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 800; }
+.entry-panel h1 { margin-top: 3px; }
+.entry-panel > p { font-weight: 650; }
+.entry-form { margin-top: 22px; }
+.entry-switch { margin: 5px 0 0; }
+.lobby-title { margin-bottom: 24px; }
+.lobby-title h1 { margin: 0 0 5px; font-size: clamp(32px, 3.6vw, 46px); }
+.lobby-title p { font-size: 13px; font-weight: 700; }
+.lobby-code { letter-spacing: .075em; font-size: clamp(23px, 3vw, 31px); }
+.lobby-code-row { padding-bottom: 15px; }
+.lobby-side .side-heading h2 { margin: 0 0 6px; font-size: 23px; }
+.lobby-side .side-heading p { font-size: 12px; font-weight: 700; }
+.lobby-seats .seat-details strong { font-weight: 850; }
+.settings-rules-link {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  align-self: flex-start;
+  color: #3d896e;
+  font-size: 13px;
+  font-weight: 800;
+}
+.settings-rules-link:hover { text-decoration: underline; }
+.rules-head { padding-top: 37px; padding-bottom: 31px; }
+.rules-head h1 { font-size: clamp(31px, 3.7vw, 45px); margin: 0 0 8px; }
+.rules-head p { font-weight: 650; font-size: 14px; }
+.rules-nav h3 { letter-spacing: 0; text-transform: none; font-size: 14px; margin-bottom: 8px; }
+.rules-article h2 { margin-top: 0; font-size: clamp(29px, 3.2vw, 40px); }
+.rules-article .article-lead { font-weight: 650; }
+.rule-card { gap: 6px; padding: 17px 19px; }
+.rule-card strong { display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 850; }
+.rule-card p { font-weight: 650; }
+.rules-example > strong { display: block; margin-bottom: 12px; }
+@media(max-width:700px) {
+  .home-copy h1 { font-size: clamp(37px, 9.5vw, 51px); }
+  .lobby-code { font-size: 23px; }
+  .lobby-title { margin-bottom: 18px; }
+}
