@@ -2,8 +2,8 @@ import { test, expect, type Page } from "@playwright/test";
 
 async function joinAs(page: Page, code: string, name: string) {
   await page.goto("/join/" + code);
-  await page.getByPlaceholder("What should we call you?").fill(name);
-  await page.getByRole("button", { name: "Join the table" }).click();
+  await page.getByPlaceholder("Nickname").fill(name);
+  await page.getByRole("button", { name: "Join room" }).click();
   await expect(page).toHaveURL(new RegExp("/lobby/" + code));
 }
 
@@ -16,16 +16,17 @@ test("three players create a lobby, set up the island, reconnect and read rules"
   ]);
   try {
     await host.goto("/create");
-    await expect(host.getByRole("heading", { name: "Gather your crew." })).toBeVisible();
-    await host.getByPlaceholder("What should we call you?").fill("Host");
-    await host.getByRole("button", { name: "Create private lobby" }).click();
+    await expect(host.getByRole("heading", { name: "Create game" })).toBeVisible();
+    await host.getByPlaceholder("Nickname").fill("Host");
+    await host.getByRole("button", { name: "Create room" }).click();
+    await host.screenshot({ path: "test-results/lobby-clean.png" });
     await expect(host).toHaveURL(/\/lobby\/[A-Z2-9]{6}$/);
     const code = host.url().split("/").at(-1)!;
 
     await joinAs(alice, code, "Alice");
     await joinAs(bob, code, "Bob");
-    await alice.getByRole("button", { name: "Mark as ready" }).click();
-    await bob.getByRole("button", { name: "Mark as ready" }).click();
+    await alice.getByRole("button", { name: "Ready up" }).click();
+    await bob.getByRole("button", { name: "Ready up" }).click();
     const start = host.getByRole("button", { name: "Start game" });
     await expect(start).toBeEnabled();
     await start.click();
@@ -60,11 +61,11 @@ test("three players create a lobby, set up the island, reconnect and read rules"
 
     // The board stays visible while each game action opens its own panel.
     await host.getByRole("button", { name: "Build", exact: true }).click();
-    await expect(host.getByRole("heading", { name: "Build something" })).toBeVisible();
+    await expect(host.getByRole("heading", { name: "Build" })).toBeVisible();
     await host.screenshot({ path: "test-results/island-build-panel.png" });
 
     await host.getByRole("button", { name: "Trade", exact: true }).click();
-    await expect(host.getByRole("heading", { name: "Make a trade" })).toBeVisible();
+    await expect(host.getByRole("heading", { name: "Trade" })).toBeVisible();
     await host.getByRole("combobox", { name: "Trade with" }).selectOption({ label: "Alice" });
     await expect(host.getByRole("combobox", { name: "Trade with" })).toHaveValue(
       (await alice.evaluate(() => JSON.parse(localStorage.getItem("hexhaven.session") || "{}"))).playerId,
@@ -74,9 +75,9 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await expect(host.getByRole("combobox", { name: "Get from the bank" })).toBeVisible();
 
     await host.getByRole("button", { name: "Cards", exact: true }).click();
-    await expect(host.getByRole("heading", { name: "Your development cards" })).toBeVisible();
+    await expect(host.getByRole("heading", { name: "Cards" })).toBeVisible();
     await host.getByRole("button", { name: "Log", exact: true }).click();
-    await expect(host.getByRole("heading", { name: "Match history" })).toBeVisible();
+    await expect(host.getByRole("heading", { name: "History" })).toBeVisible();
     await host.getByRole("button", { name: "Log", exact: true }).click();
 
     // The same scene must remain usable on a phone-sized viewport.
@@ -101,9 +102,28 @@ test("three players create a lobby, set up the island, reconnect and read rules"
 test("homepage and rulebook work at narrow mobile widths", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /The island is/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Play with friends." })).toBeVisible();
+  await expect(page.getByText("THE BOARD IS YOURS")).toHaveCount(0);
+  await expect(page.getByText("ONLINE BOARD GAME")).toHaveCount(0);
+  await page.screenshot({ path: "test-results/home-clean-mobile.png" });
   await page.goto("/rules");
-  await expect(page.getByRole("heading", { name: /Learn the island/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Rules" })).toBeVisible();
   await page.getByPlaceholder(/Search rules/).fill("Longest Road");
   await expect(page.getByRole("link", { name: /Longest Road/ }).first()).toBeVisible();
+  await page.screenshot({ path: "test-results/rules-clean-mobile.png" });
+});
+
+
+test("menus contain only one functional heading and no decorative labels", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Play with friends." })).toHaveCount(1);
+  await expect(page.getByText(/THE BOARD IS YOURS|ONLINE BOARD GAME|EVERY ISLAND IS DIFFERENT/)).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Create game" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Join game" })).toBeVisible();
+  await page.goto("/create");
+  await expect(page.getByRole("heading", { name: "Create game" })).toHaveCount(1);
+  await expect(page.getByText("NEW GAME", { exact: true })).toHaveCount(0);
+  await page.goto("/rules");
+  await expect(page.getByRole("heading", { name: "Rules" })).toHaveCount(1);
+  await expect(page.getByText("QUICK GUIDE", { exact: true })).toHaveCount(0);
 });
