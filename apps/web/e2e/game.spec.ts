@@ -29,6 +29,8 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await bob.getByRole("button", { name: "Ready up" }).click();
     const start = host.getByRole("button", { name: "Start game" });
     await expect(start).toBeEnabled();
+    await expect(start).toBeInViewport({ ratio: 1 });
+    await expect(host.getByRole("button", { name: "Ready", exact: true })).toBeInViewport({ ratio: 1 });
     await start.click();
     await expect(host).toHaveURL(new RegExp("/game/" + code));
     await expect(alice).toHaveURL(new RegExp("/game/" + code));
@@ -87,6 +89,8 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await expect(host.getByRole("button", { name: "Trade", exact: true })).toBeVisible();
     await host.getByRole("button", { name: "Trade", exact: true }).click();
     await expect(host.getByRole("combobox", { name: "Trade with" })).toBeVisible();
+    await expect(host.getByText("Give", { exact: true })).toBeInViewport();
+    await expect(host.getByText("Get", { exact: true })).toBeInViewport();
     await host.screenshot({ path: "test-results/island-mobile.png" });
     const width = await host.evaluate(() => ({ actual: document.documentElement.scrollWidth, viewport: innerWidth }));
     expect(width.actual).toBeLessThanOrEqual(width.viewport + 2);
