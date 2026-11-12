@@ -113,10 +113,9 @@ export function LobbyPage() {
   const share = location.origin + "/join/" + lobby.code;
   const leaveAndGo=()=>{leave();navigate("/")};
   return <main className="lobby-page">
-    <div className="lobby-title"><h1>Lobby</h1><p>{lobby.players.length} of 4 players</p></div>
     <div className="lobby-layout">
       <section className="lobby-main surface">
-        <div className="lobby-code-row"><div><strong className="lobby-code">Room {lobby.code}</strong></div><button className="button secondary" onClick={async()=>{await navigator.clipboard.writeText(share);setCopied(true);setTimeout(()=>setCopied(false),1700)}}>{copied ? <Check size={17}/> : <Copy size={17}/>} {copied ? "Copied" : "Copy link"}</button></div>
+        <div className="lobby-code-row"><div><h1 className="lobby-code">Room {lobby.code}</h1><span className="lobby-seat-count">{lobby.players.length} of 4 players</span></div><button className="button secondary" onClick={async()=>{await navigator.clipboard.writeText(share);setCopied(true);setTimeout(()=>setCopied(false),1700)}}>{copied ? <Check size={17}/> : <Copy size={17}/>} {copied ? "Copied" : "Copy link"}</button></div>
         <div className="lobby-seats">{Array.from({length:4},(_,i)=>{const p=lobby.players[i];return <div key={p?.id||i} className={"lobby-seat" + (!p ? " seat-empty" : "")}>
           <span className="seat-number">{i+1}</span>
           {p ? <PlayerAvatar name={p.name} color={p.color} size="lg"/> : <span className="empty-avatar"><Users size={22}/></span>}
