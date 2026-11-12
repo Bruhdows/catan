@@ -24,3 +24,52 @@
 @keyframes resourcePop{0%{transform:scale(.72)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
 @keyframes diceLand{0%{transform:translateY(-10px) rotate(-8deg);opacity:.3}100%{transform:translateY(0) rotate(0);opacity:1}}
 @media(prefers-reduced-motion:reduce){.inventory-count,.dice-pair span{animation:none}}
+
+
+/* Functional game controls have one hierarchy: action -> available choices. */
+.turn-prompt {
+  width: max-content;
+  max-width: min(310px, calc(100% - 55px));
+  padding: 10px 14px;
+  gap: 0;
+  border: 1.5px solid #e7ede1;
+  box-shadow: 0 3px 0 #4d8e9870, 0 7px 18px #286d8230;
+  background: #fffdf3f5;
+}
+.turn-prompt::before { display: none; }
+.turn-prompt strong { font-size: 16px; font-weight: 850; }
+.turn-prompt p { margin-top: 3px; font-size: 11.5px; font-weight: 700; }
+.drawer-header { min-height: 64px; padding: 11px 17px; background: #fffcf3; }
+.drawer-header h2 { margin: 0; font-size: 21px; font-weight: 850; }
+.match-player-name { gap: 0; }
+.match-player-name b { font-weight: 850; }
+.match-player-name small { font-weight: 650; }
+.match-player:not(.current) { border-color: #e5e9dd; }
+.panel-content { gap: 11px; }
+.panel-h3 { font-weight: 850; }
+.build-option-copy strong { font-weight: 850; }
+.build-option-copy small { font-size: 11px; font-weight: 650; }
+.buy-dev-button > span:nth-child(2) > small { font-size: 11px; font-weight: 650; color: #9b8660; }
+.buy-dev-button strong { font-weight: 850; }
+.trade-columns { grid-template-columns: 1fr; gap: 9px; }
+.trade-columns .quantity-picker { padding: 8px 11px; }
+.trade-columns .quantity-row { padding: 6px 1px; }
+.picker-title { letter-spacing: 0; font-size: 12px; color: #557c6c; }
+.quantity-name { font-size: 12px; font-weight: 750; }
+.quantity-icon { width: 25px; }
+.stepper button { width: 30px; height: 29px; font-size: 18px; }
+.stepper output { width: 22px; font-size: 13px; }
+.trade-offers-top { display: flex; flex-direction: column; gap: 8px; }
+.trade-offers-top .panel-h3 { margin: 2px 0 0; }
+.bank-ratio { font-size: 14px; padding: 15px 13px; }
+.incoming-banner, .drawer-eyebrow, .turn-prompt-eyebrow { display: none; }
+.history-turn { letter-spacing: 0; text-transform: none; font-weight: 750; font-size: 10px; }
+.winner-small { display: none; }
+@media(max-width:660px) {
+  .turn-prompt { top: 10px; left: 10px; padding: 9px 11px; max-width: min(250px, calc(100% - 80px)); }
+  .turn-prompt strong { font-size: 14px; }
+  .turn-prompt p { font-size: 11px; }
+  .drawer-header { min-height: 55px; }
+  .trade-columns { grid-template-columns: 1fr; }
+  .stepper button { height: 31px; width: 34px; }
+}
