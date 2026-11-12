@@ -73,3 +73,61 @@
   .trade-columns { grid-template-columns: 1fr; }
   .stepper button { height: 31px; width: 34px; }
 }
+
+
+/*
+ * Compact give/get card trays, laid out vertically for clear trade direction.
+ * Each resource is a single usable tile; both sides of a proposal are visible
+ * before scrolling through the rest of the panel.
+ */
+.trade-columns .quantity-picker {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  padding: 9px 7px;
+}
+.trade-columns .picker-title {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+}
+.trade-columns .quantity-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 6px 2px;
+  background: #f0f5e9;
+  border: 1px solid #e0e8d8;
+  border-radius: 8px;
+}
+.trade-columns .quantity-icon { height: 19px; width: 22px; }
+.trade-columns .quantity-icon svg { width: 19px; height: 19px; }
+.trade-columns .quantity-name {
+  flex: none;
+  max-width: 100%;
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.trade-columns .stepper {
+  width: 100%;
+  justify-content: space-around;
+  gap: 1px;
+}
+.trade-columns .stepper button {
+  flex: 0 0 auto;
+  width: 23px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+.trade-columns .stepper output { width: 11px; font-size: 11px; }
+@media(max-width:660px) {
+  .trade-columns .quantity-picker { padding: 8px 5px; }
+  .trade-columns .quantity-row { padding: 6px 1px; }
+  .trade-columns .stepper button { width: 23px; height: 26px; }
+}
