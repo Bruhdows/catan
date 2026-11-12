@@ -23,7 +23,19 @@ export function RulebookPage() {
   const [query,setQuery]=useState("");
   const active=chapters.find(c=>c.slug===chapter);
   const currentIndex=active?chapters.findIndex(c=>c.slug===active.slug):-1;
-  const filtered=useMemo(()=>chapters.filter(c=>(c.title+" "+c.summary+" "+c.sections.flat().join(" ")).toLowerCase().includes(query.toLowerCase())),[query]);
+  const filtered=useMemo(()=>{
+    const term=query.toLowerCase().trim();
+    const rank=(c:typeof chapters[number])=>{
+      const title=c.title.toLowerCase(),summary=c.summary.toLowerCase();
+      if(title===term)return 0;
+      if(title.startsWith(term))return 1;
+      if(title.includes(term))return 2;
+      if(summary.includes(term))return 3;
+      return 4;
+    };
+    return chapters.filter(c=>(c.title+" "+c.summary+" "+c.sections.flat().join(" ")).toLowerCase().includes(term))
+      .sort((a,b)=>rank(a)-rank(b));
+  },[query]);
   const searching=query.trim().length>0;
   useEffect(()=>{document.title=(active?active.title+" · ":"")+"Rules | Hexhaven";window.scrollTo(0,0);},[active?.slug]);
   return <main className="rules-page">
