@@ -12,26 +12,26 @@ type Panel = "build" | "trade" | "cards" | "history" | null;
 
 function phasePrompt(game: GameView, meId?: string) {
   const pending = game.pending;
-  const active = pending.type === "setup" ? game.players.find(p => p.id===pending.player) : game.players[game.turnIndex];
-  const myTurn = active?.id===meId && Boolean(meId);
-  if (game.phase==="finished") return { eyebrow:"MATCH COMPLETE",title:"We have a winner!",description:"The island has a new champion.",kind:"finish" };
-  if (pending.type==="setup") {
-    if (myTurn) return { eyebrow:"STARTING PLACEMENT",title:pending.needsRoad?"Place your free road":"Choose your settlement spot",description:pending.needsRoad?"Connect it to your newly placed settlement.":"Click a glowing corner of the island. Keep a space between buildings.",kind:"setup" };
-    return { eyebrow:"STARTING PLACEMENT",title:"Waiting for "+active?.name,description:"Everyone places two settlements and two connecting roads before the dice begin.",kind:"wait" };
+  const active = pending.type === "setup" ? game.players.find(p => p.id === pending.player) : game.players[game.turnIndex];
+  const myTurn = Boolean(meId && active?.id === meId);
+  if (game.phase === "finished") return { title: "Game over", description: "", kind: "finish" };
+  if (pending.type === "setup") {
+    if (myTurn) return { title: pending.needsRoad ? "Place a road" : "Place a settlement", description: pending.needsRoad ? "Choose an edge next to your settlement." : "Choose a highlighted corner.", kind: "setup" };
+    return { title: active?.name + " is placing", description: "", kind: "wait" };
   }
-  if (pending.type==="discard") return {eyebrow:"ROBBER ALERT",title:pending.players.some(p=>p.playerId===meId)?"Discard your resources":"Waiting for discards",description:"Players holding more than seven cards must discard half.",kind:"robber"};
-  if (pending.type==="robberMove") return {eyebrow:"ROBBER ALERT",title:myTurn?"Move the robber":"Waiting for robber",description:"Choose a different land tile. It will stop producing until the robber moves again.",kind:"robber"};
-  if (pending.type==="robberSteal") return {eyebrow:"ROBBER ALERT",title:myTurn?"Choose a player to rob":"Waiting for a steal",description:"The active player takes a random resource card from an eligible opponent.",kind:"robber"};
-  if (pending.type==="roadBuilding") return {eyebrow:"SPECIAL CARD",title:myTurn?"Place your free roads":"Waiting for free roads",description:pending.remaining+" road"+(pending.remaining===1?"":"s")+" remaining. No resources needed.",kind:"setup"};
-  if (game.phase==="roll") return { eyebrow:"TURN "+game.turnCount, title:myTurn?"Your turn!":"It's "+active?.name+"'s turn",description:myTurn?"Roll the dice to collect resources.":"Watch the island while they roll.",kind:myTurn?"roll":"wait"};
-  return { eyebrow:"TURN "+game.turnCount, title:myTurn?"Build, trade or end your turn":active?.name+"'s turn",description:myTurn?"Choose an action below. You can make as many buildings and trades as you can afford.":"Plan your next settlement while you wait.",kind:myTurn?"action":"wait"};
+  if (pending.type === "discard") return { title: pending.players.some(p => p.playerId === meId) ? "Discard cards" : "Waiting for discards", description: "", kind: "robber" };
+  if (pending.type === "robberMove") return { title: myTurn ? "Move the robber" : "Waiting for robber", description: myTurn ? "Select a highlighted tile." : "", kind: "robber" };
+  if (pending.type === "robberSteal") return { title: myTurn ? "Choose a player to rob" : "Waiting for steal", description: "", kind: "robber" };
+  if (pending.type === "roadBuilding") return { title: myTurn ? "Place " + pending.remaining + " free road" + (pending.remaining === 1 ? "" : "s") : "Waiting for roads", description: "", kind: "setup" };
+  if (game.phase === "roll") return { title: myTurn ? "Roll the dice" : active?.name + "'s turn", description: "", kind: myTurn ? "roll" : "wait" };
+  return { title: myTurn ? "Your turn" : active?.name + "'s turn", description: "", kind: myTurn ? "action" : "wait" };
 }
 
 function MatchBar({game,meId}:{game:GameView;meId?:string}) {
   const activeId=game.pending.type==="setup"?game.pending.player:game.players[game.turnIndex]?.id;
   return <div className="match-roster" aria-label="Players and victory points">{game.players.map(player=><div key={player.id} className={"match-player"+(activeId===player.id?" current":"")+(player.id===meId?" mine":"")}>
     <PlayerAvatar name={player.name} color={player.color} size="sm"/>
-    <span className="match-player-name"><b>{player.name}</b><small>{player.id===meId?"You":!player.connected?"Offline":activeId===player.id?"Playing":"Settler"}</small></span>
+    <span className="match-player-name"><b>{player.name}</b>{(player.id===meId||!player.connected)&&<small>{!player.connected?"Offline":"You"}</small>}</span>
     <span className="match-player-score" title="Visible victory points"><Crown size={13} fill="currentColor"/> {player.publicPoints}<span>/10</span></span>
     {(player.hasLongestRoad||player.hasLargestArmy)&&<span className="player-trophy" title={player.hasLongestRoad?"Longest Road":"Largest Army"}>{player.hasLongestRoad?<Route size={14}/>:<Shield size={14}/>}</span>}
   </div>)}</div>;
@@ -99,7 +99,7 @@ export function GamePage(){
   const toggleAudio=()=>{setAudio(!audio);localStorage.setItem("hexhaven.audio",audio?"no":"yes");if(!audio)playCue("turn");};
   if(!auth||!lobby||auth.code!==code) return <main className="center-state"><h2>Rejoining your game…</h2><p>Restoring your seat on the island.</p><Link to="/join">Join a different room</Link></main>;
   if(!game) return <main className="center-state"><div className="spinner"/><h2>Preparing your island…</h2><p>Waiting for the other players.</p></main>;
-  const prompt=phasePrompt(game,auth.playerId);
+  const prompt=mode&&game.pending.type==="none"?{title:mode==="road"?"Place a road":mode==="city"?"Upgrade a city":"Place a settlement",description:mode==="road"?"Choose a highlighted edge.":"Choose a highlighted corner.",kind:"action"}:phasePrompt(game,auth.playerId);
   const needsDiscard=game.pending.type==="discard"&&game.pending.players.some(p=>p.playerId===auth.playerId);
   const waitingOffers=game.offers.filter(o=>o.to===auth.playerId&&o.status==="pending"&&!o.counter).length;
   const cards=game.you?.devCards.length??0;
@@ -107,7 +107,7 @@ export function GamePage(){
   const lastRoll=game.dice;
   return <main className="game-scene">
     <header className="game-hud">
-      <div className="hud-room"><Link to="/" className="hud-logo" aria-label="Hexhaven home"><Hexagon size={20} strokeWidth={3}/></Link><span>ROOM <b>{lobby.code}</b></span><button className="hud-copy" title="Copy invite link" aria-label="Copy invite link" onClick={()=>void navigator.clipboard.writeText(window.location.origin+"/join/"+code)}><Copy size={15}/></button></div>
+      <div className="hud-room"><Link to="/" className="hud-logo" aria-label="Hexhaven home"><Hexagon size={20} strokeWidth={3}/></Link><span className="hud-room-code" title="Room code">{lobby.code}</span><button className="hud-copy" title="Copy invite link" aria-label="Copy invite link" onClick={()=>void navigator.clipboard.writeText(window.location.origin+"/join/"+code)}><Copy size={15}/></button></div>
       <MatchBar game={game} meId={auth.playerId}/>
       <div className="hud-buttons">
         <Link to="/rules" target="_blank" rel="noopener noreferrer" className="hud-icon" aria-label="Open rulebook" title="Rulebook"><BookOpen size={19}/></Link>
@@ -119,15 +119,13 @@ export function GamePage(){
     <section className="board-area">
       <BoardView game={game} mode={mode} selectable={allowed} onVertex={onVertex} onEdge={onEdge} onHex={onHex}/>
       <div className={"turn-prompt " + (prompt.kind==="roll"?"is-my-turn":prompt.kind==="robber"?"is-robber":"")}>
-        <span className="turn-prompt-eyebrow">{prompt.eyebrow}</span>
         <strong>{prompt.title}</strong>
-        <p>{prompt.description}</p>
-        {mode&&allowed.size>0&&<span className="prompt-target-count"><MapPin size={13}/> {allowed.size} spots available</span>}
+        {prompt.description&&<p>{prompt.description}</p>}
       </div>
       {lastRoll&&<div className="dice-pair" aria-label={"Last dice roll: "+lastRoll[0]+" and "+lastRoll[1]}><span>{lastRoll[0]}</span><span>{lastRoll[1]}</span><b>{lastRoll[0]+lastRoll[1]}</b></div>}
       {mode&&game.pending.type==="none"&&<button className="placement-cancel" onClick={()=>setMode(null)}><X size={15}/> Cancel placement</button>}
       {panel&&<aside className="action-drawer" aria-label={panel+" controls"}>
-        <header className="drawer-header"><div><span className="drawer-eyebrow">YOUR ACTIONS</span><h2>{panel==="build"?"Build something":panel==="trade"?"Make a trade":panel==="cards"?"Your development cards":"Match history"}</h2></div><button className="drawer-close" aria-label="Close panel" onClick={()=>setPanel(null)}><X size={20}/></button></header>
+        <header className="drawer-header"><h2>{panel==="build"?"Build":panel==="trade"?"Trade":panel==="cards"?"Cards":"History"}</h2><button className="drawer-close" aria-label="Close panel" onClick={()=>setPanel(null)}><X size={20}/></button></header>
         <div className="drawer-body">
           {panel==="build"&&<BuildPanel game={game} meId={auth.playerId} hand={hand} canBuild={canBuild} mode={mode} onMode={changeMode} send={send}/>}
           {panel==="trade"&&<TradePanel game={game} meId={auth.playerId} canTrade={canBuild} hand={hand} send={send}/>}
@@ -149,12 +147,12 @@ export function GamePage(){
       <div className="dock-turn-action">{canRoll?<button className="button roll-button" disabled={busy||!connected} onClick={()=>void send({type:"rollDice"})}><Dices size={22}/> Roll dice <ChevronRight size={18}/></button>:canBuild?<button className="button end-turn-button" disabled={busy||!connected} onClick={()=>void send({type:"endTurn"})}>End turn <ChevronRight size={18}/></button>:<span className="dock-waiting">{mine?"Make your move":gameOver?"Game over":"Waiting…"}</span>}</div>
     </footer>
 
-    {needsDiscard&&game.pending.type==="discard"&&<div className="dialog-backdrop" role="dialog" aria-modal="true" aria-label="Discard resources"><div className="game-dialog"><h2>The robber is here!</h2><DiscardPicker hand={hand} count={game.pending.players.find(p=>p.playerId===auth.playerId)?.count??0} send={send}/></div></div>}
+    {needsDiscard&&game.pending.type==="discard"&&<div className="dialog-backdrop" role="dialog" aria-modal="true" aria-label="Discard resources"><div className="game-dialog"><h2>Discard cards</h2><DiscardPicker hand={hand} count={game.pending.players.find(p=>p.playerId===auth.playerId)?.count??0} send={send}/></div></div>}
     {game.pending.type==="robberSteal"&&mine&&<div className="dialog-backdrop" role="dialog" aria-modal="true" aria-label="Choose a player to rob"><div className="game-dialog">
       <span className="dialog-illustration"><Swords size={34}/></span><h2>Who will you rob?</h2><p>Choose one neighboring player. You'll take one random resource.</p><div className="victim-options">{game.pending.candidates.map(id=>{const target=game.players.find(p=>p.id===id);return <button key={id} onClick={()=>void send({type:"selectVictim",player:id})}>{target&&<PlayerAvatar color={target.color} name={target.name}/>}<strong>{target?.name??"Player"}</strong><ChevronRight size={20}/></button>})}</div>
     </div></div>}
     {gameOver&&<div className="dialog-backdrop victory-backdrop" role="dialog" aria-modal="true" aria-label="Match results"><div className="game-dialog winner-dialog">
-      <span className="winner-illustration"><Trophy size={49}/></span><span className="winner-small">THE MATCH IS OVER</span><h2>{game.players.find(p=>p.id===game.winnerId)?.name??"A player"} wins!</h2><p>Well played! Here are the final scores.</p>
+      <span className="winner-illustration"><Trophy size={49}/></span><h2>{game.players.find(p=>p.id===game.winnerId)?.name??"A player"} wins!</h2>
       <div className="final-scores">{[...game.players].sort((a,b)=>b.publicPoints-a.publicPoints).map((p,i)=><div key={p.id}><span>{i+1}</span><PlayerAvatar name={p.name} color={p.color} size="sm"/><strong>{p.name}</strong><b>{p.publicPoints} VP</b></div>)}</div>
       {lobby.hostId===auth.playerId?<button className="button primary full" onClick={async()=>{if(await reset())navigate("/lobby/"+code)}}><RotateCcw size={19}/> Play again</button>:<span className="muted">Waiting for the host to start a rematch.</span>}
     </div></div>}
