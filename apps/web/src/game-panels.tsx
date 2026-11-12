@@ -15,25 +15,28 @@ export function BuildPanel({ game, meId, hand, canBuild, mode, onMode, send }: {
 }) {
   const me = game.players.find(p => p.id === meId);
   const items = [
-    { id: "road", title: "Road", sub: "", cost: COSTS.road, count: me?.pieces.roads ?? 0, icon: Route },
-    { id: "settlement", title: "Settlement", sub: "1 VP", cost: COSTS.settlement, count: me?.pieces.settlements ?? 0, icon: House },
-    { id: "city", title: "City", sub: "2 VP · double production", cost: COSTS.city, count: me?.pieces.cities ?? 0, icon: Crown },
+    { id: "road", title: "Road", cost: COSTS.road, count: me?.pieces.roads ?? 0, icon: Route },
+    { id: "settlement", title: "Settlement", cost: COSTS.settlement, count: me?.pieces.settlements ?? 0, icon: House },
+    { id: "city", title: "City", cost: COSTS.city, count: me?.pieces.cities ?? 0, icon: Crown },
   ] as const;
   return <div className="panel-content">
     <div className="build-options">{items.map(item => {
       const Icon = item.icon;
       const enabled = canBuild && canAfford(hand, item.cost) && item.count > 0;
       return <button type="button" key={item.id} className={"build-option " + (mode === item.id ? "is-selected" : "")}
-        disabled={!enabled} aria-pressed={mode===item.id} onClick={()=>onMode(mode===item.id ? null : item.id)}>
+        disabled={!enabled} aria-pressed={mode===item.id}
+        title={!canBuild ? "You can build after rolling" : item.count===0 ? "No pieces remaining" : !canAfford(hand,item.cost) ? "Not enough resources" : item.title}
+        onClick={()=>onMode(mode===item.id ? null : item.id)}>
         <span className={"piece-illustration piece-"+item.id}><Icon size={27} strokeWidth={2.2}/></span>
-        <span className="build-option-copy"><strong>{item.title}</strong><small>{!canBuild ? item.sub : item.count <= 0 ? "No pieces left" : !canAfford(hand,item.cost) ? "Need resources" : item.sub}{item.sub && item.count > 0 && canBuild && canAfford(hand,item.cost) ? " · " : ""}{item.count} left</small><Cost cost={item.cost} hand={hand}/></span>
+        <span className="build-option-copy"><strong>{item.title}</strong><Cost cost={item.cost} hand={hand}/></span>
+        <span className="piece-remaining">{item.count} left</span>
         {mode===item.id && <Check size={19} className="build-selected-icon"/>}
       </button>;
     })}</div>
     <div className="panel-divider"/>
     
     <button className="buy-dev-button" disabled={!canBuild || !canAfford(hand,COSTS.development) || game.devDeckCount<=0} onClick={()=>void send({type:"buyDevelopment"})}>
-      <ScrollText size={23}/><span><strong>Buy development card</strong><Cost hand={hand} cost={COSTS.development}/><small>{game.devDeckCount} in deck</small></span><span className="buy-dev-arrow">+</span>
+      <ScrollText size={23}/><span><strong>Buy development card</strong><Cost hand={hand} cost={COSTS.development}/></span><span className="buy-dev-arrow">+</span>
     </button>
     {!canBuild && <p className="muted small">You can build after rolling on your turn.</p>}
   </div>;
