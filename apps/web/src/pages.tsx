@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
-import { ArrowRight, BookOpen, Check, ChevronRight, Copy, Hexagon, LogOut, Menu, Play, Sparkles, Users, X, WifiOff, Trees, Mountain, Wheat, Cloud, BrickWall } from "lucide-react";
+import { ArrowRight, BookOpen, Check, ChevronRight, Copy, Crown, Hexagon, LogOut, Menu, Play, Sparkles, Users, X, WifiOff, Trees, Mountain, Wheat, Cloud, BrickWall } from "lucide-react";
 import { hexSpiral, hexToPixel, type PlayerColor } from "@hexhaven/shared";
 import { FieldSelect, PlayerAvatar, PLAYER_COLORS } from "./design";
 import { useSession } from "./session";
@@ -47,7 +47,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <Link to="/rules" onClick={() => setMenu(false)}>Rules</Link>
         {auth && <Link onClick={() => setMenu(false)} to={auth.lobby.state === "lobby" ? "/lobby/" + auth.code : "/game/" + auth.code}>Your game</Link>}
       </nav>
-      <div className="nav-right"><span className={"connection " + (connected ? "online" : "offline")}>{connected ? <span className="status-dot"/> : <WifiOff size={15}/>}<span>{connected ? "Online" : "Reconnecting"}</span></span><button className="icon-button menu-toggle" onClick={() => setMenu(!menu)} aria-label="Toggle menu">{menu ? <X size={19}/> : <Menu size={19}/>}</button></div>
+      <div className="nav-right">{!connected && <span className="connection offline"><WifiOff size={15}/> Reconnecting</span>}<button className="icon-button menu-toggle" onClick={() => setMenu(!menu)} aria-label="Toggle menu">{menu ? <X size={19}/> : <Menu size={19}/>}</button></div>
     </header>}
     {error && <div className="toast" role="alert"><span>{error}</span><button type="button" onClick={clearError} aria-label="Dismiss"><X size={18}/></button></div>}
     {children}
@@ -119,11 +119,11 @@ export function LobbyPage() {
         <div className="lobby-seats">{Array.from({length:4},(_,i)=>{const p=lobby.players[i];return <div key={p?.id||i} className={"lobby-seat" + (!p ? " seat-empty" : "")}>
           <span className="seat-number">{i+1}</span>
           {p ? <PlayerAvatar name={p.name} color={p.color} size="lg"/> : <span className="empty-avatar"><Users size={22}/></span>}
-          <div className="seat-details"><strong>{p?.name ?? "Empty seat"}</strong>{p && (!p.connected || p.id===lobby.hostId) && <small>{!p.connected ? "Offline" : "Host"}</small>}</div>
+          <div className="seat-details"><strong>{p?.name ?? "Empty seat"}{p?.id===lobby.hostId&&<Crown size={14} className="host-crown" aria-label="Host"/>}</strong>{p && !p.connected && <small>Offline</small>}</div>
           {p && <span className={"seat-ready" + (p.ready ? " is-ready" : "")}>{p.ready ? <><Check size={15}/> Ready</> : "Not ready"}</span>}
           {p && host && p.id !== auth.playerId && <button className="icon-button seat-kick" title={"Remove "+p.name} aria-label={"Remove "+p.name} onClick={()=>kick(p.id)}><X size={16}/></button>}
         </div>})}</div>
-        {!auth.spectator && me && <div className="seat-controls"><div><span className="field-label">Color</span><div className="color-swatches">{(["crimson","azure","amber","ivory"] as PlayerColor[]).map(c=><button key={c} type="button" aria-label={c} aria-pressed={me.color===c} className={"color-swatch" + (me.color===c ? " selected":"")} style={{background:PLAYER_COLORS[c]}} disabled={lobby.players.some(p=>p.id!==me.id && p.color===c)} onClick={()=>color(c)}/>)}</div></div><button className={"button " + (me.ready ? "secondary" : "primary")} onClick={()=>ready(!me.ready)}>{me.ready ? <><Check size={18}/> Ready</> : "Ready up"}</button></div>}
+        {!auth.spectator && me && <div className="seat-controls"><div><span className="field-label">Color</span><div className="color-swatches">{(["crimson","azure","amber","ivory"] as PlayerColor[]).map(c=><button key={c} type="button" aria-label={c} aria-pressed={me.color===c} className={"color-swatch" + (me.color===c ? " selected":"")} style={{background:PLAYER_COLORS[c]}} disabled={lobby.players.some(p=>p.id!==me.id && p.color===c)} onClick={()=>color(c)}/>)}</div></div><button className={"button " + (me.ready ? "secondary" : "primary")} onClick={()=>ready(!me.ready)}>{me.ready ? "Cancel ready" : "Ready up"}</button></div>}
       </section>
       <aside className="lobby-side surface">
         <div className="side-heading"><h2>Settings</h2><p>Classic rules · 10 points to win</p></div>
