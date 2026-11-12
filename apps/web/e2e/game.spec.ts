@@ -115,6 +115,7 @@ test("homepage and rulebook work at narrow mobile widths", async ({ page }) => {
   await page.getByPlaceholder(/Search rules/).fill("Longest Road");
   await expect(page.getByRole("heading", { name: "Search results" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Getting started" })).toHaveCount(0);
+  await expect(page.locator(".rules-article .rule-card").first()).toContainText("Longest Road");
   await expect(page.getByRole("link", { name: /Longest Road/ }).first()).toBeVisible();
   await page.screenshot({ path: "test-results/rules-clean-mobile.png" });
   await page.getByRole("link", { name: /Longest Road/ }).first().click();
