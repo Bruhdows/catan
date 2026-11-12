@@ -68,3 +68,27 @@
   .lobby-code { font-size: 23px; }
   .lobby-title { margin-bottom: 18px; }
 }
+
+
+/* Fit the playable lobby controls above the fold at typical laptop resolutions. */
+.lobby-page { padding-top: 23px; padding-bottom: 29px; }
+.lobby-page .surface { padding: 18px 20px; }
+.lobby-code { margin: 0; line-height: 1.2; font-size: 27px; }
+.lobby-seat-count { display: block; margin-top: 3px; color: #7f998e; font-size: 12px; font-weight: 700; }
+.lobby-code-row { padding-bottom: 12px; }
+.lobby-seats { gap: 7px; margin-top: 13px; }
+.lobby-seat { min-height: 55px; padding: 7px 11px; }
+.lobby-seat .player-avatar-lg, .lobby-seat .empty-avatar { width: 39px; height: 39px; border-radius: 10px; }
+.seat-controls { margin-top: 13px; padding-top: 12px; }
+.color-swatches { margin-top: 8px; }
+.lobby-side { gap: 13px; }
+.lobby-start { padding-top: 11px; }
+.lobby-start p { margin-bottom: 8px; }
+.lobby-side .field { gap: 6px; }
+.lobby-side .field select { height: 41px; }
+@media(max-width:700px) {
+  .lobby-page { padding: 20px 13px 32px; }
+  .lobby-page .surface { padding: 16px; }
+  .lobby-code { font-size: 22px; }
+  .lobby-seat { min-height: 56px; }
+}
