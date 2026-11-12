@@ -30,7 +30,7 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     const start = host.getByRole("button", { name: "Start game" });
     await expect(start).toBeEnabled();
     await expect(start).toBeInViewport({ ratio: 1 });
-    await expect(host.getByRole("button", { name: "Ready", exact: true })).toBeInViewport({ ratio: 1 });
+    await expect(host.getByRole("button", { name: "Cancel ready", exact: true })).toBeInViewport({ ratio: 1 });
     await start.click();
     await expect(host).toHaveURL(new RegExp("/game/" + code));
     await expect(alice).toHaveURL(new RegExp("/game/" + code));
@@ -113,8 +113,12 @@ test("homepage and rulebook work at narrow mobile widths", async ({ page }) => {
   await page.goto("/rules");
   await expect(page.getByRole("heading", { name: "Rules" })).toBeVisible();
   await page.getByPlaceholder(/Search rules/).fill("Longest Road");
+  await expect(page.getByRole("heading", { name: "Search results" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Getting started" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Longest Road/ }).first()).toBeVisible();
   await page.screenshot({ path: "test-results/rules-clean-mobile.png" });
+  await page.getByRole("link", { name: /Longest Road/ }).first().click();
+  await expect(page.getByRole("heading", { name: "Longest Road" })).toBeVisible();
 });
 
 
@@ -124,6 +128,7 @@ test("menus contain only one functional heading and no decorative labels", async
   await expect(page.getByText(/THE BOARD IS YOURS|ONLINE BOARD GAME|EVERY ISLAND IS DIFFERENT/)).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Create game" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Join game" })).toBeVisible();
+  await expect(page.getByText("Online", { exact: true })).toHaveCount(0);
   await page.goto("/create");
   await expect(page.getByRole("heading", { name: "Create game" })).toHaveCount(1);
   await expect(page.getByText("NEW GAME", { exact: true })).toHaveCount(0);
