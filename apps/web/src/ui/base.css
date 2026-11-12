@@ -1,0 +1,177 @@
+/* Base reset, typography and shared controls. Chrome stays neutral; the game
+   components carry the color. */
+
+* { box-sizing: border-box; }
+html, body, #root { min-width: 320px; min-height: 100%; margin: 0; }
+body {
+  font-family: var(--font-ui);
+  color: var(--ink);
+  background: var(--parchment-2);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+a { color: inherit; text-decoration: none; }
+h1, h2, h3, h4, p, ol, ul { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+svg { flex-shrink: 0; }
+img { max-width: 100%; }
+::selection { background: #f3d998; }
+:focus-visible { outline: 3px solid var(--honey); outline-offset: 2px; }
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.12; letter-spacing: -0.01em; }
+p { line-height: 1.55; }
+
+.muted { color: var(--ink-3); }
+.small { font-size: 12px; }
+
+/* --- Buttons ------------------------------------------------------------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 8px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-weight: 650;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background var(--dur-1), border-color var(--dur-1), transform var(--dur-1), box-shadow var(--dur-1);
+}
+.button:not(:disabled):active { transform: translateY(1px); }
+.button.primary {
+  background: linear-gradient(var(--honey), #e2982f);
+  border-color: #c8872a;
+  color: #4a3410;
+  box-shadow: 0 2px 0 #c8872a, var(--shadow-1);
+}
+.button.primary:hover:not(:disabled) { background: linear-gradient(#f2b155, #e8a134); }
+.button.primary:not(:disabled):active { box-shadow: 0 1px 0 #c8872a; }
+.button.wood {
+  background: linear-gradient(var(--wood), #7c4e2b);
+  border-color: var(--wood-deep);
+  color: #f8eeda;
+  box-shadow: 0 2px 0 var(--wood-deep), var(--shadow-1);
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.button.wood:hover:not(:disabled) { background: linear-gradient(#96653b, #7c4e2b); }
+.button.ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink-2);
+}
+.button.ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.55); }
+.button.large { min-height: 52px; font-size: 15px; padding: 10px 24px; }
+.button.small { min-height: 32px; font-size: 12.5px; padding: 4px 11px; }
+.button.full { width: 100%; }
+.button:disabled { opacity: 0.45; }
+
+/* --- Fields --------------------------------------------------------------- */
+
+.field { display: flex; flex-direction: column; gap: 6px; color: var(--ink-2); }
+.field-label { font-size: 12.5px; font-weight: 650; }
+.field input,
+.field select {
+  width: 100%;
+  height: 44px;
+  padding: 0 13px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  outline: none;
+  transition: border-color var(--dur-1), box-shadow var(--dur-1);
+}
+.field input:focus, .field select:focus { border-color: var(--wood-soft); box-shadow: 0 0 0 3px rgba(179, 133, 91, 0.18); }
+.select-wrap { position: relative; display: block; }
+.select-wrap select { appearance: none; padding-right: 34px; cursor: pointer; }
+.select-wrap svg { position: absolute; right: 11px; top: 50%; translate: 0 -50%; color: var(--ink-3); pointer-events: none; }
+.checkbox-row { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 13.5px; color: var(--ink-2); }
+.checkbox-row input { width: 18px; height: 18px; accent-color: var(--wood); cursor: pointer; }
+
+/* --- Dialogs -------------------------------------------------------------- */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(13, 55, 72, 0.55);
+  backdrop-filter: blur(3px);
+}
+.game-dialog {
+  width: min(470px, 100%);
+  max-height: 92dvh;
+  overflow: auto;
+  background: var(--parchment);
+  border: 1px solid #d9c9a4;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+  padding: 24px;
+  color: var(--ink);
+}
+.game-dialog h2 { font-size: 26px; color: var(--ink); }
+.game-dialog > p { margin: 6px 0 16px; font-size: 13.5px; color: var(--ink-2); }
+
+/* Toast for recoverable errors */
+.toast {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(430px, calc(100vw - 28px));
+  padding: 11px 13px 11px 16px;
+  background: #fdf3e0;
+  border: 1px solid #e5c493;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+  color: #7a4d1e;
+  font-size: 13px;
+  font-weight: 600;
+}
+.toast button { background: none; border: 0; color: #a4763f; display: grid; place-items: center; }
+
+/* --- Player markers -------------------------------------------------------- */
+
+.player-avatar {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 700;
+  background: var(--avatar-color, var(--wood));
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+}
+.player-avatar-sm { width: 30px; height: 30px; font-size: 13px; }
+.player-avatar-md { width: 40px; height: 40px; font-size: 17px; }
+.player-avatar-lg { width: 46px; height: 46px; font-size: 19px; }
+
+/* --- Spinner ---------------------------------------------------------------- */
+
+.spinner {
+  width: 38px;
+  height: 38px;
+  border: 3.5px solid #d9cbaa;
+  border-top-color: var(--honey);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

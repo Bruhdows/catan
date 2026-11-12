@@ -1,7 +1,19 @@
+/**
+ * The island board.
+ *
+ * Rendering only: all placement validation lives in the shared package and in
+ * `legalBoardTargets` below (mirrored from the authoritative rules). Terrain is
+ * illustrated by `assets/terrain.tsx`; pieces, ports and tokens are drawn here.
+ */
 import { useEffect, useMemo, useState, type KeyboardEvent, type PointerEvent, type WheelEvent } from "react";
-import { BrickWall, Cloud, Compass, Mountain, RotateCcw, Trees, Wheat, ZoomIn, ZoomOut, type LucideIcon } from "lucide-react";
-import { cornerIndexForVertex, cornerPixel, hexToPixel, parseHexKey, tokenPips, type GameView, type Resource } from "@hexhaven/shared";
-import { PLAYER_COLORS, ResourceIcon } from "./design";
+import { Maximize, Minus, Plus } from "lucide-react";
+import {
+  cornerIndexForVertex, cornerPixel, hashSeed, hexToPixel, parseHexKey, tokenPips,
+  type GameView, type Resource,
+} from "@hexhaven/shared";
+import { PLAYER_COLORS } from "./design";
+import { ResourceIcon } from "./assets/art";
+import { RobberPiece, SeaDecor, TERRAIN_LABEL, TerrainArt } from "./assets/terrain";
 
 export type BoardAction = "road" | "settlement" | "city" | "robber" | null;
 type Props = {
@@ -13,207 +25,312 @@ type Props = {
   onHex: (id: string) => void;
 };
 
-type TileTheme = { base: string; light: string; border: string; ink: string; name: string; icon: LucideIcon };
-const THEMES: Record<string, TileTheme> = {
-  forest: { base: "#55aa72", light: "#80ca8b", border: "#36865e", ink: "#275f45", name: "Forest · Lumber", icon: Trees },
-  hills: { base: "#eb9b72", light: "#f9bc94", border: "#c97655", ink: "#995d41", name: "Hills · Brick", icon: BrickWall },
-  pasture: { base: "#b6da7b", light: "#d1e79a", border: "#84b25b", ink: "#648544", name: "Pasture · Wool", icon: Cloud },
-  fields: { base: "#f1c768", light: "#ffe19a", border: "#d4a147", ink: "#a57a32", name: "Fields · Grain", icon: Wheat },
-  mountains: { base: "#9fb4c0", light: "#d6e2dd", border: "#748c9a", ink: "#627987", name: "Mountains · Ore", icon: Mountain },
-  desert: { base: "#e9c99b", light: "#f8e0b4", border: "#cfac78", ink: "#ad885b", name: "Desert", icon: Compass },
-};
-const SIZE=62;
+const SIZE = 62;
 
-function hexPoints(x:number,y:number,r=SIZE) {
-  return Array.from({length:6},(_,i)=>{const a=(i*60+30)*Math.PI/180;return (x+r*Math.cos(a)).toFixed(2)+","+(y+r*Math.sin(a)).toFixed(2)}).join(" ");
-}
-function positions(game: GameView) {
-  const map=new Map<string,{x:number;y:number}>();
-  const land=new Map(game.board.landHexes.map(h=>[h.id,h]));
-  for(const v of game.board.vertices) {
-    const h=v.hexes.map(id=>land.get(id)).find(Boolean);
-    if(!h)continue;
-    const i=cornerIndexForVertex(h.axial,v.id);
-    if(i>=0)map.set(v.id,cornerPixel(h.axial,i,SIZE));
-  }
-  return map;
-}
-
-export function legalBoardTargets(game:GameView, mode:BoardAction, myId:string|undefined):Set<string> {
-  const result=new Set<string>();
-  if(!myId||!mode)return result;
-  const me=game.players.find(p=>p.id===myId);
-  if(!me)return result;
-  const ownBuildings=new Set([...me.settlements,...me.cities]);
-  const occupiedBuildings=new Set(game.players.flatMap(p=>[...p.settlements,...p.cities]));
-  const occupiedRoads=new Set(game.players.flatMap(p=>p.roads));
-  const opponentBuildings=new Set(game.players.filter(p=>p.id!==myId).flatMap(p=>[...p.settlements,...p.cities]));
-  const ownRoads=new Set(me.roads);
-  const edges=game.board.edges;
-  const pending=game.pending;
-  if(mode==="robber"){
-    for(const hex of game.board.landHexes)if(hex.id!==game.robberHex)result.add(hex.id);
-  } else if(mode==="city"){
-    for(const vertex of me.settlements)result.add(vertex);
-  } else if(mode==="settlement"){
-    for(const vertex of game.board.vertices){
-      if(occupiedBuildings.has(vertex.id)||vertex.neighbors.some(n=>occupiedBuildings.has(n)))continue;
-      if(pending.type==="setup"||edges.some(e=>ownRoads.has(e.id)&&(e.a===vertex.id||e.b===vertex.id)))result.add(vertex.id);
+export function legalBoardTargets(game: GameView, mode: BoardAction, myId: string | undefined): Set<string> {
+  const result = new Set<string>();
+  if (!myId || !mode) return result;
+  const me = game.players.find((p) => p.id === myId);
+  if (!me) return result;
+  const ownBuildings = new Set([...me.settlements, ...me.cities]);
+  const occupiedBuildings = new Set(game.players.flatMap((p) => [...p.settlements, ...p.cities]));
+  const occupiedRoads = new Set(game.players.flatMap((p) => p.roads));
+  const opponentBuildings = new Set(game.players.filter((p) => p.id !== myId).flatMap((p) => [...p.settlements, ...p.cities]));
+  const ownRoads = new Set(me.roads);
+  const edges = game.board.edges;
+  const pending = game.pending;
+  if (mode === "robber") {
+    for (const hex of game.board.landHexes) if (hex.id !== game.robberHex) result.add(hex.id);
+  } else if (mode === "city") {
+    for (const vertex of me.settlements) result.add(vertex);
+  } else if (mode === "settlement") {
+    for (const vertex of game.board.vertices) {
+      if (occupiedBuildings.has(vertex.id) || vertex.neighbors.some((n) => occupiedBuildings.has(n))) continue;
+      if (pending.type === "setup" || edges.some((e) => ownRoads.has(e.id) && (e.a === vertex.id || e.b === vertex.id))) result.add(vertex.id);
     }
-  } else if(mode==="road"){
-    if(pending.type==="setup"){
-      if(!pending.needsRoad||!pending.vertex)return result;
-      for(const e of edges)if(!occupiedRoads.has(e.id)&&(e.a===pending.vertex||e.b===pending.vertex))result.add(e.id);
-    } else for(const e of edges) {
-      if(occupiedRoads.has(e.id))continue;
-      const connected=(v:string)=>!opponentBuildings.has(v)&&(ownBuildings.has(v)||edges.some(existing=>ownRoads.has(existing.id)&&(existing.a===v||existing.b===v)));
-      if(connected(e.a)||connected(e.b))result.add(e.id);
+  } else if (mode === "road") {
+    if (pending.type === "setup") {
+      if (!pending.needsRoad || !pending.vertex) return result;
+      for (const e of edges) if (!occupiedRoads.has(e.id) && (e.a === pending.vertex || e.b === pending.vertex)) result.add(e.id);
+    } else for (const e of edges) {
+      if (occupiedRoads.has(e.id)) continue;
+      const connected = (v: string) =>
+        !opponentBuildings.has(v) && (ownBuildings.has(v) || edges.some((existing) => ownRoads.has(existing.id) && (existing.a === v || existing.b === v)));
+      if (connected(e.a) || connected(e.b)) result.add(e.id);
     }
   }
   return result;
 }
 
-function Settlement({x,y,city,color}:{x:number;y:number;city:boolean;color:string}){
-  return <g transform={"translate("+x+" "+y+")"} className="board-piece" filter="url(#piece-shadow)">
-    {city?<>
-      <path d="M-14 10V-8L-6-15L1-9L8-15L15-8V10Z" fill={color} stroke="#334c4d" strokeWidth="2.8" strokeLinejoin="round"/>
-      <rect x="-4" y="0" width="8" height="10" rx="1.5" fill="#334c4d" opacity=".65"/>
-      <path d="M-10-3L-6-7L-1-3" stroke="#fff1cd" strokeWidth="2" fill="none"/>
-    </>:<>
-      <path d="M-11 10V-3L0-14L11-3V10Z" fill={color} stroke="#30494b" strokeLinejoin="round" strokeWidth="2.8"/>
-      <path d="M-11-3L0-14L11-3" fill="none" stroke="#ffefd1" strokeWidth="2.5" strokeLinecap="round"/>
-      <rect x="-3" y="1" width="6" height="9" rx="1" fill="#30494b" opacity=".65"/>
-    </>}
-  </g>;
+function hexPoints(x: number, y: number, r = SIZE) {
+  return Array.from({ length: 6 }, (_, i) => {
+    const a = (i * 60 + 30) * Math.PI / 180;
+    return (x + r * Math.cos(a)).toFixed(2) + "," + (y + r * Math.sin(a)).toFixed(2);
+  }).join(" ");
 }
 
-function Robber({x,y}:{x:number;y:number}) {
-  return <g transform={"translate("+(x+27)+" "+(y-27)+")"} filter="url(#piece-shadow)">
-    <ellipse rx="12" ry="5" cy="12" fill="#303e3d" opacity=".25"/>
-    <path d="M-8 12L-5 0A9 9 0 0 1-7-9A9 9 0 0 1 7-9A9 9 0 0 1 5 0L8 12Z" fill="#3e4f52" stroke="#fff7df" strokeWidth="1.7"/>
-    <circle cy="-9" r="5" fill="#39484a" stroke="#fff7df" strokeWidth="1.7"/>
-  </g>;
-}
-function keyboard(e:KeyboardEvent<SVGGElement>,handler:()=>void) { if(e.key==="Enter"||e.key===" "){e.preventDefault();handler();} }
-
-export function BoardView({game,mode,selectable,onVertex,onEdge,onHex}:Props) {
-  const [zoom,setZoom]=useState(()=>typeof window!=="undefined"&&window.matchMedia("(max-width: 660px)").matches?1.2:1);
-  const [offset,setOffset]=useState({x:0,y:0});
-  const [drag,setDrag]=useState<{x:number;y:number;startX:number;startY:number}|null>(null);
-  // The same island should occupy more of the available width on portrait screens.
-  // Reset only when crossing the mobile breakpoint, never on a game revision.
-  useEffect(()=>{
-    const media=window.matchMedia("(max-width: 660px)");
-    const update=()=>{setZoom(media.matches?1.2:1);setOffset({x:0,y:0});};
-    media.addEventListener("change",update);
-    return ()=>media.removeEventListener("change",update);
-  },[]);
-  const vertexPositions=useMemo(()=>positions(game),[game.board]);
-  const roads=new Map<string,string>();
-  const buildings=new Map<string,{color:string;city:boolean}>();
-  for(const player of game.players){
-    for(const id of player.roads)roads.set(id,PLAYER_COLORS[player.color]);
-    for(const id of player.settlements)buildings.set(id,{color:PLAYER_COLORS[player.color],city:false});
-    for(const id of player.cities)buildings.set(id,{color:PLAYER_COLORS[player.color],city:true});
+function positions(game: GameView) {
+  const map = new Map<string, { x: number; y: number }>();
+  const land = new Map(game.board.landHexes.map((h) => [h.id, h]));
+  for (const v of game.board.vertices) {
+    const h = v.hexes.map((id) => land.get(id)).find(Boolean);
+    if (!h) continue;
+    const i = cornerIndexForVertex(h.axial, v.id);
+    if (i >= 0) map.set(v.id, cornerPixel(h.axial, i, SIZE));
   }
-  const range=405/zoom;
-  const viewBox=(-range+offset.x)+" "+(-range*0.80+offset.y)+" "+(range*2)+" "+(range*1.60);
-  const onWheel=(e:WheelEvent<SVGSVGElement>)=>{if(e.ctrlKey||e.metaKey)e.preventDefault();setZoom(z=>Math.max(.72,Math.min(2.3,z+(e.deltaY<0?.10:-.10))));};
-  const onDown=(e:PointerEvent<SVGSVGElement>)=>{
-    if((e.target as Element).closest(".hex-selectable,.edge-target,.vertex-target"))return;
+  return map;
+}
+
+/* --- Pieces ----------------------------------------------------------------- */
+
+const PIECE_INK = "#33281a";
+
+function Settlement({ color, city }: { color: string; city?: boolean }) {
+  return <g filter="url(#piece-shadow)" className="board-piece">
+    {city
+      ? <g>
+        <path d="M-15.5 11V-4l6.5-4.4v-4.6l6.5 4.6 6.5 4.4 2-2.6V11Z" fill={color} stroke={PIECE_INK} strokeWidth="2.6" strokeLinejoin="round" />
+        <path d="M-15.5-4l6.5-4.4v-4.6l6.5 4.6" fill="none" stroke={PIECE_INK} strokeWidth="2.3" strokeLinecap="round" />
+        <rect x="-10.5" y="2" width="6.6" height="9" rx="1.2" fill={PIECE_INK} opacity=".5" />
+        <rect x="1" y="2" width="5" height="5" rx="1" fill="#fff" opacity=".55" />
+        <rect x="8" y="5" width="5" height="6" rx="1" fill="#fff" opacity=".4" />
+      </g>
+      : <g>
+        <path d="M-11 11V-2.6L0-14.4 11-2.6V11Z" fill={color} stroke={PIECE_INK} strokeWidth="2.6" strokeLinejoin="round" />
+        <path d="M-11-2.6 0-14.4 11-2.6" fill="none" stroke={PIECE_INK} strokeWidth="2.4" strokeLinecap="round" />
+        <rect x="-3.4" y="1" width="6.8" height="10" rx="1.2" fill={PIECE_INK} opacity=".5" />
+        <rect x="4.2" y="3.6" width="4.2" height="4.2" rx="1" fill="#fff" opacity=".55" />
+      </g>}
+  </g>;
+}
+
+/* --- Number token ------------------------------------------------------------ */
+
+function NumberToken({ x, y, n }: { x: number; y: number; n: number }) {
+  const red = n === 6 || n === 8;
+  const pips = tokenPips(n);
+  const angle = ((hashSeed("token:" + n) % 15) - 7) * 0.9;
+  return <g transform={`translate(${x} ${y}) rotate(${angle.toFixed(1)})`} pointerEvents="none">
+    <circle r="19.5" fill="#2f2416" opacity=".18" cy="1.8" />
+    <circle r="19" fill={red ? "#f6e3c8" : "#f8f0dc"} stroke={red ? "#b8473c" : "#c8b689"} strokeWidth="2.4" />
+    <circle r="15.6" fill="none" stroke={red ? "#c85a4e" : "#d8c9a2"} strokeWidth="1" opacity=".8" />
+    <text y="3.6" textAnchor="middle" fontSize="17.5" fontWeight="700" fontFamily="Fraunces, Georgia, serif"
+      fill={red ? "#a83a30" : "#4a3b26"}>{n}</text>
+    {Array.from({ length: pips }, (_, i) =>
+      <circle key={i} cx={(i - (pips - 1) / 2) * 5} cy="10.4" r="1.5" fill={red ? "#b8473c" : "#9a8663"} />)}
+  </g>;
+}
+
+/* --- Ports -------------------------------------------------------------------- */
+
+function PortMedallion({ x, y, ratio, resource }: { x: number; y: number; ratio: 2 | 3; resource: Resource | null }) {
+  return <g transform={`translate(${x} ${y})`} className="harbor-token" filter="url(#piece-shadow)">
+    <circle r="16.5" fill="#f6eeda" stroke="#8a5a33" strokeWidth="3" />
+    <circle r="12.8" fill="none" stroke="#c9a76b" strokeWidth="1.2" strokeDasharray="2.6 3" />
+    {resource
+      ? <g transform="translate(-7 -9) scale(1.25)"><ResourceIcon resource={resource} size={11} /></g>
+      : <text y="-1" textAnchor="middle" fontSize="9.5" fontWeight="800" fill="#7a6440">ANY</text>}
+    <text y="9.6" textAnchor="middle" fontSize="10.5" fontWeight="700" fontFamily="Fraunces, Georgia, serif" fill="#6b4a2a">
+      {ratio}:1
+    </text>
+  </g>;
+}
+
+function keyboard(e: KeyboardEvent<SVGGElement>, handler: () => void) {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handler(); }
+}
+
+export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: Props) {
+  const [zoom, setZoom] = useState(() => (typeof window !== "undefined" && window.matchMedia("(max-width: 700px)").matches ? 1.25 : 1));
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [drag, setDrag] = useState<{ x: number; y: number; sx: number; sy: number } | null>(null);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 700px)");
+    const update = () => { setZoom(media.matches ? 1.25 : 1); setOffset({ x: 0, y: 0 }); };
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  const vertexPositions = useMemo(() => positions(game), [game.board]);
+  const roads = new Map<string, string>();
+  const buildings = new Map<string, { color: string; city: boolean }>();
+  for (const player of game.players) {
+    const color = PLAYER_COLORS[player.color];
+    for (const id of player.roads) roads.set(id, color);
+    for (const id of player.settlements) buildings.set(id, { color, city: false });
+    for (const id of player.cities) buildings.set(id, { color, city: true });
+  }
+
+  const range = 408 / zoom;
+  const viewBox = `${-range + offset.x} ${-range * 0.8 + offset.y} ${range * 2} ${range * 1.6}`;
+
+  const onWheel = (e: WheelEvent<SVGSVGElement>) => {
+    if (e.ctrlKey || e.metaKey) e.preventDefault();
+    setZoom((z) => Math.max(0.75, Math.min(2.4, z + (e.deltaY < 0 ? 0.1 : -0.1))));
+  };
+  const onDown = (e: PointerEvent<SVGSVGElement>) => {
+    if ((e.target as Element).closest(".board-hit")) return;
     e.currentTarget.setPointerCapture(e.pointerId);
-    setDrag({x:e.clientX,y:e.clientY,startX:offset.x,startY:offset.y});
+    setDrag({ x: e.clientX, y: e.clientY, sx: offset.x, sy: offset.y });
   };
-  const onMove=(e:PointerEvent<SVGSVGElement>)=>{
-    if(!drag)return;
-    const rect=e.currentTarget.getBoundingClientRect();
-    setOffset({x:drag.startX-(e.clientX-drag.x)*range*2/rect.width,y:drag.startY-(e.clientY-drag.y)*range*1.6/rect.height});
+  const onMove = (e: PointerEvent<SVGSVGElement>) => {
+    if (!drag) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setOffset({ x: drag.sx - (e.clientX - drag.x) * (range * 2) / rect.width, y: drag.sy - (e.clientY - drag.y) * (range * 1.6) / rect.height });
   };
+  const resetView = () => {
+    setZoom(window.matchMedia("(max-width: 700px)").matches ? 1.25 : 1);
+    setOffset({ x: 0, y: 0 });
+  };
+
   return <div className="island-stage">
-    <svg className="game-board" viewBox={viewBox} role="group" aria-label="Interactive island board" onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={()=>setDrag(null)} onPointerCancel={()=>setDrag(null)}>
+    <svg className="game-board" viewBox={viewBox} role="group" aria-label="Interactive island board"
+      onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={() => setDrag(null)} onPointerCancel={() => setDrag(null)}>
       <defs>
-        <radialGradient id="ocean-light"><stop stopColor="#81d6e4"/><stop offset=".7" stopColor="#54b8d6"/><stop offset="1" stopColor="#318dae"/></radialGradient>
-        <pattern id="ocean-foam" width="40" height="35" patternUnits="userSpaceOnUse"><path d="M-3 17Q7 11 17 17T40 17" fill="none" stroke="#dcfcfa" strokeWidth="1.5" strokeOpacity=".22"/></pattern>
-        <filter id="tile-depth" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="3" floodColor="#286c82" floodOpacity=".24"/></filter>
-        <filter id="piece-shadow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="1" dy="3" stdDeviation="2" floodColor="#233d4e" floodOpacity=".43"/></filter>
-        <filter id="placement-glow" x="-100%" y="-100%" width="300%" height="300%"><feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#fff6a4" floodOpacity=".9"/></filter>
+        <radialGradient id="sea" cx="50%" cy="38%" r="75%">
+          <stop stopColor="#3d9db8" />
+          <stop offset=".62" stopColor="#2187a4" />
+          <stop offset="1" stopColor="#14607e" />
+        </radialGradient>
+        <pattern id="waves" width="86" height="54" patternUnits="userSpaceOnUse">
+          <path d="M-8 16 Q2 10 12 16 T32 16 T52 16 T72 16 T92 16" fill="none" stroke="#dff4f6" strokeWidth="1.6" strokeOpacity=".14" />
+          <path d="M-8 42 Q2 36 12 42 T32 42 T52 42 T72 42 T92 42" fill="none" stroke="#dff4f6" strokeWidth="1.6" strokeOpacity=".09" />
+        </pattern>
+        <filter id="tile-depth" x="-30%" y="-30%" width="160%" height="180%">
+          <feDropShadow dx="0" dy="6" stdDeviation="5" floodColor="#0c3d52" floodOpacity=".35" />
+        </filter>
+        <filter id="piece-shadow" x="-80%" y="-80%" width="260%" height="260%">
+          <feDropShadow dx="1" dy="3" stdDeviation="2" floodColor="#22333c" floodOpacity=".45" />
+        </filter>
       </defs>
-      <rect x="-1300" y="-1300" width="2600" height="2600" fill="url(#ocean-light)"/>
-      <rect x="-1300" y="-1300" width="2600" height="2600" fill="url(#ocean-foam)"/>
-      {game.board.seaHexes.map(id=>{const p=hexToPixel(parseHexKey(id),SIZE);return <polygon key={id} points={hexPoints(p.x,p.y,60)} fill="#ffffff" fillOpacity=".07" stroke="#f2ffff" strokeOpacity=".18" strokeWidth="2"/>;})}
-      {game.board.landHexes.map(hex=>{
-        const p=hexToPixel(hex.axial,SIZE),theme=THEMES[hex.terrain]!,Icon=theme.icon;
-        const active=mode==="robber"&&selectable.has(hex.id);
-        const click=()=>onHex(hex.id);
-        const pips=hex.number?tokenPips(hex.number):0;
-        return <g key={hex.id} className={active?"hex-selectable":""} role={active?"button":undefined} aria-label={active?"Move robber to "+theme.name:undefined} tabIndex={active?0:undefined} onKeyDown={active?e=>keyboard(e,click):undefined} onClick={active?click:undefined}>
-          <title>{theme.name}{hex.number?" · "+hex.number:""}{game.robberHex===hex.id?" · Robber here":""}</title>
-          <polygon points={hexPoints(p.x,p.y,61)} fill="#fff7dc" stroke="#fff3d1" strokeWidth="4" filter="url(#tile-depth)"/>
-          <polygon points={hexPoints(p.x,p.y,56.5)} fill={theme.base} stroke={active?"#fff6ab":theme.border} strokeWidth={active?5:2} className="terrain-fill"/>
-          <polygon points={hexPoints(p.x,p.y-2,49)} fill={theme.light} fillOpacity=".45" pointerEvents="none"/>
-          <g opacity=".42" pointerEvents="none">
-            {[-1,0,1].map((i)=><g key={i} transform={"translate("+(p.x+i*19-15)+" "+(p.y-28+(i%2)*8)+")"}>{hex.terrain==="pasture"?<g color={theme.ink}><ResourceIcon resource="wool" size={27}/></g>:<Icon width={27} height={27} stroke={theme.ink} strokeWidth={1.8} fill="none"/>}</g>)}
+
+      {/* Ocean */}
+      <rect x="-1400" y="-1400" width="2800" height="2800" fill="url(#sea)" />
+      <rect x="-1400" y="-1400" width="2800" height="2800" fill="url(#waves)" />
+
+      {/* Open-sea hexes */}
+      {game.board.seaHexes.map((id) => {
+        const p = hexToPixel(parseHexKey(id), SIZE);
+        return <polygon key={id} points={hexPoints(p.x, p.y, SIZE + 1)} fill="#3aa0bb" fillOpacity=".16" pointerEvents="none" />;
+      })}
+
+      {/* Sand shelf + foam ring under the island */}
+      {game.board.landHexes.map((hex) => {
+        const p = hexToPixel(hex.axial, SIZE);
+        return <polygon key={"shelf" + hex.id} points={hexPoints(p.x, p.y, SIZE * 1.22)}
+          fill="#e6d3a4" opacity=".85" />;
+      })}
+      {game.board.landHexes.map((hex) => {
+        const p = hexToPixel(hex.axial, SIZE);
+        return <polygon key={"foam" + hex.id} points={hexPoints(p.x, p.y, SIZE * 1.1)}
+          fill="none" stroke="#f3f7ee" strokeOpacity=".55" strokeWidth="2.4" strokeDasharray="7 6" />;
+      })}
+
+      <SeaDecor />
+
+      {/* Land tiles */}
+      {game.board.landHexes.map((hex) => {
+        const p = hexToPixel(hex.axial, SIZE);
+        const active = mode === "robber" && selectable.has(hex.id);
+        const click = () => onHex(hex.id);
+        const robberHere = game.robberHex === hex.id;
+        return <g key={hex.id}
+          className={active ? "board-hit hex-target" : undefined}
+          role={active ? "button" : undefined}
+          aria-label={active ? "Move the robber to " + TERRAIN_LABEL[hex.terrain] : undefined}
+          tabIndex={active ? 0 : undefined}
+          onKeyDown={active ? (e) => keyboard(e, click) : undefined}
+          onClick={active ? click : undefined}>
+          <title>{TERRAIN_LABEL[hex.terrain]}{hex.number ? " · " + hex.number : ""}{robberHere ? " · robber here" : ""}</title>
+          <polygon points={hexPoints(p.x, p.y, SIZE)} fill="#f4e9cf" filter="url(#tile-depth)" />
+          <polygon points={hexPoints(p.x, p.y, SIZE - 2.5)} className="terrain-fill"
+            fill={`var(--t-${hex.terrain})`} stroke={active ? "#fff3b0" : "#efe2c2"} strokeWidth={active ? 3.4 : 1.6} />
+          <g transform={`translate(${p.x} ${p.y})`} pointerEvents="none">
+            <TerrainArt terrain={hex.terrain} seed={hex.id} r={SIZE - 4} />
           </g>
-          {hex.number!==null&&<>
-            <circle cx={p.x} cy={p.y+12} r="20" fill="#b9986c" opacity=".27" pointerEvents="none"/>
-            <circle cx={p.x} cy={p.y+10} r="19" fill="#fff8e6" stroke="#dcbf93" strokeWidth="1.7" pointerEvents="none"/>
-            <text x={p.x} y={p.y+14} textAnchor="middle" fontSize="17" fontWeight="900" fill={hex.number===6||hex.number===8?"#be4d46":"#37484b"} pointerEvents="none">{hex.number}</text>
-            {Array.from({length:pips},(_,i)=><circle key={i} cx={p.x-(pips-1)*3.6+i*7.2} cy={p.y+22.5} r="1.6" fill={hex.number===6||hex.number===8?"#ca6156":"#876c51"} pointerEvents="none"/>)}
-          </>}
-          {active&&<polygon points={hexPoints(p.x,p.y,51)} fill="#ffe98e" fillOpacity=".16" stroke="#fff2a5" strokeWidth="3" className="terrain-target" pointerEvents="none"/>}
-          {game.robberHex===hex.id&&<Robber x={p.x} y={p.y}/>}
+          {active && <polygon points={hexPoints(p.x, p.y, SIZE - 5)} fill="#ffe98e" fillOpacity=".18"
+            stroke="#ffef9e" strokeWidth="2.6" className="terrain-outline" pointerEvents="none" />}
+          {robberHere && <g transform={`translate(${p.x} ${p.y - 12})`} pointerEvents="none"><RobberPiece scale={1.5} /></g>}
         </g>;
       })}
-      {game.board.ports.map(port=>{
-        const a=vertexPositions.get(port.vertices[0]),b=vertexPositions.get(port.vertices[1]);
-        if(!a||!b)return null;
-        const midX=(a.x+b.x)/2,midY=(a.y+b.y)/2;
-        const h=game.board.landHexes.find(h=>h.id===port.landHex);
-        if(!h)return null;
-        const center=hexToPixel(h.axial,SIZE);
-        const dx=midX-center.x,dy=midY-center.y,d=Math.hypot(dx,dy)||1;
-        const x=midX+dx/d*34,y=midY+dy/d*34;
-        return <g key={port.id} className="harbor-token">
-          <title>{port.resource?port.resource+" harbor: 2 for 1":"General harbor: 3 for 1"}</title>
-          <path d={"M"+a.x+" "+a.y+"L"+x+" "+y+"L"+b.x+" "+b.y} fill="none" stroke="#ffe4ab" strokeWidth="3" strokeDasharray="4 4" opacity=".8"/>
-          <circle cx={x} cy={y} r="20" fill="#fff5d3" stroke="#d8ab71" strokeWidth="3" filter="url(#piece-shadow)"/>
-          <text textAnchor="middle" x={x} y={y-1} fontSize="12" fontWeight="900" fill="#765637">{port.ratio}:1</text>
-          {port.resource?<g transform={"translate("+(x-6)+" "+(y+3)+")"}><ResourceIcon resource={port.resource as Resource} size={12}/></g>:<text x={x} y={y+9} textAnchor="middle" fontSize="8" fontWeight="800" fill="#8c6840">ANY</text>}
+
+      {/* Number tokens */}
+      {game.board.landHexes.filter((h) => h.number !== null).map((hex) => {
+        const p = hexToPixel(hex.axial, SIZE);
+        return <NumberToken key={hex.id} x={p.x} y={p.y} n={hex.number!} />;
+      })}
+
+      {/* Ports */}
+      {game.board.ports.map((port) => {
+        const a = vertexPositions.get(port.vertices[0]);
+        const b = vertexPositions.get(port.vertices[1]);
+        if (!a || !b) return null;
+        const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+        const h = game.board.landHexes.find((k) => k.id === port.landHex);
+        if (!h) return null;
+        const center = hexToPixel(h.axial, SIZE);
+        const dx = midX - center.x, dy = midY - center.y, d = Math.hypot(dx, dy) || 1;
+        const x = midX + (dx / d) * 40, y = midY + (dy / d) * 40;
+        return <g key={port.id}>
+          <title>{port.resource ? `${port.resource} harbor — trade 2 for 1` : "General harbor — trade 3 for 1"}</title>
+          <path d={`M${a.x} ${a.y} L${x} ${y} L${b.x} ${b.y}`} fill="none" stroke="#f2e3b8" strokeWidth="2.4"
+            strokeDasharray="4 4" opacity=".85" />
+          <PortMedallion x={x} y={y} ratio={port.ratio} resource={port.resource as Resource | null} />
         </g>;
       })}
-      {game.board.edges.map(edge=>{
-        const a=vertexPositions.get(edge.a),b=vertexPositions.get(edge.b);
-        if(!a||!b)return null;
-        const owned=roads.get(edge.id),active=mode==="road"&&selectable.has(edge.id);
-        const click=()=>onEdge(edge.id);
-        return <g key={edge.id} role={active?"button":undefined} tabIndex={active?0:undefined} onKeyDown={active?e=>keyboard(e,click):undefined} aria-label={active?"Place road":undefined}>
-          {owned&&<>
-            <line x1={a.x} y1={a.y+2} x2={b.x} y2={b.y+2} stroke="#294a56" strokeOpacity=".4" strokeWidth="15" strokeLinecap="round"/>
-            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fff4d7" strokeWidth="13" strokeLinecap="round"/>
-            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={owned} strokeWidth="9" strokeLinecap="round"/>
-          </>}
-          {active&&<>
-            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fff9b7" strokeWidth="10" strokeDasharray="5 5" strokeLinecap="round" className="road-hint" pointerEvents="none"/>
-            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fff5a8" strokeOpacity=".05" strokeWidth="26" pointerEvents="stroke" className="edge-target" onClick={click}/>
+
+      {/* Roads */}
+      {game.board.edges.map((edge) => {
+        const a = vertexPositions.get(edge.a), b = vertexPositions.get(edge.b);
+        if (!a || !b) return null;
+        const owned = roads.get(edge.id);
+        const active = mode === "road" && selectable.has(edge.id);
+        const click = () => onEdge(edge.id);
+        return <g key={edge.id} role={active ? "button" : undefined} tabIndex={active ? 0 : undefined}
+          onKeyDown={active ? (e) => keyboard(e, click) : undefined}
+          aria-label={active ? "Place a road here" : undefined}>
+          {owned && <g className="board-piece" filter="url(#piece-shadow)">
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#4a3826" strokeWidth="10.5" strokeLinecap="round" />
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={owned} strokeWidth="7" strokeLinecap="round" />
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#ffffff" strokeOpacity=".3" strokeWidth="1.8" strokeLinecap="round" />
+          </g>}
+          {active && <>
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fff3ae" strokeWidth="8" strokeDasharray="6 5"
+              strokeLinecap="round" className="road-hint" pointerEvents="none" />
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fff5a8" strokeOpacity=".06" strokeWidth="24"
+              pointerEvents="stroke" className="board-hit edge-hit" onClick={click} />
           </>}
         </g>;
       })}
-      {game.board.vertices.map(v=>{
-        const p=vertexPositions.get(v.id);
-        if(!p)return null;
-        const built=buildings.get(v.id),active=(mode==="settlement"||mode==="city")&&selectable.has(v.id);
-        if(!built&&!active)return null;
-        const click=()=>onVertex(v.id);
-        return <g key={v.id} transform={"translate("+p.x+" "+p.y+")"} className={active?"vertex-target":""} tabIndex={active?0:undefined} role={active?"button":undefined} aria-label={active?(mode==="city"?"Upgrade city":"Build settlement"):undefined} onKeyDown={active?e=>keyboard(e,click):undefined} onClick={active?click:undefined}>
-          {active&&<><circle r="18" fill="#fff3a8" fillOpacity=".62" stroke="#fff8cc" strokeWidth="2.5" className="vertex-hint" filter="url(#placement-glow)"/><circle r="20" fill="transparent"/></>}
-          {built&&<Settlement x={0} y={0} city={built.city} color={built.color}/>}
+
+      {/* Buildings + placement hints */}
+      {game.board.vertices.map((v) => {
+        const p = vertexPositions.get(v.id);
+        if (!p) return null;
+        const built = buildings.get(v.id);
+        const active = (mode === "settlement" || mode === "city") && selectable.has(v.id);
+        if (!built && !active) return null;
+        const click = () => onVertex(v.id);
+        return <g key={v.id} transform={`translate(${p.x} ${p.y})`}
+          className={active ? "board-hit vertex-hit" : undefined}
+          tabIndex={active ? 0 : undefined} role={active ? "button" : undefined}
+          aria-label={active ? (mode === "city" ? "Upgrade to a city" : "Build a settlement here") : undefined}
+          onKeyDown={active ? (e) => keyboard(e, click) : undefined}
+          onClick={active ? click : undefined}>
+          {active && <>
+            <circle r="17.5" fill="#fff3ae" fillOpacity=".5" stroke="#fff8d0" strokeWidth="2" className="vertex-hint" pointerEvents="none" />
+            <circle r="21" fill="transparent" />
+          </>}
+          {built && <Settlement color={built.color} city={built.city} />}
         </g>;
       })}
     </svg>
+
     <div className="board-zoom" role="group" aria-label="Board view controls">
-      <button aria-label="Zoom in" onClick={()=>setZoom(z=>Math.min(2.3,z+.18))}><ZoomIn size={17}/></button>
-      <button aria-label="Reset map" onClick={()=>{setZoom(1);setOffset({x:0,y:0})}}><RotateCcw size={16}/></button>
-      <button aria-label="Zoom out" onClick={()=>setZoom(z=>Math.max(.72,z-.18))}><ZoomOut size={17}/></button>
+      <button aria-label="Zoom in" onClick={() => setZoom((z) => Math.min(2.4, z + 0.18))}><Plus size={16} /></button>
+      <button aria-label="Reset view" onClick={resetView}><Maximize size={15} /></button>
+      <button aria-label="Zoom out" onClick={() => setZoom((z) => Math.max(0.75, z - 0.18))}><Minus size={16} /></button>
     </div>
   </div>;
 }

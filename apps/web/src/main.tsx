@@ -4,8 +4,10 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import { SessionProvider } from "./session";
 import { HomePage, JoinPage, LobbyPage, GamePage, Shell } from "./pages";
 import { RulebookPage } from "./rulebook";
-import "./style.css";
-import "./game.css";
+import "./ui/tokens.css";
+import "./ui/base.css";
+import "./ui/game.css";
+import "./ui/menu.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
