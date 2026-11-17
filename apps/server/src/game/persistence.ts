@@ -1,4 +1,4 @@
-import { generateBoard, type BoardMode, type GameState } from "@hexhaven/shared";
+import { generateBoard, type BoardMode, type BoardShape, type GameState } from "@hexhaven/shared";
 import type { EnginePlayerSeed } from "./engine.js";
 
 /**
@@ -15,6 +15,7 @@ export interface StoredGame {
   schemaVersion: number;
   seed: string;
   boardMode: BoardMode;
+  boardSize?: BoardShape;
   players: {
     id: string;
     name: string;
@@ -60,10 +61,14 @@ export function gameFromStored(stored: StoredGame): GameState {
   if (stored.schemaVersion !== GAME_SCHEMA_VERSION) {
     throw new Error(`Unsupported game snapshot schema version ${stored.schemaVersion}`);
   }
-  const board = generateBoard(stored.boardMode === "fixed" && stored.players.length > 4 ? "balanced" : stored.boardMode, stored.seed, stored.players.length > 4 ? 3 : 2);
+  // Old snapshots without boardSize used the original 37-hex six-player map.
+  const boardSize = stored.boardSize ?? (stored.players.length > 4 ? "legacy" : "classic");
+  const mode = boardSize === "legacy" && stored.boardMode === "fixed" ? "balanced" : stored.boardMode;
+  const board = generateBoard(mode, stored.seed, boardSize, stored.boardSize == null);
   return {
     ...(stored as unknown as Omit<GameState, "board" | "schemaVersion">),
     schemaVersion: GAME_SCHEMA_VERSION,
+    boardSize,
     board,
   } as GameState;
 }

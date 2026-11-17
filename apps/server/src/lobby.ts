@@ -3,6 +3,8 @@ import {
   DEFAULT_LOBBY_SETTINGS,
   MAX_PLAYERS,
   MIN_PLAYERS,
+  BOARD_PLAYER_LIMITS,
+  resolveBoardSize,
   PLAYER_COLORS,
   type GameCommand,
   type GameEvent,
@@ -126,7 +128,8 @@ export class Lobby {
     if (this.state !== "lobby") {
       return { ok: false, error: "game-in-progress", message: "This game has already started." };
     }
-    if (this.seats.size >= MAX_PLAYERS) {
+    const cap = this.settings.boardSize === "classic" ? 4 : this.settings.boardSize === "expanded" ? 6 : MAX_PLAYERS;
+    if (this.seats.size >= cap) {
       return { ok: false, error: "lobby-full", message: "This lobby is full." };
     }
     const taken = [...this.seats.values()].map((s) => s.color);
@@ -255,6 +258,8 @@ export class Lobby {
 
   updateSettings(playerId: string, settings: LobbySettings): boolean {
     if (playerId !== this.hostId || this.state !== "lobby") return false;
+    const cap = settings.boardSize === "classic" ? 4 : settings.boardSize === "expanded" ? 6 : MAX_PLAYERS;
+    if (this.seats.size > cap) return false;
     this.settings = settings;
     this.touch();
     return true;
@@ -273,6 +278,10 @@ export class Lobby {
     if (this.seats.size < MIN_PLAYERS) {
       return { ok: false, reason: `You need at least ${MIN_PLAYERS} players.` };
     }
+    const size = resolveBoardSize(this.settings.boardSize ?? "auto", this.seats.size);
+    if (this.seats.size > BOARD_PLAYER_LIMITS[size]) {
+      return { ok: false, reason: `${size} board supports at most ${BOARD_PLAYER_LIMITS[size]} players. Choose a larger board.` };
+    }
     const unready = [...this.seats.values()].filter((s) => !s.ready);
     if (unready.length > 0) {
       return { ok: false, reason: `${unready.length} player(s) are not ready yet.` };
@@ -290,6 +299,7 @@ export class Lobby {
     this.engine = new GameEngine({
       seed: seed ?? `${this.code}-${Date.now()}`,
       boardMode: this.settings.boardMode,
+      boardSize: this.settings.boardSize,
       players,
     });
     this.state = "playing";
@@ -411,7 +421,7 @@ export class Lobby {
       spectators: [...this.spectators.values()].map((s) => ({ id: s.id, name: s.name })),
       settings: { ...this.settings },
       minPlayers: MIN_PLAYERS,
-      maxPlayers: MAX_PLAYERS,
+      maxPlayers: this.settings.boardSize === "classic" ? 4 : this.settings.boardSize === "expanded" ? 6 : MAX_PLAYERS,
       turnDeadline: this.turnDeadline,
     };
   }

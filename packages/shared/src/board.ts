@@ -1,5 +1,7 @@
 import {
   buildTopology,
+  buildTopologyForHexes,
+  cornerPixel,
   cornerIndexForVertex,
   hexKey,
   hexNeighbor,
@@ -68,12 +70,45 @@ export interface Port {
 
 export interface Board {
   radius: number;
+  size: BoardShape;
   hexes: Map<string, BoardHex>;
   topology: BoardTopology;
   ports: Port[];
 }
 
 export type BoardMode = "fixed" | "random" | "balanced";
+export type BoardSize = "auto" | "classic" | "expanded" | "grand";
+/** Old six-player save files used the 37-hex board with nine ports. */
+export type BoardShape = Exclude<BoardSize, "auto"> | "legacy";
+export const BOARD_PLAYER_LIMITS = { classic: 4, expanded: 6, grand: 8 } as const;
+
+export function resolveBoardSize(size: BoardSize, playerCount: number): Exclude<BoardSize, "auto"> {
+  return size !== "auto" ? size : playerCount <= 4 ? "classic" : playerCount <= 6 ? "expanded" : "grand";
+}
+
+/** Same 30-hex outline as the official extension: rows of 3,4,5,6,5,4,3. */
+export function expandedIslandHexes(): Axial[] {
+  const counts = [3, 4, 5, 6, 5, 4, 3];
+  return counts.flatMap((count, row) => {
+    const r = row - 3;
+    const start = Math.ceil(-(count - 1) / 2 - r / 2);
+    return Array.from({ length: count }, (_, i) => ({ q: start + i, r }));
+  });
+}
+
+/** Official 5–6 component composition: 19 original + 11 extra tiles. */
+export const EXPANDED_TERRAIN_COUNTS = {
+  forest: 6, fields: 6, pasture: 6, hills: 5, mountains: 5, desert: 2,
+} satisfies Record<Exclude<Terrain, "water">, number>;
+export const EXPANDED_NUMBER_TOKENS = [
+  2, 2, 12, 12, ...[3, 4, 5, 6, 8, 9, 10, 11].flatMap(n => [n, n, n]),
+];
+
+/** Custom 7–8 player 37-hex island; terrain distribution retains legacy compatibility. */
+export const GRAND_TERRAIN_COUNTS = {
+  forest: 8, fields: 8, pasture: 8, hills: 6, mountains: 5, desert: 2,
+} satisfies Record<Exclude<Terrain, "water">, number>;
+export const GRAND_NUMBER_TOKENS = [...NUMBER_TOKENS, ...NUMBER_TOKENS.slice(0, 17)];
 
 // ---------------------------------------------------------------------------
 // Seeded RNG (mulberry32) — deterministic board generation and dice.
@@ -167,13 +202,18 @@ const PORT_TYPES: ReadonlyArray<{ ratio: 2 | 3; resource: Resource | null }> = [
   ...RESOURCES.map((r) => ({ ratio: 2 as const, resource: r })),
 ];
 
-/** Generates the complete board for a mode + seed. Deterministic. */
-export function generateBoard(mode: BoardMode, seed: string, radius = 2): Board {
-  const topology = buildTopology(radius);
+const EXPANDED_PORT_TYPES = [...PORT_TYPES, { ratio: 3 as const, resource: null }, { ratio: 2 as const, resource: "wool" as Resource }];
+const GRAND_PORT_TYPES = [...PORT_TYPES, ...RESOURCES.map(resource => ({ ratio: 2 as const, resource }))];
+
+/** Generates classic (19), official-size expanded (30), or custom grand (37) boards. */
+export function generateBoard(mode: BoardMode, seed: string, shape: BoardShape | 2 | 3 = "classic", legacyPorts = false): Board {
+  const size: BoardShape = shape === 2 ? "classic" : shape === 3 ? "legacy" : shape;
+  const radius = size === "classic" ? 2 : 3;
+  const topology = size === "expanded" ? buildTopologyForHexes(expandedIslandHexes()) : buildTopology(radius);
   const hexes = new Map<string, BoardHex>();
   const landKeys = topology.landHexes;
 
-  const assigned = assignTerrainAndNumbers(mode, landKeys, seed, topology);
+  const assigned = assignTerrainAndNumbers(mode, landKeys, seed, size);
 
   for (let i = 0; i < landKeys.length; i++) {
     const key = landKeys[i]!;
@@ -197,8 +237,9 @@ export function generateBoard(mode: BoardMode, seed: string, radius = 2): Board 
     for (const h of e.hexes) hexes.get(h)?.edges.push(e.id);
   }
 
-  const ports = placePorts(topology, mulberry32(`${mode}:ports:${seed}`));
-  return { radius, hexes, topology, ports };
+  const portTypes = size === "expanded" ? EXPANDED_PORT_TYPES : size === "grand" ? GRAND_PORT_TYPES : PORT_TYPES;
+  const ports = placePorts(topology, mulberry32(`${mode}:ports:${mode === "fixed" && size !== "classic" ? `preset-${size}` : seed}`), portTypes, size === "legacy" || legacyPorts);
+  return { radius, size, hexes, topology, ports };
 }
 
 type Slot = { terrain: Exclude<Terrain, "water">; number: number | null };
@@ -207,7 +248,7 @@ function assignTerrainAndNumbers(
   mode: BoardMode,
   landKeys: string[],
   seed: string,
-  topology: BoardTopology,
+  size: BoardShape,
 ): Slot[] {
   if (mode === "fixed" && landKeys.length === 19) {
     const byKey = new Map(FIXED_LAYOUT.map((s) => [hexKey(s.hex), s]));
@@ -219,14 +260,15 @@ function assignTerrainAndNumbers(
     });
   }
 
-  const rng = mulberry32(`${mode}:${seed}`);
-  const counts = landKeys.length > 19
-    ? { forest: 8, fields: 8, pasture: 8, hills: 6, mountains: 5, desert: 2 }
-    : TERRAIN_COUNTS;
+  // Only the original 19-hex preset is directly encoded; larger presets are
+  // deterministic balanced layouts, independent of the room's random seed.
+  const effectiveMode = mode === "fixed" && size !== "classic" ? "balanced" : mode;
+  const rng = mulberry32(`${effectiveMode}:${mode === "fixed" && size !== "classic" ? `preset-${size}` : seed}`);
+  const counts = size === "expanded" ? EXPANDED_TERRAIN_COUNTS : size === "classic" ? TERRAIN_COUNTS : GRAND_TERRAIN_COUNTS;
   const terrainDeck: Exclude<Terrain, "water">[] = (
     Object.keys(counts) as Exclude<Terrain, "water">[]
   ).flatMap((t) => Array.from({ length: counts[t] }, () => t));
-  const tokenDeck = landKeys.length > 19 ? [...NUMBER_TOKENS, ...NUMBER_TOKENS.slice(0, 17)] : NUMBER_TOKENS;
+  const tokenDeck = size === "expanded" ? EXPANDED_NUMBER_TOKENS : size === "classic" ? NUMBER_TOKENS : GRAND_NUMBER_TOKENS;
 
   const isRed = (n: number | null) => n != null && RED_NUMBERS.has(n);
 
@@ -247,7 +289,7 @@ function assignTerrainAndNumbers(
       for (const j of neighborLists[i]!) {
         if (isRed(nums[j]!)) return false;
       }
-      if (mode === "balanced") {
+      if (effectiveMode === "balanced") {
         // Red numbers at least 2 hexes apart and never on the same terrain.
         for (let k = 0; k < nums.length; k++) {
           if (k !== i && isRed(nums[k]!) && hexDistance(parseHexKey(landKeys[i]!), parseHexKey(landKeys[k]!)) < 2) {
@@ -273,7 +315,7 @@ function assignTerrainAndNumbers(
     }
     if (t !== tokenDeck.length) continue;
     if (!redsOk(nums)) continue;
-    if (mode === "balanced") {
+    if (effectiveMode === "balanced") {
       // Red numbers must sit on four different terrains when possible.
       const redTerrains = new Set<string>();
       for (let i = 0; i < nums.length; i++) {
@@ -283,27 +325,28 @@ function assignTerrainAndNumbers(
     }
     return landKeys.map((_, i) => ({ terrain: terrains[i]!, number: nums[i] ?? null }));
   }
-  throw new Error(`could not generate a legal ${mode} board layout`);
+  throw new Error(`could not generate a legal ${mode}/${size} board layout`);
 }
 
 // ---------------------------------------------------------------------------
 // Ports
 // ---------------------------------------------------------------------------
 
-/**
- * Places the 9 harbor ports (4 generic 3:1, 5 specific 2:1) on coastal
- * edges. Ports never share a vertex and are spread around the island by a
- * minimum-midpoint-distance rule, with fallbacks if the coast is tight.
- */
-function placePorts(topology: BoardTopology, rng: Rng): Port[] {
+/** Place the board-size harbor set on separated coastal edges. */
+function placePorts(
+  topology: BoardTopology, rng: Rng,
+  types: ReadonlyArray<{ ratio: 2 | 3; resource: Resource | null }>,
+  legacy = false,
+): Port[] {
   const coastal = [...topology.edges.values()].filter(
     (e): e is Edge & { landHex: string; seaHex: string } => e.coastal && !!e.landHex && !!e.seaHex,
   );
   const size = 1;
 
   const midpointOf = (edge: Edge) => {
-    const a = vertexPixel(topology, edge.a, size);
-    const b = vertexPixel(topology, edge.b, size);
+    const locate = legacy ? legacyVertexPixel : vertexPixel;
+    const a = locate(topology, edge.a, size);
+    const b = locate(topology, edge.b, size);
     return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
   };
 
@@ -321,21 +364,21 @@ function placePorts(topology: BoardTopology, rng: Rng): Port[] {
       midpoints.push(mid);
       usedVertices.add(edge.a);
       usedVertices.add(edge.b);
-      if (chosen.length === PORT_TYPES.length) break;
+      if (chosen.length === types.length) break;
     }
     return chosen;
   };
 
   let chosen = pick(2.8, false);
-  if (chosen.length < PORT_TYPES.length) chosen = pick(2.0, false);
-  if (chosen.length < PORT_TYPES.length) chosen = pick(0, false);
+  if (chosen.length < types.length) chosen = pick(2.0, false);
+  if (chosen.length < types.length) chosen = pick(0, false);
 
-  const types = rng.shuffle(PORT_TYPES);
+  const shuffledTypes = rng.shuffle(types);
   return chosen
-    .slice(0, PORT_TYPES.length)
+    .slice(0, types.length)
     .map((edgeIdStr, i) => {
       const edge = topology.edges.get(edgeIdStr)!;
-      const type = types[i]!;
+      const type = shuffledTypes[i]!;
       return {
         id: `port-${edgeIdStr}`,
         ratio: type.ratio,
@@ -355,6 +398,17 @@ function placePorts(topology: BoardTopology, rng: Rng): Port[] {
 }
 
 function vertexPixel(topology: BoardTopology, vertexId: string, size: number): { x: number; y: number } {
+  const vertex = topology.vertices.get(vertexId)!;
+  const land = vertex.hexes.find((id) => topology.landHexes.includes(id));
+  if (!land) throw new Error(`vertex ${vertexId} does not touch land`);
+  const hex = parseHexKey(land);
+  const corner = cornerIndexForVertex(hex, vertex.id);
+  if (corner < 0) throw new Error(`invalid corner for vertex ${vertexId}`);
+  return cornerPixel(hex, corner, size);
+}
+
+/** Preserve original harbor positions when restoring old 5–6 player saves. */
+function legacyVertexPixel(topology: BoardTopology, vertexId: string, size: number): { x: number; y: number } {
   const v = topology.vertices.get(vertexId)!;
   const hex = parseHexKey(v.hexes[0]!);
   const center = hexToPixel(hex, size);

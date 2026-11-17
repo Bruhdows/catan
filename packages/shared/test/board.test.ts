@@ -5,6 +5,10 @@ import {
   NUMBER_TOKENS,
   RED_NUMBERS,
   TERRAIN_COUNTS,
+  EXPANDED_TERRAIN_COUNTS,
+  EXPANDED_NUMBER_TOKENS,
+  GRAND_TERRAIN_COUNTS,
+  GRAND_NUMBER_TOKENS,
   tokenPips,
   type BoardMode,
 } from "../src/index.js";
@@ -103,6 +107,31 @@ describe("board generation", () => {
           const vertex = board.topology.vertices.get(v)!;
           expect(vertex.hexes).toContain(p.landHex);
           expect(vertex.hexes).toContain(p.seaHex);
+        }
+      }
+    }
+  });
+
+  it.each([
+    ["expanded", 30, 28, 11, EXPANDED_TERRAIN_COUNTS, EXPANDED_NUMBER_TOKENS],
+    ["grand", 37, 35, 14, GRAND_TERRAIN_COUNTS, GRAND_NUMBER_TOKENS],
+  ] as const)("%s board has correct terrain, tokens and ports", (size, hexes, numbers, ports, terrain, tokens) => {
+    for (const mode of ["random", "balanced", "fixed"] as BoardMode[]) {
+      for (const seed of ["exp-1", "exp-2", "exp-3", "exp-4", "exp-5"]) {
+        const board = generateBoard(mode, seed, size);
+        expect(board.size).toBe(size);
+        expect(board.hexes.size).toBe(hexes);
+        expect([...board.hexes.values()].filter(h => h.number !== null)).toHaveLength(numbers);
+        const counts: Record<string, number> = {};
+        for (const hex of board.hexes.values()) counts[hex.terrain] = (counts[hex.terrain] ?? 0) + 1;
+        expect(counts).toEqual(terrain);
+        expect([...board.hexes.values()].flatMap(h => h.number == null ? [] : [h.number]).sort((a,b)=>a-b)).toEqual([...tokens].sort((a,b)=>a-b));
+        expect(board.ports).toHaveLength(ports);
+        const seen = new Set<string>();
+        for (const port of board.ports) for (const v of port.vertices) {
+          expect(seen.has(v)).toBe(false);
+          seen.add(v);
+          expect(board.topology.vertices.has(v)).toBe(true);
         }
       }
     }

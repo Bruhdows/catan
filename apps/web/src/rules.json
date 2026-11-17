@@ -25,7 +25,7 @@
     "sections": [
       [
         "Terrain and numbers",
-        "The standard island has 19 terrain hexes, including one desert. Resource-producing hexes carry number tokens. A token receives resources when its number matches the sum of two dice."
+        "The classic island has 19 hexes and one desert; the expansion-sized island has 30 hexes and two deserts. A custom 37-hex grand island supports up to eight players. All producing hexes carry number tokens that pay when their number matches the dice."
       ],
       [
         "Intersections and paths",
@@ -52,7 +52,7 @@
       ],
       [
         "Bank limits",
-        "The bank begins with 19 cards of each resource. When production demand cannot be met, apply the official supply-shortage rule. Trading and construction return cards to the bank."
+        "The bank starts with 19 cards per resource for the classic board, 24 for the expanded board, and 29 for custom grand games. When production demand cannot be met, the shortage rule applies. Trading and construction return cards to the bank."
       ]
     ]
   },

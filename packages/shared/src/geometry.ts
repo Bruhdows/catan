@@ -111,8 +111,14 @@ export interface BoardTopology {
  * surrounded by one sea ring. Deterministic and frame-independent.
  */
 export function buildTopology(radius: number, seaRing = 1): BoardTopology {
-  const land = hexSpiral({ q: 0, r: 0 }, radius);
+  void seaRing;
+  return buildTopologyForHexes(hexSpiral({ q: 0, r: 0 }, radius));
+}
+
+/** Canonical road/settlement graph for any contiguous island shape. */
+export function buildTopologyForHexes(land: readonly Axial[]): BoardTopology {
   const landKeys = land.map(hexKey);
+  if (new Set(landKeys).size !== landKeys.length) throw new Error("duplicate island hex coordinates");
   const landSet = new Set(landKeys);
 
   const sea = new Set<string>();

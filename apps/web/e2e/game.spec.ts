@@ -61,6 +61,12 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await expect(host.locator(".table-sidebar .roster-plate")).toHaveCount(3);
     await expect(host.locator(".hud")).toBeHidden();
     await expect(host.locator(".table-bank-item")).toHaveCount(5);
+    await expect(host.locator(".hand-stack")).toHaveCount(5);
+    const handLayers = await host.locator(".hand-stack").evaluateAll(stacks => stacks.map(stack => ({
+      count: Number(stack.querySelector(".hand-stack-total")?.textContent),
+      layers: stack.querySelectorAll(".hand-stack-card").length,
+    })));
+    for (const stack of handLayers) expect(stack.layers).toBe(Math.max(1, Math.min(stack.count, 9)));
     await expect(host.locator(".placed-road")).toHaveCount(6);
     await expect(host.locator(".placed-road[filter]")).toHaveCount(0);
     await expect(host.locator(".hud-code")).toHaveCount(0);
@@ -69,6 +75,12 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await expect(host.getByRole("button", { name: "Roll dice" })).toBeVisible();
     await host.getByRole("button", { name: "Roll dice" }).click();
     await expect(host.locator(".dice-tray")).toBeVisible();
+    const diceBox = await host.locator(".dice-tray").boundingBox();
+    const boardAreaBox = await host.locator(".board-area").boundingBox();
+    expect(diceBox).not.toBeNull(); expect(boardAreaBox).not.toBeNull();
+    expect(diceBox!.width).toBeGreaterThan(150);
+    expect(boardAreaBox!.x + boardAreaBox!.width - diceBox!.x - diceBox!.width).toBeLessThan(30);
+    expect(boardAreaBox!.y + boardAreaBox!.height - diceBox!.y - diceBox!.height).toBeLessThan(30);
 
     // The board stays visible while each game action opens its own drawer.
     await host.getByRole("button", { name: "Build", exact: true }).click();
@@ -83,11 +95,11 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await expect(host.getByText("You give", { exact: true })).toBeVisible();
     await expect(host.getByText("You receive", { exact: true })).toBeVisible();
 
-    await host.getByRole("button", { name: "Cards", exact: true }).click();
+    await host.getByRole("button", { name: "Development cards", exact: true }).click();
     await expect(host.getByRole("heading", { name: "Development cards" })).toBeVisible();
-    await host.getByRole("button", { name: "Log", exact: true }).click();
-    await expect(host.getByRole("heading", { name: "Game log" })).toBeVisible();
-    await host.getByRole("button", { name: "Log", exact: true }).click();
+    await expect(host.locator(".table-activity-line").first()).toBeVisible();
+    await expect(host.getByRole("button", { name: "Game log" })).toBeHidden();
+    await host.getByRole("button", { name: "Development cards", exact: true }).click();
 
     // The same scene must remain usable on a phone-sized viewport.
     await host.setViewportSize({ width: 390, height: 844 });
@@ -95,6 +107,10 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await expect(host.locator(".table-sidebar")).toBeHidden();
     await expect(host.locator(".hud")).toBeVisible();
     await host.screenshot({ path: "test-results/island-mobile-board.png" });
+    await expect(host.getByRole("button", { name: "Game log" })).toBeVisible();
+    await host.getByRole("button", { name: "Game log" }).click();
+    await expect(host.getByRole("heading", { name: "Game log" })).toBeVisible();
+    await host.getByRole("button", { name: "Game log" }).click();
     await expect(host.getByRole("button", { name: "Trade", exact: true })).toBeVisible();
     await host.getByRole("button", { name: "Game menu" }).click();
     await expect(host.getByRole("menuitem", { name: "Rulebook" })).toBeVisible();
@@ -107,6 +123,10 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await host.screenshot({ path: "test-results/island-mobile.png" });
     const width = await host.evaluate(() => ({ actual: document.documentElement.scrollWidth, viewport: innerWidth }));
     expect(width.actual).toBeLessThanOrEqual(width.viewport + 2);
+    const stacks = await host.locator(".hand-stack").evaluateAll(items => items.map(item => {
+      const b = item.getBoundingClientRect(); return { left: b.left, right: b.right };
+    }));
+    for (const box of stacks) { expect(box.left).toBeGreaterThanOrEqual(0); expect(box.right).toBeLessThanOrEqual(width.viewport + 1); }
 
     await host.goto("/rules/robber");
     await expect(host.getByRole("heading", { name: "The robber & seven" })).toBeVisible();
@@ -169,6 +189,8 @@ test("six-player lobby, timed settings, and roster stay visible", async ({ brows
     await host.getByRole("button", { name: "Start a new game" }).click();
     await expect(host).toHaveURL(/\/lobby\/[A-Z2-9]{6}$/);
     const code = host.url().split("/").at(-1)!;
+    await host.getByLabel("Board size").selectOption("expanded");
+    await expect(host.getByLabel("Board size")).toHaveValue("expanded");
     const timer = host.getByLabel("Turn timer");
     await timer.selectOption("60");
     await expect(timer).toHaveValue("60");
@@ -218,6 +240,48 @@ test("six-player lobby, timed settings, and roster stay visible", async ({ brows
     await expect(host.locator(".placed-road")).toHaveCount(12);
     await expect(host.locator(".placed-road[filter]")).toHaveCount(0);
     await host.screenshot({ path: "test-results/six-player-game.png" });
+  } finally {
+    await Promise.all(contexts.map(c => c.close()));
+  }
+});
+
+
+test("eight players can complete grand-board setup without clipped seats or roads", async ({ browser }) => {
+  test.setTimeout(120_000);
+  const contexts = await Promise.all(Array.from({ length: 8 }, () => browser.newContext()));
+  const pages = await Promise.all(contexts.map(c => c.newPage()));
+  try {
+    const host = pages[0]!;
+    await host.goto("/");
+    await host.getByPlaceholder("Your nickname").fill("Host");
+    await host.getByRole("button", { name: "Start a new game" }).click();
+    await expect(host).toHaveURL(/\/lobby\/[A-Z2-9]{6}$/);
+    const code = host.url().split("/").at(-1)!;
+    await expect(host.getByLabel("Board size")).toHaveValue("auto");
+    await host.getByLabel("Board size").selectOption("grand");
+    await expect(host.getByLabel("Board size")).toHaveValue("grand");
+    for (let i = 1; i < pages.length; i++) {
+      const page = pages[i]!;
+      await joinAs(page, code, "Player " + i);
+      await page.getByRole("button", { name: "Ready up" }).click();
+    }
+    await expect(host.getByText("8 of 8 players seated")).toBeVisible();
+    await host.getByRole("button", { name: "Start game" }).click();
+    await expect(host).toHaveURL(new RegExp("/game/" + code));
+    await expect(host.locator(".game-board .terrain-fill")).toHaveCount(37);
+    await expect(host.locator(".table-sidebar .roster-plate")).toHaveCount(8);
+    await expect(host.locator(".table-sidebar .roster-plate").last()).toBeInViewport();
+    await host.setViewportSize({ width: 390, height: 844 });
+    await expect(host.locator(".roster-plate:visible")).toHaveCount(8);
+    const bounds = await host.locator(".roster-plate:visible").evaluateAll(items => items.map(item => {
+      const b = item.getBoundingClientRect(); return { left: b.left, right: b.right };
+    }));
+    for (const bound of bounds) { expect(bound.left).toBeGreaterThanOrEqual(0); expect(bound.right).toBeLessThanOrEqual(391); }
+    await host.setViewportSize({ width: 1440, height: 900 });
+    for (const i of [0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0]) await playSetupTurn(pages[i]!);
+    await expect(host.getByRole("button", { name: "Roll dice" })).toBeVisible();
+    await expect(host.locator(".placed-road")).toHaveCount(16);
+    await host.screenshot({ path: "test-results/eight-player-game.png" });
   } finally {
     await Promise.all(contexts.map(c => c.close()));
   }

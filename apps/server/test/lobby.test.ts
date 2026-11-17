@@ -38,7 +38,9 @@ describe("lobby membership", () => {
     const { lobby } = fourPlayerLobby();
     expect(lobby.addSeat("Eve").ok).toBe(true);
     expect(lobby.addSeat("Frank").ok).toBe(true);
-    expect(new Set([...lobby.seats.values()].map(p => p.color)).size).toBe(6);
+    expect(lobby.addSeat("Grace").ok).toBe(true);
+    expect(lobby.addSeat("Hank").ok).toBe(true);
+    expect(new Set([...lobby.seats.values()].map(p => p.color)).size).toBe(8);
     const extra = lobby.addSeat("Extra");
     expect(extra.ok).toBe(false);
     expect((extra as { ok: false; error: string }).error).toBe("lobby-full");
@@ -62,7 +64,39 @@ describe("lobby membership", () => {
     readyAll(lobby);
     expect(lobby.start(lobby.hostId)).toBe(true);
     expect(lobby.engine!.state.players).toHaveLength(6);
+    expect(lobby.engine!.state.board.topology.landHexes).toHaveLength(30);
+    expect(lobby.engine!.state.bank.brick).toBe(24);
+    expect(lobby.engine!.state.devDeck).toHaveLength(34);
+  });
+
+  it("eight ready players play on the grand 37-hex custom board", () => {
+    const { lobby } = fourPlayerLobby();
+    for (const name of ["Eve", "Frank", "Grace", "Hank"]) expect(lobby.addSeat(name).ok).toBe(true);
+    expect(new Set([...lobby.seats.values()].map(p => p.color)).size).toBe(8);
+    readyAll(lobby);
+    expect(lobby.start(lobby.hostId, "eight-player-test")).toBe(true);
+    expect(lobby.engine!.state.players).toHaveLength(8);
     expect(lobby.engine!.state.board.topology.landHexes).toHaveLength(37);
+    expect(lobby.engine!.state.board.ports).toHaveLength(14);
+    expect(lobby.engine!.state.bank.brick).toBe(29);
+    expect(lobby.engine!.state.devDeck).toHaveLength(43);
+    expect(lobby.engine!.state.setupSequence).toHaveLength(16);
+  });
+
+  it("enforces classic and expanded board seat capacities", () => {
+    const { lobby } = fourPlayerLobby();
+    expect(lobby.updateSettings(lobby.hostId, { ...lobby.settings, boardSize: "classic" })).toBe(true);
+    expect(lobby.view().maxPlayers).toBe(4);
+    expect(lobby.addSeat("Fifth").ok).toBe(false);
+    expect(lobby.updateSettings(lobby.hostId, { ...lobby.settings, boardSize: "expanded" })).toBe(true);
+    expect(lobby.view().maxPlayers).toBe(6);
+    expect(lobby.addSeat("Fifth").ok).toBe(true);
+    expect(lobby.addSeat("Sixth").ok).toBe(true);
+    expect(lobby.addSeat("Seventh").ok).toBe(false);
+    expect(lobby.updateSettings(lobby.hostId, { ...lobby.settings, boardSize: "classic" })).toBe(false);
+    readyAll(lobby);
+    expect(lobby.start(lobby.hostId)).toBe(true);
+    expect(lobby.engine!.state.boardSize).toBe("expanded");
   });
 
   it("reconnect by token restores the original seat", () => {

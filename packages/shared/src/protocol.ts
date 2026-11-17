@@ -1,21 +1,22 @@
 import { z } from "zod";
 import { PLAYER_COLORS, type GameCommand, type GameEvent, type GameView, type PlayerColor } from "./game.js";
-import type { BoardMode } from "./board.js";
+import type { BoardMode, BoardSize } from "./board.js";
 
 export const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const LOBBY_CODE_LENGTH = 6;
 export const MIN_PLAYERS = 3;
-export const MAX_PLAYERS = 6;
+export const MAX_PLAYERS = 8;
 
 export type LobbyState = "lobby" | "playing" | "finished";
 
 export interface LobbySettings {
   boardMode: BoardMode;
+  boardSize: BoardSize;
   allowSpectators: boolean;
   turnTimeSeconds: 0 | 60 | 120 | 180 | 300;
 }
 
-export const DEFAULT_LOBBY_SETTINGS: LobbySettings = { boardMode: "random", allowSpectators: true, turnTimeSeconds: 0 };
+export const DEFAULT_LOBBY_SETTINGS: LobbySettings = { boardMode: "random", boardSize: "auto", allowSpectators: true, turnTimeSeconds: 0 };
 
 export interface LobbyPlayerView {
   id: string;
@@ -62,11 +63,11 @@ export const codeSchema = z
   .refine((v) => new RegExp(`^[${CODE_ALPHABET}]{${LOBBY_CODE_LENGTH}}$`).test(v));
 
 const handSchema = z.object({
-  brick: z.number().int().min(0).max(19),
-  lumber: z.number().int().min(0).max(19),
-  wool: z.number().int().min(0).max(19),
-  grain: z.number().int().min(0).max(19),
-  ore: z.number().int().min(0).max(19),
+  brick: z.number().int().min(0).max(29),
+  lumber: z.number().int().min(0).max(29),
+  wool: z.number().int().min(0).max(29),
+  grain: z.number().int().min(0).max(29),
+  ore: z.number().int().min(0).max(29),
 });
 
 export const gameCommandSchema: z.ZodType<GameCommand> = z.discriminatedUnion("type", [
@@ -110,6 +111,7 @@ export const commandEnvelopeSchema = z.object({
 
 export const settingsSchema = z.object({
   boardMode: z.enum(["fixed", "random", "balanced"]),
+  boardSize: z.enum(["auto", "classic", "expanded", "grand"]).default("auto"),
   allowSpectators: z.boolean(),
   turnTimeSeconds: z.union([z.literal(0), z.literal(60), z.literal(120), z.literal(180), z.literal(300)]).default(0),
 }) satisfies z.ZodType<LobbySettings>;

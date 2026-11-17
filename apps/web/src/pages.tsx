@@ -2,7 +2,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowRight, BookOpen, Check, Copy, Crown, LogOut, Play, Users, X } from "lucide-react";
-import { PLAYER_COLORS as COLOR_OPTIONS } from "@hexhaven/shared";
+import { BOARD_PLAYER_LIMITS, PLAYER_COLORS as COLOR_OPTIONS, resolveBoardSize } from "@hexhaven/shared";
 import { FieldSelect, PlayerAvatar, PLAYER_COLORS } from "./design";
 import { useSession } from "./session";
 import { openRules } from "./rulebook-modal";
@@ -81,7 +81,9 @@ export function LobbyPage() {
   }
   const me = lobby.players.find((p) => p.id === auth.playerId);
   const host = auth.playerId === lobby.hostId;
-  const canStart = lobby.players.length >= 3 && lobby.players.every((p) => p.ready && p.connected);
+  const boardSize = resolveBoardSize(lobby.settings.boardSize ?? "auto", lobby.players.length);
+  const boardLimit = BOARD_PLAYER_LIMITS[boardSize];
+  const canStart = lobby.players.length >= 3 && lobby.players.length <= boardLimit && lobby.players.every((p) => p.ready && p.connected);
   const share = location.origin + "/join/" + lobby.code;
   return <main className="lobby-page">
     <div className="lobby-layout">
@@ -126,8 +128,12 @@ export function LobbyPage() {
       <aside className="lobby-side surface">
         <div className="side-heading">
           <h2>Table settings</h2>
-          <p>3–4 classic · 5–6 expanded island house rules</p>
+          <p>Classic, expanded, or custom eight-player islands</p>
         </div>
+        <FieldSelect label="Board size" value={lobby.settings.boardSize ?? "auto"} disabled={!host}
+          options={[{ value: "auto", label: "Automatic (by players)" }, { value: "classic", label: "Classic · 19 hexes · up to 4" }, { value: "expanded", label: "Expanded · 30 hexes · up to 6" }, { value: "grand", label: "Grand · 37 hexes · up to 8" }]}
+          onChange={next => settings({ ...lobby.settings, boardSize: next as "auto" | "classic" | "expanded" | "grand" })}
+          description={`Current table: ${boardSize === "classic" ? "19" : boardSize === "expanded" ? "30" : "37"} terrain hexes. ${boardSize === "grand" ? "Custom house rules." : boardSize === "expanded" ? "Expanded layout with sequential-turn house rules." : "Classic rules."}`} />
         <FieldSelect label="Island layout" value={lobby.settings.boardMode} disabled={!host}
           options={[{ value: "random", label: "Random island" }, { value: "balanced", label: "Balanced random" }, { value: "fixed", label: "Beginner layout" }]}
           onChange={(next) => settings({ ...lobby.settings, boardMode: next as "random" | "balanced" | "fixed" })} />
@@ -138,7 +144,7 @@ export function LobbyPage() {
           onChange={(e) => settings({ ...lobby.settings, allowSpectators: e.target.checked })} /> Allow spectators</label>
         <button type="button" className="settings-rules-link" onClick={openRules}><BookOpen size={15} /> Rulebook <ArrowRight size={13} /></button>
         <div className="lobby-start">
-          <p>{!connected ? "Reconnecting…" : lobby.players.length < 3 ? "Need at least 3 players" : !canStart ? "Waiting for players to ready up" : host ? "Ready to start" : "Waiting for the host"}</p>
+          <p>{!connected ? "Reconnecting…" : lobby.players.length < 3 ? "Need at least 3 players" : lobby.players.length > boardLimit ? "Choose a larger board" : !canStart ? "Waiting for players to ready up" : host ? "Ready to start" : "Waiting for the host"}</p>
           {host && <button className="button wood large full" disabled={!canStart || busy || !connected} onClick={() => void start()}>
             <Play size={17} fill="currentColor" /> Start game</button>}
         </div>

@@ -78,17 +78,15 @@ test("after-shots", async ({ browser }) => {
     await host.getByRole("tab", { name: "Bank & harbors" }).click();
     await host.waitForTimeout(400);
     await host.screenshot({ path: "shots/after-trade-bank.png" });
-    await host.getByRole("button", { name: "Cards", exact: true }).click();
+    await host.getByRole("button", { name: "Development cards", exact: true }).click();
     await host.waitForTimeout(400);
     await host.screenshot({ path: "shots/after-cards.png" });
-    await host.getByRole("button", { name: "Cards", exact: true }).click();
-    await host.getByRole("button", { name: "Log", exact: true }).click();
-    await host.waitForTimeout(400);
+    await host.getByRole("button", { name: "Development cards", exact: true }).click();
     await host.screenshot({ path: "shots/after-log.png" });
 
     await host.setViewportSize({ width: 390, height: 844 });
     await host.waitForTimeout(600);
-    await host.getByRole("button", { name: "Log", exact: true }).click();
+    await host.getByRole("button", { name: "Game log" }).click();
     await host.screenshot({ path: "shots/after-game-mobile.png" });
     await host.getByRole("button", { name: "Trade", exact: true }).click();
     await host.waitForTimeout(500);

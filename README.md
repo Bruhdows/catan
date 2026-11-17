@@ -1,6 +1,6 @@
 # Catan
 
-An independent browser-based island trading and settlement strategy game for 3–6 friends. The project is **unofficial and not affiliated with CATAN GmbH**.
+An independent browser-based island trading and settlement strategy game for 3–8 friends. The project is **unofficial and not affiliated with CATAN GmbH**.
 
 ## Features
 
@@ -24,7 +24,7 @@ npm ci
 npm run dev
 ```
 
-Web: http://localhost:5173 · API: http://localhost:3001 · health: /api/health
+Web: http://localhost:5173 · Dev API: http://localhost:3005 · health: /api/health
 
 The Vite dev server proxies `/socket.io` and `/api` to the backend.
 
@@ -36,7 +36,7 @@ npm test
 npm run build
 ```
 
-The integration test uses actual socket clients and a real Fastify server. A browser E2E suite and deployment shakeout are still required before production claims can be made.
+The integration test uses actual socket clients and a real Fastify server. The Playwright browser E2E suite covers multiplayer setup, responsive layouts and full eight-player games; verify deployment separately before production claims.
 
 **Dependency lockfile:** The workspace lockfile is committed. Use `npm ci` for reproducible installs.
 
@@ -63,6 +63,16 @@ The tunnel should route to `http://app:3000`. Do not expose the token in version
 - `apps/web`: React routes, lobby UI, SVG board and rulebook.
 
 Game rules are executed exclusively on the server; the browser highlights likely legal targets for UX but sends commands to the authoritative engine.
+
+## Board sizes
+
+| Board | Players | Land hexes | Number tokens | Ports | Resource cards/type | Development deck |
+| --- | --- | --- | --- | --- | --- | --- |
+| Classic | 3–4 | 19 | 18 | 9 | 19 | 25 |
+| Expanded | 3–6 | 30 | 28 | 11 | 24 | 34 |
+| Grand (custom) | 3–8 | 37 | 35 | 14 | 29 | 43 |
+
+The host can select a board size or use automatic sizing (3–4 classic, 5–6 expanded, 7–8 grand). Larger games use **sequential-turn house rules**, not the official 2025 5–6 player expansion's **paired-player turn**. The expanded board follows its official terrain and number-token counts; grand is a custom eight-player scenario. Older saved games retain their original layouts on restoration. See the [official expansion rulebook](https://www.catan.com/sites/default/files/2025-03/CN3082%20CATAN%20%E2%80%93%205-6%20Rulebook%202025%20reduced.pdf).
 
 ## Rules
 

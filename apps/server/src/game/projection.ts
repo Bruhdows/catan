@@ -66,6 +66,7 @@ export function projectGame(
     turnCount: state.turnCount,
     seed: state.seed,
     boardMode: state.boardMode,
+    boardSize: state.boardSize,
     board: {
       landHexes: [...state.board.hexes.values()].map((h) => ({ ...h })),
       seaHexes: [...state.board.topology.seaHexes],

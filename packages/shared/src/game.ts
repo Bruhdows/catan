@@ -1,9 +1,9 @@
-import type { Board, BoardHex, BoardMode, Port } from "./board.js";
+import type { Board, BoardHex, BoardMode, BoardShape, Port } from "./board.js";
 import type { Edge, Vertex } from "./geometry.js";
 import type { Resource, ResourceHand } from "./resources.js";
 
 /** Player piece colors. Names are shown alongside colors for accessibility. */
-export const PLAYER_COLORS = ["crimson", "azure", "amber", "ivory", "emerald", "violet"] as const;
+export const PLAYER_COLORS = ["crimson", "azure", "amber", "ivory", "emerald", "violet", "teal", "rose"] as const;
 export type PlayerColor = (typeof PLAYER_COLORS)[number];
 
 export type DevCardType = "knight" | "roadBuilding" | "yearOfPlenty" | "monopoly" | "victoryPoint";
@@ -98,6 +98,7 @@ export interface GameState {
   schemaVersion: number;
   seed: string;
   boardMode: BoardMode;
+  boardSize: BoardShape;
   board: Board;
   players: PlayerGame[];
   phase: Phase;
@@ -209,6 +210,7 @@ export interface GameView {
   turnCount: number;
   seed: string;
   boardMode: BoardMode;
+  boardSize: BoardShape;
   board: BoardView;
   robberHex: string;
   players: PublicPlayer[];

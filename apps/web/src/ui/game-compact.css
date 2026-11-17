@@ -164,3 +164,91 @@
 .table-activity-line.activity-action .table-activity-turn { color: #528262; }
 .table-activity-line.activity-roll .table-activity-turn { color: #3d83a0; }
 .table-activity-line.activity-trade .table-activity-turn { color: #a17a43; }
+
+/* Each resource is represented by its individual cards, offset in a stack. */
+.hand { max-width: none; flex: 1; gap: 11px; align-items: end; }
+.hand-stack { --step: 8px; position: relative; display: block; flex: none;
+  width: calc(44px + (var(--visible) - 1) * var(--step)); height: 48px;
+  isolation: isolate; transition: width .2s ease; }
+.hand-stack-card { position: absolute; left: calc(var(--layer) * var(--step)); top: 0;
+  width: 44px; height: 46px; border-radius: 5px;
+  border: 1px solid #cfaa8c; box-shadow: 0 1px 2px #46362b32;
+  display: grid; place-items: center; background: #f7e6c8;
+  z-index: var(--layer); transition: left .18s ease, transform .18s ease; }
+.hand-stack-card::after { content: ""; position: absolute; pointer-events: none; inset: 3px;
+  border-radius: 3px; border: 1px solid #ffffff8a; }
+.hand-stack-card.top { background: #fff9ec; border-width: 1.5px; }
+.hand-stack.r-brick .hand-stack-card { border-color: #ce8c73; background-color: #f8e7df; }
+.hand-stack.r-lumber .hand-stack-card { border-color: #84a786; background-color: #e6f0e2; }
+.hand-stack.r-wool .hand-stack-card { border-color: #a0b975; background-color: #edf3df; }
+.hand-stack.r-grain .hand-stack-card { border-color: #d0b065; background-color: #fff0cf; }
+.hand-stack.r-ore .hand-stack-card { border-color: #8e9db7; background-color: #e9edf4; }
+.hand-stack-card svg { width: 25px; height: 25px; }
+.hand-stack.empty .hand-stack-card { opacity: .55; border-style: dashed; }
+.hand-stack-total { position: absolute; right: -4px; bottom: -4px; z-index: 20; display: grid;
+  min-width: 19px; height: 19px; padding: 0 4px; place-items: center;
+  font: 800 11px var(--font-ui); border-radius: 5px;
+  color: #5d4a33; background: #fffaf0; border: 1px solid #c0a782; box-shadow: 0 1px 3px #49392a30; }
+.hand-stack.empty .hand-stack-total { opacity: .85; }
+
+/* One toolbar in the desktop panel, not a second action bar. */
+.sidebar-actions { display: flex; align-items: center; justify-content: space-evenly; gap: 7px;
+  padding: 8px 12px; border-bottom: 1px solid var(--table-border); flex: none; }
+.sidebar-action { position: relative; display: grid; place-items: center; width: 100%; height: 38px;
+  border: 1px solid #d1cdbd; border-radius: 7px; background: #fbf9f1; color: #6e6958;
+  transition: background .15s, border-color .15s; }
+.sidebar-action:hover, .sidebar-action.selected { background: #eee5d3; border-color: #b4a181; color: #4b3c28; }
+.sidebar-action:focus-visible { outline: 2px solid #bd9047; outline-offset: 1px; }
+.sidebar-action .dock-badge { position: absolute; right: -3px; top: -5px; }
+.sidebar-trade-icon { font-size: 25px; line-height: 1; font-weight: 700; }
+.sidebar-turn-control { display: grid; place-items: stretch; flex: none; padding: 8px 11px;
+  border-top: 1px solid var(--table-border); background: #eae7d9; }
+.sidebar-turn-control .primary-action { width: 100%; height: 42px; }
+.sidebar-turn-control .dock-wait { text-align: center; }
+.dock-actions, .dock-primary { display: none; }
+.dock { justify-content: flex-start; gap: 14px; }
+
+/* Final dice are part of the board, large and anchored bottom-right. */
+.board-area .dice-tray { top: auto; bottom: 12px; right: 12px; padding: 8px 10px; gap: 7px;
+  background: #fffaf0f5; border-radius: 10px; border: 1px solid #bdc3ba;
+  box-shadow: 0 3px 14px #183a4d45; }
+.board-area .dice-tray svg { width: 64px; height: 64px; }
+.board-area .dice-tray b { font-size: 21px; margin-left: 3px; }
+.board-area .board-zoom { left: 10px; right: auto; bottom: 12px; }
+@media (max-width: 1100px) {
+  .sidebar-actions, .sidebar-turn-control { display: none; }
+  .dock-actions, .dock-primary { display: flex; }
+  .dock-actions .dock-tile { width: 40px; height: 40px; border-radius: 7px; }
+  .dock-actions .dock-tile > svg { width: 19px; height: 19px; }
+}
+@media (max-width: 600px) {
+  .hand { gap: 5px; }
+  .hand-stack { --step: 3px; height: 36px; width: calc(33px + (var(--visible) - 1) * var(--step)); }
+  .hand-stack-card { width: 33px; height: 34px; border-radius: 4px; }
+  .hand-stack-card svg { width: 20px; height: 20px; }
+  .hand-stack-total { font-size: 9px; min-width: 16px; height: 16px; }
+  .board-area .dice-tray { bottom: 9px; right: 6px; padding: 5px 7px; gap: 4px; }
+  .board-area .dice-tray svg { width: 35px; height: 35px; }
+  .board-area .dice-tray b { font-size: 16px; }
+  .board-area .board-zoom { bottom: 9px; left: 6px; }
+  .dock-primary { width: 108px; }
+}
+
+@media (max-width: 1100px) {
+  .game .hud .roster:has(> :nth-child(7)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .game .hud .roster:has(> :nth-child(7)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Keep the hand in its own full-width row on narrow phones. The global
+   desktop hand flex rule must never override the mobile row basis. */
+@media (max-width: 600px) {
+  .dock { flex-wrap: wrap; justify-content: center; gap: 4px 6px; min-height: 88px; }
+  .dock > .hand { order: 1; flex: 1 0 100%; width: 100%; min-width: 0;
+    max-width: 100%; justify-content: center; gap: 5px;
+    overflow-x: auto; scrollbar-width: none; }
+  .dock-actions { order: 2; flex: 1 1 auto; justify-content: center; gap: 5px; }
+  .dock-primary { order: 3; flex: none; }
+  .drawer { animation-duration: .16s; }
+}

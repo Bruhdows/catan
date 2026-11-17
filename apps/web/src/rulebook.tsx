@@ -90,7 +90,7 @@ export function RulebookPage() {
           <div className="rule-cards">{QUICK_LINKS.map(({slug,title,sub,icon:Icon})=><Link key={slug} to={"/rules/"+slug} className="rule-card"><strong><Icon size={17}/> {title}</strong><p>{sub}</p><ArrowRight size={16}/></Link>)}</div>
           <div className="rules-example"><strong>Building costs</strong><div className="rules-cost-grid">{COST_CARDS.map(item=><div key={item.name}><strong>{item.art} {item.name}</strong><Cost cost={item.cost}/></div>)}</div></div>
         </>}
-        <div className="rules-source"><CircleHelp size={15}/> This independently written guide explains classic 3–4 player rules. Games with 5–6 players use a larger island and house rules; they do not replicate the official 5–6 player expansion. See the <a href="https://www.catan.com/understand-catan/game-rules" rel="noopener noreferrer" target="_blank">official CATAN rules</a> for authoritative edition-specific details.</div>
+        <div className="rules-source"><CircleHelp size={15}/> This independently written guide explains classic 3–4 player rules. Games with 5–6 players use the 30-hex expansion-sized island, but sequential-turn house rules instead of official paired turns. Seven and eight players use a custom 37-hex island. See the <a href="https://www.catan.com/understand-catan/game-rules" rel="noopener noreferrer" target="_blank">official CATAN rules</a> for authoritative edition-specific details.</div>
       </article>
     </div>
   </main>;

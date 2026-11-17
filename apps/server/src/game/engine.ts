@@ -9,6 +9,7 @@ import {
   canAfford,
   emptyHand,
   generateBoard,
+  resolveBoardSize,
   handTotal,
   hexResource,
   legalCityUpgrades,
@@ -20,6 +21,7 @@ import {
   subHands,
   totalPoints,
   type BoardMode,
+  type BoardSize,
   type DevCardType,
   type GameCommand,
   type GameEvent,
@@ -60,6 +62,7 @@ function secureRng(): Rng {
 export interface EngineOptions {
   seed: string;
   boardMode: BoardMode;
+  boardSize?: BoardSize;
   players: EnginePlayerSeed[];
   now?: () => number;
   /** Injectable random source for deterministic tests. */
@@ -90,7 +93,12 @@ export class GameEngine {
   constructor(options: EngineOptions) {
     this.rng = options.rng ?? secureRng();
     this.now = options.now ?? Date.now;
-    const board = generateBoard(options.players.length > 4 && options.boardMode === "fixed" ? "balanced" : options.boardMode, options.seed, options.players.length > 4 ? 3 : 2);
+    const size = resolveBoardSize(options.boardSize ?? "auto", options.players.length);
+    if (options.players.length > ({ classic: 4, expanded: 6, grand: 8 } as const)[size]) {
+      throw new Error(`The ${size} island cannot seat ${options.players.length} players`);
+    }
+    const board = generateBoard(options.boardMode, options.seed, size);
+    const supply = size === "classic" ? BANK_SUPPLY : size === "expanded" ? 24 : 29;
     const desertHex = [...board.hexes.values()].find((h) => h.terrain === "desert");
     const players: PlayerGame[] = options.players.map((p, index) => ({
       id: p.id,
@@ -114,6 +122,7 @@ export class GameEngine {
       schemaVersion: SCHEMA_VERSION,
       seed: options.seed,
       boardMode: options.boardMode,
+      boardSize: size,
       board,
       players,
       phase: "setup",
@@ -121,8 +130,8 @@ export class GameEngine {
       turnCount: 0,
       rev: 0,
       dice: null,
-      bank: { brick: options.players.length > 4 ? 38 : BANK_SUPPLY, lumber: options.players.length > 4 ? 38 : BANK_SUPPLY, wool: options.players.length > 4 ? 38 : BANK_SUPPLY, grain: options.players.length > 4 ? 38 : BANK_SUPPLY, ore: options.players.length > 4 ? 38 : BANK_SUPPLY },
-      devDeck: this.shuffleDevDeck(options.deckRng ?? secureRng()),
+      bank: { brick: supply, lumber: supply, wool: supply, grain: supply, ore: supply },
+      devDeck: this.shuffleDevDeck(options.deckRng ?? secureRng(), size),
       robberHex: desertHex?.id ?? board.topology.landHexes[0]!,
       pending: { type: "setup", step: 0, player: setupSequence[0]!, needsRoad: false, vertex: null },
       offers: [],
@@ -158,8 +167,9 @@ export class GameEngine {
     return engine;
   }
 
-  private shuffleDevDeck(deckRng: Rng) {
-    const deck = [...DEV_DECK];
+  private shuffleDevDeck(deckRng: Rng, size: "classic" | "expanded" | "grand") {
+    const extra: DevCardType[] = ["knight", "knight", "knight", "knight", "knight", "knight", "roadBuilding", "yearOfPlenty", "monopoly"];
+    const deck = [...DEV_DECK, ...(size === "classic" ? [] : extra), ...(size === "grand" ? extra : [])];
     // Fisher-Yates with a dedicated deck rng so gameplay rng stays scripted.
     for (let i = deck.length - 1; i > 0; i--) {
       const j = deckRng.int(i + 1);
@@ -469,7 +479,8 @@ export class GameEngine {
 
   private returnToBank(hand: ResourceHand): void {
     for (const r of Object.keys(hand) as Resource[]) {
-      this.state.bank[r] = Math.min(this.state.players.length > 4 ? 38 : BANK_SUPPLY, this.state.bank[r] + hand[r]);
+      const supply = this.state.boardSize === "classic" ? BANK_SUPPLY : this.state.boardSize === "expanded" ? 24 : this.state.boardSize === "legacy" ? 38 : 29;
+      this.state.bank[r] = Math.min(supply, this.state.bank[r] + hand[r]);
     }
   }
 
