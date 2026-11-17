@@ -141,13 +141,13 @@ function keyboard(e: KeyboardEvent<SVGGElement>, handler: () => void) {
 }
 
 export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: Props) {
-  const [zoom, setZoom] = useState(() => (typeof window !== "undefined" && window.matchMedia("(max-width: 700px)").matches ? 1.1 : 1));
+  const [zoom, setZoom] = useState(() => (typeof window !== "undefined" && window.matchMedia("(max-width: 700px)").matches ? 1.24 : 1));
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [drag, setDrag] = useState<{ x: number; y: number; sx: number; sy: number } | null>(null);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 700px)");
-    const update = () => { setZoom(media.matches ? 1.1 : 1); setOffset({ x: 0, y: 0 }); };
+    const update = () => { setZoom(media.matches ? 1.24 : 1); setOffset({ x: 0, y: 0 }); };
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
@@ -180,7 +180,7 @@ export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: P
     setOffset({ x: drag.sx - (e.clientX - drag.x) * (range * 2) / rect.width, y: drag.sy - (e.clientY - drag.y) * (range * 1.6) / rect.height });
   };
   const resetView = () => {
-    setZoom(window.matchMedia("(max-width: 700px)").matches ? 1.1 : 1);
+    setZoom(window.matchMedia("(max-width: 700px)").matches ? 1.24 : 1);
     setOffset({ x: 0, y: 0 });
   };
 
@@ -189,9 +189,9 @@ export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: P
       onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={() => setDrag(null)} onPointerCancel={() => setDrag(null)}>
       <defs>
         <radialGradient id="sea" cx="50%" cy="38%" r="75%">
-          <stop stopColor="#3d9db8" />
-          <stop offset=".62" stopColor="#2187a4" />
-          <stop offset="1" stopColor="#14607e" />
+          <stop stopColor="#288bb4" />
+          <stop offset=".62" stopColor="#1479a7" />
+          <stop offset="1" stopColor="#105579" />
         </radialGradient>
         <pattern id="waves" width="86" height="54" patternUnits="userSpaceOnUse">
           <path d="M-8 16 Q2 10 12 16 T32 16 T52 16 T72 16 T92 16" fill="none" stroke="#dff4f6" strokeWidth="1.6" strokeOpacity=".14" />

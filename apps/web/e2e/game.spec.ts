@@ -58,6 +58,8 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     for (const page of [host, alice, bob, bob, alice, host]) await playSetupTurn(page);
     await expect(host.getByRole("button", { name: "Roll dice" })).toBeVisible();
     await expect(host.locator(".table-sidebar")).toBeVisible();
+    await expect(host.locator(".table-sidebar .roster-plate")).toHaveCount(3);
+    await expect(host.locator(".hud")).toBeHidden();
     await expect(host.locator(".table-bank-item")).toHaveCount(5);
     await expect(host.locator(".placed-road")).toHaveCount(6);
     await expect(host.locator(".placed-road[filter]")).toHaveCount(0);
@@ -91,8 +93,14 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await host.setViewportSize({ width: 390, height: 844 });
     await expect(host.locator(".game-board")).toBeVisible();
     await expect(host.locator(".table-sidebar")).toBeHidden();
+    await expect(host.locator(".hud")).toBeVisible();
     await host.screenshot({ path: "test-results/island-mobile-board.png" });
     await expect(host.getByRole("button", { name: "Trade", exact: true })).toBeVisible();
+    await host.getByRole("button", { name: "Game menu" }).click();
+    await expect(host.getByRole("menuitem", { name: "Rulebook" })).toBeVisible();
+    await host.getByRole("menuitem", { name: "Rulebook" }).click();
+    await expect(host.getByRole("dialog", { name: "Catan rules" })).toBeVisible();
+    await host.getByRole("button", { name: "Close rules" }).click();
     await host.getByRole("button", { name: "Trade", exact: true }).click();
     await expect(host.getByText("You give", { exact: true })).toBeInViewport();
     await expect(host.getByText("You receive", { exact: true })).toBeInViewport();
@@ -176,10 +184,20 @@ test("six-player lobby, timed settings, and roster stay visible", async ({ brows
     await expect(host.getByText("6 of 6 players seated")).toBeVisible();
     await host.getByRole("button", { name: "Start game" }).click();
     await expect(host).toHaveURL(new RegExp("/game/" + code));
-    await expect(host.locator(".roster-plate")).toHaveCount(6);
+    await expect(host.locator(".roster-plate:visible")).toHaveCount(6);
+    await host.setViewportSize({ width: 1440, height: 900 });
+    const sidebar = host.locator(".table-sidebar");
+    await expect(sidebar).toBeVisible();
+    await expect(host.locator(".table-sidebar .roster-plate")).toHaveCount(6);
+    await expect(host.locator(".hud")).toBeHidden();
+    const lastPlayer = await host.locator(".table-sidebar .roster-plate").last().boundingBox();
+    const sidebarBounds = await sidebar.boundingBox();
+    expect(lastPlayer).not.toBeNull();
+    expect(sidebarBounds).not.toBeNull();
+    expect(lastPlayer!.y + lastPlayer!.height).toBeLessThanOrEqual(sidebarBounds!.y + sidebarBounds!.height);
     for (const size of [{ width: 1050, height: 850 }, { width: 390, height: 844 }]) {
       await host.setViewportSize(size);
-      const bounds = await host.locator(".roster-plate").evaluateAll(plates => plates.map(p => {
+      const bounds = await host.locator(".roster-plate:visible").evaluateAll(plates => plates.map(p => {
         const r = p.getBoundingClientRect();
         return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
       }));
@@ -192,6 +210,14 @@ test("six-player lobby, timed settings, and roster stay visible", async ({ brows
         expect(boundsRow.bottom).toBeLessThanOrEqual(hud!.y + hud!.height + 1);
       }
     }
+
+    // Full six-player setup: 2 placements per player, each with a visible road.
+    await host.setViewportSize({ width: 1440, height: 900 });
+    for (const i of [0, 1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 0]) await playSetupTurn(pages[i]!);
+    await expect(host.getByRole("button", { name: "Roll dice" })).toBeVisible();
+    await expect(host.locator(".placed-road")).toHaveCount(12);
+    await expect(host.locator(".placed-road[filter]")).toHaveCount(0);
+    await host.screenshot({ path: "test-results/six-player-game.png" });
   } finally {
     await Promise.all(contexts.map(c => c.close()));
   }

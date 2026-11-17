@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { BookOpen, Check, Copy, Crown, History, LogOut, Scroll, Clock3, Volume2, VolumeX, X } from "lucide-react";
+import { BookOpen, Copy, Crown, History, LogOut, Scroll, Clock3, Volume2, VolumeX, X, Layers3 } from "lucide-react";
 import { RESOURCES, emptyHand, type GameCommand, type GameView, type ResourceHand } from "@hexhaven/shared";
 import { legalBoardTargets, BoardView, type BoardAction } from "./board-view";
 import { BuildPanel, CardsPanel, DiscardPicker, HistoryPanel, TradePanel } from "./game-panels";
@@ -53,6 +53,8 @@ function Roster({ game, meId }: { game: GameView; meId?: string }) {
           {player.hasLongestRoad && <span className="award-chip" title="Longest Road"><AwardIcon award="longestRoad" size={14} /></span>}
           {player.hasLargestArmy && <span className="award-chip" title="Largest Army"><AwardIcon award="largestArmy" size={14} /></span>}
         </span>
+        <span className="roster-card-count" title={`${player.resourceCount} resource cards`}><Layers3 size={12} aria-hidden /> {player.resourceCount}</span>
+        <span className="roster-dev-count" title={`${player.devCount} development cards`}><Scroll size={12} aria-hidden /> {player.devCount}</span>
         <span className="roster-pts" title="Visible victory points"><Crown size={13} aria-hidden /> <b>{player.publicPoints}</b><i>/10</i></span>
       </li>;
     })}
@@ -208,33 +210,73 @@ export function GamePage() {
   const devCount = game.you?.devCards.length ?? 0;
   const gameOver = game.phase === "finished";
   const waitingAction = canRoll ? "roll" : canBuild ? "end" : null;
+  const tableTools = <div className="hud-tools">
+    <TurnClock deadline={lobby.turnDeadline ?? null} />
+    <button type="button" onClick={openRules} className="hud-tool" title="Rulebook" aria-label="Open rulebook"><BookOpen size={17} /></button>
+    <button className="hud-tool" aria-label={audio ? "Mute sounds" : "Enable sounds"} title={audio ? "Mute sounds" : "Enable sounds"} onClick={toggleAudio}>
+      {audio ? <Volume2 size={17} /> : <VolumeX size={17} />}
+    </button>
+    <div className="hud-menu-wrap">
+      <button className="hud-tool" aria-label="Game menu" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu(!menu)}><span className="hud-dots" aria-hidden>•••</span></button>
+      {menu && <div className="game-menu" role="menu">
+        <button role="menuitem" onClick={() => { openRules(); setMenu(false); }}><BookOpen size={15} /> Rulebook</button>
+        <button role="menuitem" onClick={() => { toggleAudio(); setMenu(false); }}>{audio ? <VolumeX size={15} /> : <Volume2 size={15} />} {audio ? "Mute sounds" : "Enable sounds"}</button>
+        <button role="menuitem" onClick={() => { void navigator.clipboard.writeText(window.location.origin + "/join/" + code); setMenu(false); }}><Copy size={15} /> Copy invite link</button>
+        <button role="menuitem" onClick={() => { leave(); navigate("/"); }}><LogOut size={15} /> Leave game</button>
+      </div>}
+    </div>
+  </div>;
 
   return <main className="game">
-    <header className="hud">
+    <header className="hud" aria-label="Compact game status">
       <Roster game={game} meId={auth.playerId} />
-      <div className="hud-tools">
-        <TurnClock deadline={lobby.turnDeadline ?? null} />
-        <button type="button" onClick={openRules} className="hud-tool" title="Rulebook" aria-label="Open rulebook"><BookOpen size={17} /></button>
-        <button className="hud-tool" aria-label={audio ? "Mute sounds" : "Enable sounds"} title={audio ? "Mute sounds" : "Enable sounds"} onClick={toggleAudio}>
-          {audio ? <Volume2 size={17} /> : <VolumeX size={17} />}
-        </button>
-        <div className="hud-menu-wrap">
-          <button className="hud-tool" aria-label="Game menu" aria-expanded={menu} onClick={() => setMenu(!menu)}><span className="hud-dots" aria-hidden>ⵗ</span></button>
-          {menu && <div className="game-menu">
-            <button onClick={() => void navigator.clipboard.writeText(window.location.origin + "/join/" + code)}><Copy size={15} /> Copy invite link</button>
-            <button onClick={() => { leave(); navigate("/"); }}><LogOut size={15} /> Leave game</button>
-          </div>}
-        </div>
-      </div>
+      {tableTools}
     </header>
 
     <section className="table">
-      <BoardView game={game} mode={mode} selectable={allowed} onVertex={onVertex} onEdge={onEdge} onHex={onHex} />
-      <aside className="table-sidebar" aria-label="Table activity and bank">
-        <div className="table-sidebar-head"><span>GAME ACTIVITY</span><span className="round-indicator">Turn {game.turnCount || "—"}</span></div>
+      <div className="board-area">
+        <BoardView game={game} mode={mode} selectable={allowed} onVertex={onVertex} onEdge={onEdge} onHex={onHex} />
+        <div className={"turn-plate tone-" + prompt.tone} role="status">
+          <strong>{prompt.title}</strong>
+          {prompt.note && <span>{prompt.note}</span>}
+        </div>
+        {game.dice && <DiceTray dice={game.dice} rolling={rolling} />}
+        {incomingOffers.length > 0 && !gameOver &&
+          <button className="offer-note" onClick={() => togglePanel("trade")}>
+            <span aria-hidden>⇄</span>
+            {incomingOffers.length === 1
+              ? <>{game.players.find((p) => p.id === incomingOffers[0]!.from)?.name} proposes a trade</>
+              : <>{incomingOffers.length} trade offers waiting</>}
+            <b>Review</b>
+          </button>}
+        {mode && game.pending.type === "none" &&
+          <button className="placement-cancel" onClick={() => setMode(null)}><X size={13} /> Cancel</button>}
+        {panel && <aside className="drawer" aria-label={panel === "log" ? "Game log" : panel + " controls"}>
+          <header className="drawer-head">
+            <h2>{panel === "build" ? "Build" : panel === "trade" ? "Trade" : panel === "cards" ? "Development cards" : "Game log"}</h2>
+            <button className="drawer-close" aria-label="Close panel" onClick={() => setPanel(null)}><X size={18} /></button>
+          </header>
+          <div className="drawer-body">
+            {panel === "build" && <BuildPanel game={game} meId={auth.playerId} hand={hand} canBuild={canBuild} mode={mode} onMode={changeMode} send={send} />}
+            {panel === "trade" && <TradePanel game={game} meId={auth.playerId} canTrade={canBuild} hand={hand} send={send} />}
+            {panel === "cards" && <CardsPanel game={game} meId={auth.playerId} canPlay={canPlayCard} send={send} />}
+            {panel === "log" && <HistoryPanel game={game} />}
+          </div>
+        </aside>}
+      </div>
+      <aside className="table-sidebar" aria-label="Players, activity and bank">
+        <div className="table-sidebar-toolbar">
+          <strong>CATAN</strong>
+          {tableTools}
+        </div>
+        <section className="table-sidebar-players" aria-label="Player standings">
+          <div className="table-sidebar-head"><span>PLAYERS</span><span className="sidebar-count">{game.players.length} seated</span></div>
+          <Roster game={game} meId={auth.playerId} />
+        </section>
+        <div className="table-sidebar-head activity-heading"><span>GAME ACTIVITY</span><span className="round-indicator">Turn {game.turnCount || "—"}</span></div>
         <div className="table-activity" aria-live="off">
           {[...game.log].slice(-9).reverse().map((entry, index) =>
-            <div className="table-activity-line" key={`${entry.rev}-${index}`}>
+            <div className={"table-activity-line activity-" + entry.tone} key={`${entry.rev}-${index}`}>
               <span className="table-activity-turn">{entry.turn ? `T${entry.turn}` : "•"}</span>
               <span>{entry.text}</span>
             </div>)}
@@ -248,37 +290,6 @@ export function GamePage() {
         </div>
       </aside>
 
-      <div className={"turn-plate tone-" + prompt.tone} role="status">
-        <strong>{prompt.title}</strong>
-        {prompt.note && <span>{prompt.note}</span>}
-      </div>
-
-      {game.dice && <DiceTray dice={game.dice} rolling={rolling} />}
-
-      {incomingOffers.length > 0 && !gameOver &&
-        <button className="offer-note" onClick={() => togglePanel("trade")}>
-          <span aria-hidden>⇄</span>
-          {incomingOffers.length === 1
-            ? <>{game.players.find((p) => p.id === incomingOffers[0]!.from)?.name} proposes a trade</>
-            : <>{incomingOffers.length} trade offers waiting</>}
-          <b>Review</b>
-        </button>}
-
-      {mode && game.pending.type === "none" &&
-        <button className="placement-cancel" onClick={() => setMode(null)}><X size={13} /> Cancel</button>}
-
-      {panel && <aside className="drawer" aria-label={panel === "log" ? "Game log" : panel + " controls"}>
-        <header className="drawer-head">
-          <h2>{panel === "build" ? "Build" : panel === "trade" ? "Trade" : panel === "cards" ? "Development cards" : "Game log"}</h2>
-          <button className="drawer-close" aria-label="Close panel" onClick={() => setPanel(null)}><X size={18} /></button>
-        </header>
-        <div className="drawer-body">
-          {panel === "build" && <BuildPanel game={game} meId={auth.playerId} hand={hand} canBuild={canBuild} mode={mode} onMode={changeMode} send={send} />}
-          {panel === "trade" && <TradePanel game={game} meId={auth.playerId} canTrade={canBuild} hand={hand} send={send} />}
-          {panel === "cards" && <CardsPanel game={game} meId={auth.playerId} canPlay={canPlayCard} send={send} />}
-          {panel === "log" && <HistoryPanel game={game} />}
-        </div>
-      </aside>}
     </section>
 
     <footer className="dock">
