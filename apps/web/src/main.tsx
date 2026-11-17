@@ -1,14 +1,21 @@
 import React from "react";
+import { useParams } from "react-router";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { SessionProvider } from "./session";
-import { HomePage, JoinPage, LobbyPage, GamePage, Shell } from "./pages";
+import { HomePage, LobbyPage, GamePage, Shell } from "./pages";
 import { RulebookPage } from "./rulebook";
 import { RulebookModal } from "./rulebook-modal";
 import "./ui/tokens.css";
 import "./ui/base.css";
 import "./ui/game.css";
 import "./ui/menu.css";
+import "./ui/game-compact.css";
+
+function JoinInviteRedirect() {
+  const { code = "" } = useParams();
+  return <Navigate to={"/?code=" + encodeURIComponent(code.toUpperCase())} replace />;
+}
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -18,9 +25,9 @@ createRoot(document.getElementById("root")!).render(
         <Shell>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/create" element={<JoinPage create />} />
-            <Route path="/join" element={<JoinPage />} />
-            <Route path="/join/:code" element={<JoinPage />} />
+            <Route path="/create" element={<Navigate to="/" replace />} />
+            <Route path="/join" element={<Navigate to="/" replace />} />
+            <Route path="/join/:code" element={<JoinInviteRedirect />} />
             <Route path="/lobby/:code" element={<LobbyPage />} />
             <Route path="/game/:code" element={<GamePage />} />
             <Route path="/rules" element={<RulebookPage />} />

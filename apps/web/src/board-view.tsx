@@ -141,13 +141,13 @@ function keyboard(e: KeyboardEvent<SVGGElement>, handler: () => void) {
 }
 
 export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: Props) {
-  const [zoom, setZoom] = useState(() => (typeof window !== "undefined" && window.matchMedia("(max-width: 700px)").matches ? 1.25 : 1));
+  const [zoom, setZoom] = useState(() => (typeof window !== "undefined" && window.matchMedia("(max-width: 700px)").matches ? 1.1 : 1));
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [drag, setDrag] = useState<{ x: number; y: number; sx: number; sy: number } | null>(null);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 700px)");
-    const update = () => { setZoom(media.matches ? 1.25 : 1); setOffset({ x: 0, y: 0 }); };
+    const update = () => { setZoom(media.matches ? 1.1 : 1); setOffset({ x: 0, y: 0 }); };
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
@@ -162,7 +162,7 @@ export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: P
     for (const id of player.cities) buildings.set(id, { color, city: true });
   }
 
-  const range = (game.board.landHexes.length > 19 ? 570 : 408) / zoom;
+  const range = (game.board.landHexes.length > 19 ? 535 : 390) / zoom;
   const viewBox = `${-range + offset.x} ${-range * 0.8 + offset.y} ${range * 2} ${range * 1.6}`;
 
   const onWheel = (e: WheelEvent<SVGSVGElement>) => {
@@ -180,7 +180,7 @@ export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: P
     setOffset({ x: drag.sx - (e.clientX - drag.x) * (range * 2) / rect.width, y: drag.sy - (e.clientY - drag.y) * (range * 1.6) / rect.height });
   };
   const resetView = () => {
-    setZoom(window.matchMedia("(max-width: 700px)").matches ? 1.25 : 1);
+    setZoom(window.matchMedia("(max-width: 700px)").matches ? 1.1 : 1);
     setOffset({ x: 0, y: 0 });
   };
 
@@ -290,7 +290,7 @@ export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: P
         return <g key={edge.id} role={active ? "button" : undefined} tabIndex={active ? 0 : undefined}
           onKeyDown={active ? (e) => keyboard(e, click) : undefined}
           aria-label={active ? "Place a road here" : undefined}>
-          {owned && <g className="board-piece" filter="url(#piece-shadow)">
+          {owned && <g className="board-piece placed-road">
             <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#4a3826" strokeWidth="10.5" strokeLinecap="round" />
             <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={owned} strokeWidth="7" strokeLinecap="round" />
             <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#ffffff" strokeOpacity=".3" strokeWidth="1.8" strokeLinecap="round" />

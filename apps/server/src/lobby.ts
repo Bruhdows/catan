@@ -71,6 +71,9 @@ export class Lobby {
   settings: LobbySettings = { ...DEFAULT_LOBBY_SETTINGS };
   state: LobbyState = "lobby";
   engine: GameEngine | null = null;
+  turnDeadline: number | null = null;
+  private clockTurn = 0;
+  private clockBlocked = false;
   lastActivity: number;
   listener: (event: LobbyEvent) => void = () => {};
 
@@ -290,6 +293,9 @@ export class Lobby {
       players,
     });
     this.state = "playing";
+    this.turnDeadline = null;
+    this.clockTurn = 0;
+    this.clockBlocked = false;
     this.touch();
     return true;
   }
@@ -319,8 +325,43 @@ export class Lobby {
       }
     }
     if (currentPhase(this.engine) === "finished") this.state = "finished";
+    this.syncTurnClock(Date.now());
     this.touch();
     return { ok: true, events: outcome.events };
+  }
+
+  /** Set the authoritative deadline; setup and blocking choices have no countdown. */
+  syncTurnClock(now: number): void {
+    if (!this.engine || this.state !== "playing" || !(this.settings.turnTimeSeconds > 0)) {
+      this.turnDeadline = null;
+      return;
+    }
+    const state = this.engine.state;
+    const blocked = state.turnCount === 0 || state.pending.type !== "none";
+    if (blocked) {
+      this.clockBlocked = true;
+      this.turnDeadline = null;
+      return;
+    }
+    if (this.turnDeadline === null || this.clockTurn !== state.turnCount || this.clockBlocked) {
+      this.clockTurn = state.turnCount;
+      this.clockBlocked = false;
+      this.turnDeadline = now + this.settings.turnTimeSeconds * 1000;
+    }
+  }
+
+  /** Expired actions are resolved on the server, never by a browser clock. */
+  expireTurn(now: number): CommandResult | null {
+    this.syncTurnClock(now);
+    if (!this.engine || this.turnDeadline === null || now < this.turnDeadline) return null;
+    const state = this.engine.state;
+    const active = state.players[state.turnIndex];
+    if (!active) return null;
+    this.turnDeadline = null;
+    const result = this.applyCommand(active.id, { type: state.phase === "roll" ? "rollDice" : "endTurn" });
+    // A failed automatic action must not spin every second.
+    if (!result.ok) this.turnDeadline = now + 10_000;
+    return result.ok ? result : null;
   }
 
   /** Returns the current game view for a viewer (player or spectator). */
@@ -371,6 +412,7 @@ export class Lobby {
       settings: { ...this.settings },
       minPlayers: MIN_PLAYERS,
       maxPlayers: MAX_PLAYERS,
+      turnDeadline: this.turnDeadline,
     };
   }
 }

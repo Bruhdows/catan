@@ -146,7 +146,7 @@ class LobbyStore {
         if (raw.schemaVersion !== LOBBY_SCHEMA_VERSION) continue;
         const lobby = new Lobby(raw.code);
         lobby.hostId = raw.hostId;
-        lobby.settings = raw.settings;
+        lobby.settings = { ...raw.settings, turnTimeSeconds: raw.settings.turnTimeSeconds ?? 0 };
         lobby.state = raw.state === "playing" && !raw.engine ? "lobby" : (raw.state as Lobby["state"]);
         for (const seat of raw.seats) {
           lobby.seats.set(seat.id, {

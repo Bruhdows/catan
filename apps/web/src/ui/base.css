@@ -175,3 +175,21 @@ p { line-height: 1.55; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/* One shared custom checkbox for the menu and table settings. */
+.checkbox-row { cursor: pointer; width: fit-content; min-height: 28px; user-select: none; }
+.checkbox-row input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none; flex: none; position: relative;
+  width: 20px; height: 20px; margin: 0; border: 1.5px solid #b7a688;
+  border-radius: 6px; background: #fffdf7; box-shadow: inset 0 1px 2px #473c2710;
+  cursor: pointer; transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.checkbox-row input[type="checkbox"]:hover:not(:disabled) { border-color: var(--wood); box-shadow: 0 0 0 3px #b3855b24; }
+.checkbox-row input[type="checkbox"]:checked { background: var(--wood); border-color: var(--wood-deep); box-shadow: 0 1px 2px #382f2233; }
+.checkbox-row input[type="checkbox"]:checked::after {
+  content: ""; position: absolute; width: 9px; height: 5px; left: 4px; top: 5px;
+  border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg);
+}
+.checkbox-row input[type="checkbox"]:focus-visible { outline: 3px solid var(--honey); outline-offset: 2px; }
+.checkbox-row input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
+.checkbox-row:has(input:disabled) { opacity: .72; cursor: default; }

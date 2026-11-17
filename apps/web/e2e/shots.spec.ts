@@ -33,17 +33,17 @@ test("after-shots", async ({ browser }) => {
     await host.waitForTimeout(400);
     await host.screenshot({ path: "shots/after-rules.png" });
 
-    await host.goto("/create");
-    await host.getByPlaceholder("Nickname").fill("Ada");
-    await host.getByRole("button", { name: "Create room" }).click();
+    await host.goto("/");
+    await host.getByPlaceholder("Your nickname").fill("Ada");
+    await host.getByRole("button", { name: "Start a new game" }).click();
     await expect(host).toHaveURL(/\/lobby\/[A-Z2-9]{6}$/);
     const code = host.url().split("/").at(-1)!;
     await host.screenshot({ path: "shots/after-lobby.png" });
 
     for (const [page, name] of [[alice, "Ben"], [bob, "Cleo"]] as [Page, string][]) {
       await page.goto("/join/" + code);
-      await page.getByPlaceholder("Nickname").fill(name);
-      await page.getByRole("button", { name: "Join room" }).click();
+      await page.getByPlaceholder("Your nickname").fill(name);
+      await page.getByRole("button", { name: "Join game" }).click();
       await expect(page).toHaveURL(new RegExp("/lobby/" + code));
       await page.getByRole("button", { name: "Ready up" }).click();
     }

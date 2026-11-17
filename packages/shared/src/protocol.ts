@@ -12,9 +12,10 @@ export type LobbyState = "lobby" | "playing" | "finished";
 export interface LobbySettings {
   boardMode: BoardMode;
   allowSpectators: boolean;
+  turnTimeSeconds: 0 | 60 | 120 | 180 | 300;
 }
 
-export const DEFAULT_LOBBY_SETTINGS: LobbySettings = { boardMode: "random", allowSpectators: true };
+export const DEFAULT_LOBBY_SETTINGS: LobbySettings = { boardMode: "random", allowSpectators: true, turnTimeSeconds: 0 };
 
 export interface LobbyPlayerView {
   id: string;
@@ -34,6 +35,7 @@ export interface LobbyView {
   settings: LobbySettings;
   minPlayers: number;
   maxPlayers: number;
+  turnDeadline: number | null;
 }
 
 export interface SessionAuth {
@@ -109,6 +111,7 @@ export const commandEnvelopeSchema = z.object({
 export const settingsSchema = z.object({
   boardMode: z.enum(["fixed", "random", "balanced"]),
   allowSpectators: z.boolean(),
+  turnTimeSeconds: z.union([z.literal(0), z.literal(60), z.literal(120), z.literal(180), z.literal(300)]).default(0),
 }) satisfies z.ZodType<LobbySettings>;
 
 export const colorSchema = z.enum(PLAYER_COLORS) satisfies z.ZodType<PlayerColor>;

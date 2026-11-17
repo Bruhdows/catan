@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { BookOpen, Check, Copy, Crown, History, LogOut, Scroll, Volume2, VolumeX, X } from "lucide-react";
+import { BookOpen, Check, Copy, Crown, History, LogOut, Scroll, Clock3, Volume2, VolumeX, X } from "lucide-react";
 import { RESOURCES, emptyHand, type GameCommand, type GameView, type ResourceHand } from "@hexhaven/shared";
 import { legalBoardTargets, BoardView, type BoardAction } from "./board-view";
 import { BuildPanel, CardsPanel, DiscardPicker, HistoryPanel, TradePanel } from "./game-panels";
@@ -79,6 +79,19 @@ function DiceTray({ dice, rolling }: { dice: [number, number] | null; rolling: b
     <DiceFace value={shown[1]} size={38} rolling={rolling} />
     <b>{shown[0] + shown[1]}</b>
   </div>;
+}
+
+function TurnClock({ deadline }: { deadline: number | null }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (deadline === null) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(timer);
+  }, [deadline]);
+  if (deadline === null) return null;
+  const seconds = Math.max(0, Math.ceil((deadline - now) / 1000));
+  return <span className={"turn-clock" + (seconds <= 15 ? " urgent" : "")} aria-label={`${seconds} seconds left in turn`} title="Turn time remaining"><Clock3 size={15} /> {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2,"0")}</span>;
 }
 
 /* --- Resource hand ------------------------------------------------------------ */
@@ -182,7 +195,7 @@ export function GamePage() {
   };
 
   if (!auth || !lobby || auth.code !== code) {
-    return <main className="center-state"><h2>Rejoining your game…</h2><p>Restoring your seat at the table.</p><Link to="/join">Join a different room</Link></main>;
+    return <main className="center-state"><h2>Rejoining your game…</h2><p>Restoring your seat at the table.</p><Link to="/">Join a different room</Link></main>;
   }
   if (!game) return <main className="center-state"><div className="spinner" /><h2>Preparing the island…</h2><p>Waiting for the other players.</p></main>;
 
@@ -198,13 +211,9 @@ export function GamePage() {
 
   return <main className="game">
     <header className="hud">
-      <div className="hud-room">
-        <span className="hud-code" title="Room code">{lobby.code}</span>
-        <button className="hud-tool" title="Copy invite link" aria-label="Copy invite link"
-          onClick={() => void navigator.clipboard.writeText(window.location.origin + "/join/" + code)}><Copy size={15} /></button>
-      </div>
       <Roster game={game} meId={auth.playerId} />
       <div className="hud-tools">
+        <TurnClock deadline={lobby.turnDeadline ?? null} />
         <button type="button" onClick={openRules} className="hud-tool" title="Rulebook" aria-label="Open rulebook"><BookOpen size={17} /></button>
         <button className="hud-tool" aria-label={audio ? "Mute sounds" : "Enable sounds"} title={audio ? "Mute sounds" : "Enable sounds"} onClick={toggleAudio}>
           {audio ? <Volume2 size={17} /> : <VolumeX size={17} />}
@@ -212,6 +221,7 @@ export function GamePage() {
         <div className="hud-menu-wrap">
           <button className="hud-tool" aria-label="Game menu" aria-expanded={menu} onClick={() => setMenu(!menu)}><span className="hud-dots" aria-hidden>ⵗ</span></button>
           {menu && <div className="game-menu">
+            <button onClick={() => void navigator.clipboard.writeText(window.location.origin + "/join/" + code)}><Copy size={15} /> Copy invite link</button>
             <button onClick={() => { leave(); navigate("/"); }}><LogOut size={15} /> Leave game</button>
           </div>}
         </div>
@@ -220,6 +230,23 @@ export function GamePage() {
 
     <section className="table">
       <BoardView game={game} mode={mode} selectable={allowed} onVertex={onVertex} onEdge={onEdge} onHex={onHex} />
+      <aside className="table-sidebar" aria-label="Table activity and bank">
+        <div className="table-sidebar-head"><span>GAME ACTIVITY</span><span className="round-indicator">Turn {game.turnCount || "—"}</span></div>
+        <div className="table-activity" aria-live="off">
+          {[...game.log].slice(-9).reverse().map((entry, index) =>
+            <div className="table-activity-line" key={`${entry.rev}-${index}`}>
+              <span className="table-activity-turn">{entry.turn ? `T${entry.turn}` : "•"}</span>
+              <span>{entry.text}</span>
+            </div>)}
+        </div>
+        <div className="table-sidebar-bank">
+          <div className="table-sidebar-head"><span>BANK</span></div>
+          <div className="table-bank-resources">{RESOURCES.map(resource =>
+            <div className="table-bank-item" key={resource} title={`${resource}: ${game.bank[resource]} remaining`}>
+              <ResourceIcon resource={resource} size={24} /><strong>{game.bank[resource]}</strong>
+            </div>)}</div>
+        </div>
+      </aside>
 
       <div className={"turn-plate tone-" + prompt.tone} role="status">
         <strong>{prompt.title}</strong>

@@ -327,6 +327,7 @@ export function registerSocketHandlers(io: Io): void {
       entry.lobby.listener({ type: "game" }); // schedule durable snapshot for every accepted mutation
       emitEvents(io, entry.lobby, result.events);
       broadcastGame(io, entry.lobby);
+      io.to(roomOf(entry.lobby.code)).emit("lobby:state", entry.lobby.view());
       // A finishing match also changes the lobby state; tell the room.
       if (entry.lobby.state === "finished") {
         io.to(roomOf(entry.lobby.code)).emit("lobby:state", entry.lobby.view());
@@ -346,8 +347,23 @@ export function registerSocketHandlers(io: Io): void {
     });
   });
 
+  const turnTicker = setInterval(() => {
+    const now = Date.now();
+    for (const lobby of lobbyStore.all()) {
+      if (lobby.state !== "playing") continue;
+      const result = lobby.expireTurn(now);
+      if (!result || !result.ok) continue;
+      lobby.listener({ type: "game" });
+      emitEvents(io, lobby, result.events);
+      broadcastGame(io, lobby);
+      io.to(roomOf(lobby.code)).emit("lobby:state", lobby.view());
+    }
+  }, 1000);
+  turnTicker.unref();
+
   // Graceful shutdown: disconnect all clients so they reconnect cleanly.
   const shutdown = () => {
+    clearInterval(turnTicker);
     io.disconnectSockets(true);
   };
   process.on("SIGTERM", shutdown);

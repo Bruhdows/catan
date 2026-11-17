@@ -1,0 +1,129 @@
+/* A single, information-dense game table: minimal chrome, clear turn hierarchy. */
+.game { background: #267f9a; }
+.hud {
+  min-height: 47px; height: auto; padding: 5px 12px;
+  gap: 12px; background: #f4f0e7; border-bottom: 1px solid #c8c9bf;
+  box-shadow: 0 1px 4px rgb(30 53 57 / 9%);
+}
+.roster { display: flex; flex: 1; gap: 6px; min-width: 0; justify-content: flex-start; overflow: visible; }
+.roster-plate {
+  flex: 0 1 186px; min-width: 0; max-width: none; height: 34px;
+  border-radius: 7px; border: 1px solid #d6d3c7;
+  border-left: 3px solid var(--pl); background: #fffdf7;
+  padding: 3px 8px 3px 5px; gap: 5px;
+  box-shadow: none; transform: none;
+}
+.roster-plate.active { transform: none; background: #fff9e7; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pl) 30%, transparent); }
+.roster-plate.mine .roster-name { box-shadow: none; }
+.roster-plate .roster-marker svg { width: 22px; height: 22px; }
+.roster-name { font-size: 12px; max-width: none; }
+.roster-pts { align-items: center; gap: 1px; margin-left: auto; }
+.roster-pts b { font: 750 14px var(--font-ui); color: #514e44; }
+.roster-pts i { font-size: 9px; }
+.roster-pts svg { width: 12px; height: 12px; }
+.hud-tools { gap: 4px; flex-shrink: 0; }
+.hud-tool { width: 30px; height: 30px; border-radius: 7px; background: #fffdf7; border-color: #d6d3c7; }
+.hud-menu-wrap .hud-tool { font-size: 16px; }
+.turn-clock { color: #53564b; min-width: 58px; font-size: 12px; }
+
+/* The activity strip is a fixed part of the board area, not another overlay. */
+.table { display: grid; grid-template-columns: minmax(0, 1fr) 238px; background: #2e8fa9; }
+.island-stage { position: relative; inset: auto; min-width: 0; min-height: 0; overflow: hidden; }
+.game-board { background: #2e8fa9; }
+.table-sidebar {
+  z-index: 3; display: flex; flex-direction: column; min-width: 0;
+  background: #f1efe6; color: #43483f;
+  border-left: 1px solid #c8c9bf;
+}
+.table-sidebar-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 9px;
+  padding: 13px 13px 10px; font-size: 10px; letter-spacing: .1em;
+  font-weight: 800; color: #6b7065;
+}
+.round-indicator { font-size: 10px; letter-spacing: 0; background: #dfdfd5; border-radius: 5px; padding: 4px 7px; }
+.table-activity { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 12px; scrollbar-width: thin; scrollbar-color: #bfc1b4 transparent; }
+.table-activity-line { display: flex; align-items: start; gap: 9px; padding: 8px 0; border-bottom: 1px solid #ddded4; font-size: 11.5px; line-height: 1.45; color: #50564e; }
+.table-activity-line:last-child { border-bottom: 0; }
+.table-activity-turn { flex: none; min-width: 25px; padding-top: 1px; font-size: 9px; font-weight: 750; color: #868b81; }
+.table-sidebar-bank { flex: none; border-top: 1px solid #d2d3c9; padding-bottom: 13px; }
+.table-bank-resources { display: flex; justify-content: space-between; gap: 3px; padding: 0 12px; }
+.table-bank-item { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; flex: 1; }
+.table-bank-item strong { font-size: 11px; font-weight: 750; font-variant-numeric: tabular-nums; }
+
+/* Prompts stay legible but no longer compete with the island. */
+.turn-plate { top: 12px; left: 12px; max-width: 260px; padding: 8px 11px; background: #f7f3e8; border-radius: 7px; border-color: #c8c9bf; box-shadow: 0 2px 7px #203e4550; }
+.turn-plate strong { font: 750 13px var(--font-ui); }
+.turn-plate span { font-size: 10px; }
+.dice-tray { top: 12px; right: 250px; gap: 3px; padding: 4px 8px; border-color: #c8c9bf; border-radius: 7px; background: #f7f3e8; }
+.dice-tray svg { width: 29px; height: 29px; }
+.dice-tray b { font: 800 16px var(--font-ui); }
+.board-zoom { right: 10px; bottom: 10px; border-radius: 7px; padding: 2px; background: #f7f3e8; border-color: #c8c9bf; }
+.board-zoom button { width: 29px; height: 29px; }
+.drawer { top: 8px; right: 8px; bottom: 8px; width: min(340px, calc(100% - 16px)); border-radius: 9px; }
+.drawer-head { padding: 10px 14px; }
+.drawer-head h2 { font-size: 17px; }
+.drawer-body { padding: 12px 14px 15px; }
+
+/* Resource counters and one-line actions instead of oversized game tiles. */
+.dock { gap: 12px; min-height: 63px; padding: 6px 12px; background: #f4f0e7; border-color: #c8c9bf; box-shadow: 0 -1px 6px #203e4520; }
+.hand { flex: 1; gap: 5px; max-width: 570px; }
+.hand-card { height: 48px; flex: 0 1 70px; min-width: 44px; max-width: 70px; border-radius: 7px; box-shadow: none; }
+.hand-card-icon svg { width: 24px; height: 24px; }
+.hand-count { min-width: 18px; height: 18px; right: 3px; bottom: 3px; padding: 0 4px; border-radius: 5px; font-size: 10px; }
+.hand-side { gap: 4px; }
+.hand-vp, .hand-tokens { border-radius: 6px; padding: 3px 7px; }
+.hand-vp b { font: 750 14px var(--font-ui); }
+.hand-vp svg, .hand-tokens svg { width: 12px; height: 12px; }
+.hand-vp i { font-size: 9px; }
+.dock-actions { display: flex; gap: 3px; }
+.dock-tile { width: 60px; height: 43px; gap: 1px; border-radius: 7px; font-size: 10px; }
+.dock-tile > svg, .dock-tile > .dock-tile-icon { width: 19px; height: 19px; font-size: 18px; }
+.dock-tile.open { background: #e6e6da; box-shadow: inset 0 -2px 0 #9a9d85; border-color: #cbcbbd; }
+.dock-primary { width: 150px; }
+.primary-action { height: 42px; border-radius: 7px; font-size: 13px; gap: 6px; }
+
+@media (max-width: 1150px) {
+  .table { grid-template-columns: minmax(0, 1fr) 200px; }
+  .dice-tray { right: 210px; }
+  .roster { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .roster-plate { height: 25px; padding: 1px 5px; }
+  .roster-plate .roster-marker svg { width: 17px; height: 17px; }
+  .roster-name { font-size: 10.5px; }
+  .roster-pts b { font-size: 12px; }
+  .hud { min-height: 59px; }
+}
+@media (max-width: 850px) {
+  .table { grid-template-columns: 1fr; }
+  .table-sidebar { display: none; }
+  .dice-tray { right: 12px; }
+  .dock { flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
+  .hand { flex: 1; max-width: none; }
+}
+@media (max-width: 600px) {
+  .hud { min-height: 63px; padding: 5px 6px; }
+  .roster { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .roster-plate { height: 24px; gap: 2px; padding: 1px 4px; }
+  .roster-name { font-size: 9.5px; }
+  .roster-pts b { font-size: 11px; }
+  .roster-pts svg, .roster-pts i, .roster-marker { display: none !important; }
+  .hud-tools { flex-direction: column; gap: 2px; }
+  .hud-tools > .hud-tool { display: none; }
+  .hud-menu-wrap .hud-tool { width: 25px; height: 23px; }
+  .turn-clock { font-size: 10px; min-width: 40px; }
+  .turn-plate { top: 7px; left: 6px; padding: 6px 8px; }
+  .dice-tray { top: 7px; right: 7px; }
+  .dice-tray svg { width: 24px; height: 24px; }
+  .dock { padding: 4px 6px; gap: 4px 7px; min-height: 80px; }
+  .hand { order: 1; justify-content: center; flex: 1 0 100%; gap: 4px; }
+  .hand-card { width: 44px; flex: 1 1 38px; max-width: 58px; height: 34px; }
+  .hand-card-icon svg { width: 18px; height: 18px; }
+  .hand-count { bottom: 1px; right: 1px; min-width: 15px; height: 15px; font-size: 9px; }
+  .hand-side { flex-direction: row; align-items: center; }
+  .hand-vp, .hand-tokens { padding: 3px; }
+  .dock-actions { order: 2; flex: 1; justify-content: flex-start; }
+  .dock-tile { height: 32px; width: 44px; font-size: 9px; }
+  .dock-tile > svg, .dock-tile > .dock-tile-icon { width: 14px; height: 14px; font-size: 13px; }
+  .dock-primary { order: 3; width: 112px; }
+  .primary-action { height: 32px; font-size: 11px; }
+  .primary-action svg { width: 17px; height: 17px; }
+}

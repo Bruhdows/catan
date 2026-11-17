@@ -656,3 +656,33 @@
   .primary-action { height: 48px; }
   .offline-note { bottom: 170px; }
 }
+
+/* Six seats remain visible without clipping or horizontally hiding anyone. */
+.hud { height: auto; min-height: 66px; padding: 9px 14px; }
+.roster { display: grid; flex: 1; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 7px; overflow: visible; }
+.roster-plate { max-width: none; min-width: 0; height: 40px; width: 100%; overflow: hidden; }
+.roster-name { flex: 1; min-width: 0; }
+.roster-pts { flex: none; }
+.turn-clock { display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; min-width: 63px; font-weight: 750; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--wood-deep); }
+.turn-clock.urgent { color: #b54534; }
+@media (max-width: 1280px) {
+  .roster { grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+  .roster-plate { height: 34px; }
+  .roster-plate .roster-marker svg { width: 21px; height: 21px; }
+}
+@media (max-width: 980px) {
+  .roster { overflow: visible; justify-content: stretch; }
+  .roster-plate { flex: initial; }
+}
+@media (max-width: 700px) {
+  .hud { height: auto; min-height: 80px; padding: 7px; gap: 5px; }
+  .roster { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .roster-plate { height: 31px; padding: 2px 4px; gap: 3px; }
+  .roster-name { font-size: 10px; max-width: none; }
+  .roster-pts { margin: 0; }
+  .roster-pts b { font-size: 13px; }
+  .hud-tools { gap: 3px; flex-direction: column; }
+  .hud-tools > .hud-tool { display: none; }
+  .turn-clock { min-width: 48px; font-size: 11px; }
+  .turn-clock svg { display: none; }
+}

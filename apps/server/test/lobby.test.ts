@@ -90,6 +90,31 @@ describe("lobby controls", () => {
     expect(lobby.setReady(ids[1]!, false)).toBe(false);
   });
 
+  it("enforces timed turns while leaving setup and blocking decisions untimed", () => {
+    const { lobby } = fourPlayerLobby();
+    expect(lobby.updateSettings(lobby.hostId, { ...lobby.settings, turnTimeSeconds: 60 })).toBe(true);
+    readyAll(lobby);
+    expect(lobby.start(lobby.hostId)).toBe(true);
+    lobby.syncTurnClock(1000);
+    expect(lobby.turnDeadline).toBeNull(); // setup never times out
+    const state = lobby.engine!.state;
+    state.phase = "main";
+    state.turnCount = 1;
+    state.pending = { type: "none" };
+    lobby.syncTurnClock(1000);
+    expect(lobby.turnDeadline).toBe(61000);
+    expect(lobby.expireTurn(60999)).toBeNull();
+    expect(lobby.expireTurn(61000)?.ok).toBe(true);
+    expect(state.turnCount).toBe(2);
+    expect(state.phase).toBe("roll");
+    state.pending = { type: "robberMove" };
+    lobby.syncTurnClock(62000);
+    expect(lobby.turnDeadline).toBeNull();
+    state.pending = { type: "none" };
+    lobby.syncTurnClock(63000);
+    expect(lobby.turnDeadline).toBe(123000);
+  });
+
   it("settings and kicks are host-only and lobby-only", () => {
     const { lobby, ids } = fourPlayerLobby();
     expect(lobby.updateSettings(ids[1]!, { ...lobby.settings, boardMode: "random" })).toBe(false);

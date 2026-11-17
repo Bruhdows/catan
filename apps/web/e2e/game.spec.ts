@@ -2,8 +2,8 @@ import { test, expect, type Page } from "@playwright/test";
 
 async function joinAs(page: Page, code: string, name: string) {
   await page.goto("/join/" + code);
-  await page.getByPlaceholder("Nickname").fill(name);
-  await page.getByRole("button", { name: "Join room" }).click();
+  await page.getByPlaceholder("Your nickname").fill(name);
+  await page.getByRole("button", { name: "Join game" }).click();
   await expect(page).toHaveURL(new RegExp("/lobby/" + code));
 }
 
@@ -33,10 +33,10 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     hostContext.newPage(), aliceContext.newPage(), bobContext.newPage(),
   ]);
   try {
-    await host.goto("/create");
-    await expect(host.getByRole("heading", { name: "Start a new game" })).toBeVisible();
-    await host.getByPlaceholder("Nickname").fill("Host");
-    await host.getByRole("button", { name: "Create room" }).click();
+    await host.goto("/");
+    await expect(host.getByRole("heading", { name: "Catan" })).toBeVisible();
+    await host.getByPlaceholder("Your nickname").fill("Host");
+    await host.getByRole("button", { name: "Start a new game" }).click();
     await expect(host).toHaveURL(/\/lobby\/[A-Z2-9]{6}$/);
     const code = host.url().split("/").at(-1)!;
     await host.screenshot({ path: "test-results/lobby-clean.png" });
@@ -57,6 +57,11 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     // First settlements/roads go forward, second placements in reverse.
     for (const page of [host, alice, bob, bob, alice, host]) await playSetupTurn(page);
     await expect(host.getByRole("button", { name: "Roll dice" })).toBeVisible();
+    await expect(host.locator(".table-sidebar")).toBeVisible();
+    await expect(host.locator(".table-bank-item")).toHaveCount(5);
+    await expect(host.locator(".placed-road")).toHaveCount(6);
+    await expect(host.locator(".placed-road[filter]")).toHaveCount(0);
+    await expect(host.locator(".hud-code")).toHaveCount(0);
     await host.screenshot({ path: "test-results/island-game.png" });
     await host.reload();
     await expect(host.getByRole("button", { name: "Roll dice" })).toBeVisible();
@@ -85,6 +90,7 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     // The same scene must remain usable on a phone-sized viewport.
     await host.setViewportSize({ width: 390, height: 844 });
     await expect(host.locator(".game-board")).toBeVisible();
+    await expect(host.locator(".table-sidebar")).toBeHidden();
     await host.screenshot({ path: "test-results/island-mobile-board.png" });
     await expect(host.getByRole("button", { name: "Trade", exact: true })).toBeVisible();
     await host.getByRole("button", { name: "Trade", exact: true }).click();
@@ -133,10 +139,60 @@ test("menus contain only one functional heading and no decorative labels", async
   await expect(page.getByRole("dialog", { name: "Catan rules" })).toBeVisible();
   await page.getByRole("button", { name: "Close rules" }).click();
   await page.goto("/create");
-  await expect(page.locator(".entry-art")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Start a new game" })).toHaveCount(1);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator(".entry-panel")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Catan" })).toHaveCount(1);
+  await page.goto("/join/ABC234");
+  await expect(page).toHaveURL(/\/\?code=ABC234$/);
+  await expect(page.getByPlaceholder("ABC123")).toHaveValue("ABC234");
   await expect(page.getByText("NEW GAME", { exact: true })).toHaveCount(0);
   await page.goto("/rules");
   await expect(page.getByRole("heading", { name: "Rules" })).toHaveCount(1);
   await expect(page.getByText("QUICK GUIDE", { exact: true })).toHaveCount(0);
+});
+
+test("six-player lobby, timed settings, and roster stay visible", async ({ browser }) => {
+  const contexts = await Promise.all(Array.from({ length: 6 }, () => browser.newContext()));
+  const pages = await Promise.all(contexts.map(c => c.newPage()));
+  try {
+    const host = pages[0]!;
+    await host.goto("/");
+    await host.getByPlaceholder("Your nickname").fill("Host");
+    await host.getByRole("button", { name: "Start a new game" }).click();
+    await expect(host).toHaveURL(/\/lobby\/[A-Z2-9]{6}$/);
+    const code = host.url().split("/").at(-1)!;
+    const timer = host.getByLabel("Turn timer");
+    await timer.selectOption("60");
+    await expect(timer).toHaveValue("60");
+    for (let i = 1; i < 6; i++) {
+      const page = pages[i]!;
+      await page.goto("/");
+      await page.getByPlaceholder("Your nickname").fill("Player " + i);
+      await page.getByPlaceholder("ABC123").fill(code);
+      await page.getByRole("button", { name: "Join game" }).click();
+      await expect(page).toHaveURL(new RegExp("/lobby/" + code));
+      await page.getByRole("button", { name: "Ready up" }).click();
+    }
+    await expect(host.getByText("6 of 6 players seated")).toBeVisible();
+    await host.getByRole("button", { name: "Start game" }).click();
+    await expect(host).toHaveURL(new RegExp("/game/" + code));
+    await expect(host.locator(".roster-plate")).toHaveCount(6);
+    for (const size of [{ width: 1050, height: 850 }, { width: 390, height: 844 }]) {
+      await host.setViewportSize(size);
+      const bounds = await host.locator(".roster-plate").evaluateAll(plates => plates.map(p => {
+        const r = p.getBoundingClientRect();
+        return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+      }));
+      const hud = await host.locator(".hud").boundingBox();
+      expect(hud).not.toBeNull();
+      for (const boundsRow of bounds) {
+        expect(boundsRow.left).toBeGreaterThanOrEqual(0);
+        expect(boundsRow.right).toBeLessThanOrEqual(size.width + 1);
+        expect(boundsRow.top).toBeGreaterThanOrEqual(hud!.y);
+        expect(boundsRow.bottom).toBeLessThanOrEqual(hud!.y + hud!.height + 1);
+      }
+    }
+  } finally {
+    await Promise.all(contexts.map(c => c.close()));
+  }
 });
