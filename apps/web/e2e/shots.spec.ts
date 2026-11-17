@@ -86,8 +86,9 @@ test("after-shots", async ({ browser }) => {
 
     await host.setViewportSize({ width: 390, height: 844 });
     await host.waitForTimeout(600);
-    await host.getByRole("button", { name: "Game log" }).click();
     await host.screenshot({ path: "shots/after-game-mobile.png" });
+    await host.getByRole("button", { name: "Game log" }).click();
+    await host.screenshot({ path: "test-results/after-game-log-mobile.png" });
     await host.getByRole("button", { name: "Trade", exact: true }).click();
     await host.waitForTimeout(500);
     await host.screenshot({ path: "shots/after-trade-mobile.png" });

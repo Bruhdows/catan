@@ -11,6 +11,7 @@ import "./ui/base.css";
 import "./ui/game.css";
 import "./ui/menu.css";
 import "./ui/game-compact.css";
+import "./ui/cursors.css";
 
 function JoinInviteRedirect() {
   const { code = "" } = useParams();

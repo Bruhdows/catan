@@ -1,101 +1,39 @@
-/**
- * Hexhaven's original game-asset family.
- *
- * Resource, piece, award and development-card artwork is drawn here as SVG so
- * every widget in the game shares one illustrated language. Lucide is only
- * used for generic interface controls (close, copy, zoom, sound).
- */
+/** Board and resource art share a single locally bundled, original raster style. */
 import type { DevCardType, Resource } from "@hexhaven/shared";
 
-const RES: Record<Resource, { fill: string; deep: string }> = {
-  brick: { fill: "#cd6f4e", deep: "#96452c" },
-  lumber: { fill: "#569361", deep: "#2f6b40" },
-  wool: { fill: "#8fae56", deep: "#647d35" },
-  grain: { fill: "#dfab41", deep: "#a3752a" },
-  ore: { fill: "#7489a6", deep: "#4d617e" },
+/**
+ * CC0 Kenney raster art. Gameplay widgets use the same locally bundled
+ * sprites as the board (see /public/art/LICENSES.md).
+ */
+export const RESOURCE_ART: Record<Resource, string> = {
+  brick: "/art/resources/brick.webp",
+  lumber: "/art/resources/lumber.webp",
+  wool: "/art/resources/wool.webp",
+  grain: "/art/resources/grain.webp",
+  ore: "/art/resources/ore.webp",
 };
 
-/** Resource emblems — recognizable as filled shapes down to ~12px. */
 export function ResourceIcon({ resource, size = 18, className = "" }: {
   resource: Resource; size?: number; className?: string;
 }) {
-  const { fill, deep } = RES[resource];
-  const common = {
-    width: size, height: size, viewBox: "0 0 24 24", className,
-    "aria-hidden": true as const,
-  };
-  switch (resource) {
-    case "brick":
-      return <svg {...common}>
-        <g fill={fill} stroke={deep} strokeWidth="1.6" strokeLinejoin="round">
-          <rect x="2.5" y="5" width="9" height="5.4" rx="1" />
-          <rect x="12.5" y="5" width="9" height="5.4" rx="1" />
-          <rect x="7" y="11.3" width="10" height="5.4" rx="1" />
-          <rect x="2.5" y="17.6" width="9" height="4.4" rx="1" />
-          <rect x="12.5" y="17.6" width="9" height="4.4" rx="1" />
-        </g>
-      </svg>;
-    case "lumber":
-      return <svg {...common}>
-        <rect x="2" y="8.5" width="17" height="8" rx="4" fill={fill} stroke={deep} strokeWidth="1.6" />
-        <ellipse cx="18.5" cy="12.5" rx="4.2" ry="4.6" fill="#e8d3a8" stroke={deep} strokeWidth="1.6" />
-        <ellipse cx="18.5" cy="12.5" rx="2" ry="2.3" fill="none" stroke={deep} strokeWidth="1.2" />
-        <path d="M6 10.5c2 .9 4.5.9 7 0M6 14.6c2 .9 4.5.9 7 0" fill="none" stroke={deep} strokeWidth="1.3" strokeLinecap="round" />
-      </svg>;
-    case "wool":
-      return <svg {...common}>
-        <circle cx="10.5" cy="12" r="7.5" fill="#f2ecdb" stroke="#9a916f" strokeWidth="1.6" />
-        <path d="M5 14.5c1.8-1.4 3.4-1.2 5-2.6 1.6-1.4 1.4-3.4 3.2-4.4M5.6 9.8c2.4.2 3.6 1.6 5.6 1.4 2-.2 2.6-2 4.8-2M9.4 18.6c.4-2.2 2-3 3.4-4.8"
-          fill="none" stroke="#b7ad88" strokeWidth="1.4" strokeLinecap="round" />
-        <circle cx="17" cy="15" r="3.6" fill={fill} stroke={deep} strokeWidth="1.6" />
-        <circle cx="16" cy="14.2" r=".7" fill="#33291e" />
-      </svg>;
-    case "grain":
-      return <svg {...common}>
-        <path d="M12 21V8" stroke={deep} strokeWidth="1.7" strokeLinecap="round" />
-        <path d="M12 8c0-2.6.8-4.4 2.6-5.6C15.8 4 15.6 6.4 13.6 7.6" fill={fill} stroke={deep} strokeWidth="1.3" strokeLinejoin="round" />
-        <path d="M12 8c0-2.6-.8-4.4-2.6-5.6C8.2 4 8.4 6.4 10.4 7.6" fill={fill} stroke={deep} strokeWidth="1.3" strokeLinejoin="round" />
-        <path d="M12 13c-2.6 0-4.4-1-5.6-2.8 2-.9 4.4-.4 5.6 1.2M12 13c2.6 0 4.4-1 5.6-2.8-2-.9-4.4-.4-5.6 1.2M12 17.4c-2.4-.2-4-1.2-5-2.8 1.9-.7 4 0 5 1.6M12 17.4c2.4-.2 4-1.2 5-2.8-1.9-.7-4 0-5 1.6"
-          fill={fill} stroke={deep} strokeWidth="1.3" strokeLinejoin="round" />
-      </svg>;
-    case "ore":
-      return <svg {...common}>
-        <g fill={fill} stroke={deep} strokeWidth="1.6" strokeLinejoin="round">
-          <path d="M8 20 5.4 12.6 9 8.4l3 4.2L10 20Z" />
-          <path d="m10 20 2-7.4L16.4 9l3.4 5-2.4 6Z" opacity=".85" />
-          <path d="M9 8.4 12.6 5l3.8 4-3.4 2.6" opacity=".95" />
-        </g>
-        <path d="M6.6 12.4 9 8.6M13 11.8l3-2.4" stroke="#ffffff" strokeOpacity=".5" strokeWidth="1.1" strokeLinecap="round" />
-      </svg>;
-  }
+  return <img src={RESOURCE_ART[resource]} width={size} height={size}
+    style={{ width: size, height: size, objectFit: "contain" }} alt="" aria-hidden="true" className={className} />;
 }
 
-/* --- Pieces (interface-size versions of the board sprites) ------------------ */
+const PIECE_SWATCHES: Record<string, string> = {
+  "#d24b40": "crimson", "#2f7fc9": "azure", "#dd922b": "amber",
+  "#efe6d0": "ivory", "#39946e": "emerald", "#9162c8": "violet",
+  "#13a7b2": "teal", "#db6294": "rose",
+};
+export function pieceSpriteSrc(kind: "road" | "settlement" | "city", color: string): string {
+  return `/art/pieces/${kind}-${PIECE_SWATCHES[color.toLowerCase()] ?? "neutral"}.webp`;
+}
 
 export function PieceSprite({ kind, color, size = 44 }: {
   kind: "road" | "settlement" | "city"; color: string; size?: number;
 }) {
-  return <svg width={size} height={size} viewBox="-24 -26 48 48" aria-hidden="true">
-    <ellipse cx="0" cy="16" rx="14" ry="4" fill="#33291e" opacity=".22" />
-    {kind === "road" && <g>
-      <line x1="-18" y1="10" x2="18" y2="-8" stroke="#4a3826" strokeWidth="13" strokeLinecap="round" />
-      <line x1="-18" y1="10" x2="18" y2="-8" stroke={color} strokeWidth="9" strokeLinecap="round" />
-      <line x1="-16" y1="9.2" x2="4" y2="-1.4" stroke="#ffffff" strokeOpacity=".35" strokeWidth="2.4" strokeLinecap="round" />
-    </g>}
-    {kind === "settlement" && <g>
-      <path d="M-11 12V-2L0-14 11-2V12Z" fill={color} stroke="#3a2c1c" strokeWidth="2.6" strokeLinejoin="round" />
-      <path d="M-11-2 0-14 11-2" fill="none" stroke="#3a2c1c" strokeWidth="2.6" strokeLinecap="round" />
-      <rect x="-3.4" y="1" width="6.8" height="11" rx="1.2" fill="#3a2c1c" opacity=".55" />
-      <rect x="4" y="4" width="4" height="4" rx="1" fill="#fff" opacity=".5" />
-    </g>}
-    {kind === "city" && <g>
-      <path d="M-16 12V-3l6-4v-4l6 4 6 4 2-3v18Z" fill={color} stroke="#3a2c1c" strokeWidth="2.6" strokeLinejoin="round" />
-      <path d="M-16-3l6-4v-4l6 4" fill="none" stroke="#3a2c1c" strokeWidth="2.4" strokeLinecap="round" />
-      <rect x="-10" y="2" width="6.4" height="10" rx="1.2" fill="#3a2c1c" opacity=".55" />
-      <rect x="2" y="2" width="5" height="5" rx="1" fill="#fff" opacity=".5" />
-      <rect x="9" y="6" width="5" height="6" rx="1" fill="#fff" opacity=".4" />
-    </g>}
-  </svg>;
+  return <img src={pieceSpriteSrc(kind, color)} width={size} height={size}
+    style={{ width: size, height: size, objectFit: "contain" }} alt="" aria-hidden="true" />;
 }
 
 /* --- Awards ----------------------------------------------------------------- */
@@ -167,24 +105,12 @@ export const DEV_CARD_INK: Record<DevCardType, string> = {
 
 /* --- Dice -------------------------------------------------------------------- */
 
-const PIP_POSITIONS: Record<number, [number, number][]> = {
-  1: [[0, 0]],
-  2: [[-1, -1], [1, 1]],
-  3: [[-1, -1], [0, 0], [1, 1]],
-  4: [[-1, -1], [1, -1], [-1, 1], [1, 1]],
-  5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]],
-  6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]],
-};
-
-/** A single die face drawn with pips. */
+/** CC0 Kenney dice silhouettes, shaded into a raised ivory tabletop set. */
 export function DiceFace({ value, size = 40, rolling = false }: {
   value: number; size?: number; rolling?: boolean;
 }) {
-  const r = size * 0.26;
-  return <svg width={size} height={size} viewBox="-20 -20 40 40" aria-hidden="true" className={rolling ? "die rolling" : "die"}>
-    <rect x="-18" y="-18" width="36" height="36" rx="9" fill="#fbf5e4" stroke="#d8c69b" strokeWidth="2" />
-    <rect x="-18" y="-18" width="36" height="36" rx="9" fill="none" stroke="#ffffff" strokeOpacity=".7" strokeWidth="1.4" strokeDasharray="3 5" />
-    {PIP_POSITIONS[value]?.map(([px, py], i) =>
-      <circle key={i} cx={px * r} cy={py * r} r={size * 0.075} fill={value === 1 ? "#c8452f" : "#4a3b28"} />)}
-  </svg>;
+  return <img src={`/art/dice/die-${Math.max(1, Math.min(6, Math.floor(value)))}.png`}
+    width={size} height={size} alt="" aria-hidden="true"
+    className={rolling ? "die rolling" : "die"}
+    style={{ objectFit: "contain" }} />;
 }

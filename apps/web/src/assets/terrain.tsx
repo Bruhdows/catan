@@ -1,3 +1,4 @@
+import React from "react";
 /**
  * Illustrated terrain for the island board.
  *

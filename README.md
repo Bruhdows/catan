@@ -81,3 +81,9 @@ See `/rules` in the application. The copy is original educational material. For 
 ## Current review
 
 This branch is under active verification; check GitHub Actions and open review issues before deploying for public use.
+
+### Art assets
+
+The game ships locally bundled, optimized board/card images and responsive Kenney cursors. No external image CDN is required. Asset license and provenance details are in `apps/web/public/art/LICENSES.md`.
+
+The source illustrations and optional generation scripts are in `apps/web/scripts/`; exported images in `apps/web/public/art/` are committed so contributors do not need image-processing tools to build or run the app.

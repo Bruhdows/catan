@@ -12,8 +12,8 @@ import {
   type GameView, type Resource,
 } from "@hexhaven/shared";
 import { PLAYER_COLORS } from "./design";
-import { ResourceIcon } from "./assets/art";
-import { RobberPiece, SeaDecor, TERRAIN_LABEL, TerrainArt } from "./assets/terrain";
+import { pieceSpriteSrc } from "./assets/art";
+import { RobberPiece, SeaDecor, TERRAIN_LABEL } from "./assets/terrain";
 
 export type BoardAction = "road" | "settlement" | "city" | "robber" | null;
 type Props = {
@@ -83,24 +83,11 @@ function positions(game: GameView) {
 
 /* --- Pieces ----------------------------------------------------------------- */
 
-const PIECE_INK = "#33281a";
-
 function Settlement({ color, city }: { color: string; city?: boolean }) {
-  return <g filter="url(#piece-shadow)" className="board-piece">
-    {city
-      ? <g>
-        <path d="M-15.5 11V-4l6.5-4.4v-4.6l6.5 4.6 6.5 4.4 2-2.6V11Z" fill={color} stroke={PIECE_INK} strokeWidth="2.6" strokeLinejoin="round" />
-        <path d="M-15.5-4l6.5-4.4v-4.6l6.5 4.6" fill="none" stroke={PIECE_INK} strokeWidth="2.3" strokeLinecap="round" />
-        <rect x="-10.5" y="2" width="6.6" height="9" rx="1.2" fill={PIECE_INK} opacity=".5" />
-        <rect x="1" y="2" width="5" height="5" rx="1" fill="#fff" opacity=".55" />
-        <rect x="8" y="5" width="5" height="6" rx="1" fill="#fff" opacity=".4" />
-      </g>
-      : <g>
-        <path d="M-11 11V-2.6L0-14.4 11-2.6V11Z" fill={color} stroke={PIECE_INK} strokeWidth="2.6" strokeLinejoin="round" />
-        <path d="M-11-2.6 0-14.4 11-2.6" fill="none" stroke={PIECE_INK} strokeWidth="2.4" strokeLinecap="round" />
-        <rect x="-3.4" y="1" width="6.8" height="10" rx="1.2" fill={PIECE_INK} opacity=".5" />
-        <rect x="4.2" y="3.6" width="4.2" height="4.2" rx="1" fill="#fff" opacity=".55" />
-      </g>}
+  return <g className="board-piece" filter="url(#piece-shadow)">
+    <image href={pieceSpriteSrc(city ? "city" : "settlement", color)}
+      x={city ? -23 : -18} y={city ? -25 : -23}
+      width={city ? 46 : 36} height={city ? 46 : 39} preserveAspectRatio="xMidYMid meet" />
   </g>;
 }
 
@@ -109,15 +96,25 @@ function Settlement({ color, city }: { color: string; city?: boolean }) {
 function NumberToken({ x, y, n }: { x: number; y: number; n: number }) {
   const red = n === 6 || n === 8;
   const pips = tokenPips(n);
-  const angle = ((hashSeed("token:" + n) % 15) - 7) * 0.9;
-  return <g transform={`translate(${x} ${y}) rotate(${angle.toFixed(1)})`} pointerEvents="none">
-    <circle r="19.5" fill="#2f2416" opacity=".18" cy="1.8" />
-    <circle r="19" fill={red ? "#f6e3c8" : "#f8f0dc"} stroke={red ? "#b8473c" : "#c8b689"} strokeWidth="2.4" />
-    <circle r="15.6" fill="none" stroke={red ? "#c85a4e" : "#d8c9a2"} strokeWidth="1" opacity=".8" />
-    <text y="3.6" textAnchor="middle" fontSize="17.5" fontWeight="700" fontFamily="Fraunces, Georgia, serif"
-      fill={red ? "#a83a30" : "#4a3b26"}>{n}</text>
+  return <g className={"number-token" + (red ? " number-token-hot" : "")}
+      transform={`translate(${x} ${y})`} pointerEvents="none"
+      aria-label={`${n}, ${pips} probability dots`}>
+    {/* A raised cardboard square matching the paper tokens, not a medallion. */}
+    <rect x="-19" y="-19" width="38" height="42" rx="5.2"
+      fill="#13251d" opacity=".23" transform="translate(0 2)" />
+    <rect x="-19" y="-22" width="38" height="42" rx="5.2"
+      fill={red ? "#fff0e2" : "#fff9e8"} stroke={red ? "#bc6659" : "#bba77f"} strokeWidth="1.7" />
+    <rect x="-16.5" y="-19.5" width="33" height="36.5" rx="3.2"
+      fill="none" stroke={red ? "#dbb4a2" : "#ded1b0"} strokeWidth=".9" />
+    <path d="M-14 -17.5 H14" stroke="#fff" strokeOpacity=".85" strokeWidth="1.1" strokeLinecap="round" />
+    <text y="1.2" textAnchor="middle" fontSize="19" fontWeight="750"
+      fontFamily="Fraunces, Georgia, serif" fill={red ? "#ad3d35" : "#41372a"}>{n}</text>
+    <line x1="-12" x2="12" y1="5.2" y2="5.2"
+      stroke={red ? "#e2b8a9" : "#e5d9bf"} strokeWidth=".8" />
     {Array.from({ length: pips }, (_, i) =>
-      <circle key={i} cx={(i - (pips - 1) / 2) * 5} cy="10.4" r="1.5" fill={red ? "#b8473c" : "#9a8663"} />)}
+      <circle key={i} className="number-token-pip"
+        cx={(i - (pips - 1) / 2) * 5.6} cy="12.2" r="1.65"
+        fill={red ? "#ba5147" : "#8d7655"} />)}
   </g>;
 }
 
@@ -128,7 +125,7 @@ function PortMedallion({ x, y, ratio, resource }: { x: number; y: number; ratio:
     <circle r="16.5" fill="#f6eeda" stroke="#8a5a33" strokeWidth="3" />
     <circle r="12.8" fill="none" stroke="#c9a76b" strokeWidth="1.2" strokeDasharray="2.6 3" />
     {resource
-      ? <g transform="translate(-7 -9) scale(1.25)"><ResourceIcon resource={resource} size={11} /></g>
+      ? <image href={`/art/resources/${resource}.webp`} x={-7} y={-12} width={14} height={14} preserveAspectRatio="xMidYMid meet" />
       : <text y="-1" textAnchor="middle" fontSize="9.5" fontWeight="800" fill="#7a6440">ANY</text>}
     <text y="9.6" textAnchor="middle" fontSize="10.5" fontWeight="700" fontFamily="Fraunces, Georgia, serif" fill="#6b4a2a">
       {ratio}:1
@@ -185,7 +182,7 @@ export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: P
   };
 
   return <div className="island-stage">
-    <svg className="game-board" viewBox={viewBox} role="group" aria-label="Interactive island board"
+    <svg className={"game-board" + (mode ? " is-placing" : "")} viewBox={viewBox} role="group" aria-label="Interactive island board"
       onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={() => setDrag(null)} onPointerCancel={() => setDrag(null)}>
       <defs>
         <radialGradient id="sea" cx="50%" cy="38%" r="75%">
@@ -207,24 +204,24 @@ export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: P
 
       {/* Ocean */}
       <rect x="-1400" y="-1400" width="2800" height="2800" fill="url(#sea)" />
-      <rect x="-1400" y="-1400" width="2800" height="2800" fill="url(#waves)" />
+      {/* A faint sea grid preserves scale without distracting wave wallpaper. */}
 
       {/* Open-sea hexes */}
       {game.board.seaHexes.map((id) => {
         const p = hexToPixel(parseHexKey(id), SIZE);
-        return <polygon key={id} points={hexPoints(p.x, p.y, SIZE + 1)} fill="#3aa0bb" fillOpacity=".16" pointerEvents="none" />;
+        return <polygon key={id} points={hexPoints(p.x, p.y, SIZE + 1)} fill="none" stroke="#e5f5f6" strokeWidth="1" strokeOpacity=".17" pointerEvents="none" />;
       })}
 
       {/* Sand shelf + foam ring under the island */}
       {game.board.landHexes.map((hex) => {
         const p = hexToPixel(hex.axial, SIZE);
-        return <polygon key={"shelf" + hex.id} points={hexPoints(p.x, p.y, SIZE * 1.22)}
-          fill="#e6d3a4" opacity=".85" />;
+        return <polygon key={"shelf" + hex.id} points={hexPoints(p.x, p.y, SIZE * 1.073)}
+          fill="#eed8a8" opacity=".7" />;
       })}
       {game.board.landHexes.map((hex) => {
         const p = hexToPixel(hex.axial, SIZE);
-        return <polygon key={"foam" + hex.id} points={hexPoints(p.x, p.y, SIZE * 1.1)}
-          fill="none" stroke="#f3f7ee" strokeOpacity=".55" strokeWidth="2.4" strokeDasharray="7 6" />;
+        return <polygon key={"foam" + hex.id} points={hexPoints(p.x, p.y, SIZE * 1.052)}
+          fill="none" stroke="#f3f7ee" strokeOpacity=".56" strokeWidth="1.5" />;
       })}
 
       <SeaDecor />
@@ -243,12 +240,10 @@ export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: P
           onKeyDown={active ? (e) => keyboard(e, click) : undefined}
           onClick={active ? click : undefined}>
           <title>{TERRAIN_LABEL[hex.terrain]}{hex.number ? " · " + hex.number : ""}{robberHere ? " · robber here" : ""}</title>
-          <polygon points={hexPoints(p.x, p.y, SIZE)} fill="#f4e9cf" filter="url(#tile-depth)" />
-          <polygon points={hexPoints(p.x, p.y, SIZE - 2.5)} className="terrain-fill"
-            fill={`var(--t-${hex.terrain})`} stroke={active ? "#fff3b0" : "#efe2c2"} strokeWidth={active ? 3.4 : 1.6} />
-          <g transform={`translate(${p.x} ${p.y})`} pointerEvents="none">
-            <TerrainArt terrain={hex.terrain} seed={hex.id} r={SIZE - 4} />
-          </g>
+          <image className="terrain-fill" href={`/art/terrain/${hex.terrain}-${hashSeed(hex.id) % 3}.webp`}
+            x={p.x - SIZE * Math.sqrt(3) / 2} y={p.y - SIZE}
+            width={SIZE * Math.sqrt(3)} height={SIZE * 2}
+            preserveAspectRatio="none" pointerEvents="none" />
           {active && <polygon points={hexPoints(p.x, p.y, SIZE - 5)} fill="#ffe98e" fillOpacity=".18"
             stroke="#ffef9e" strokeWidth="2.6" className="terrain-outline" pointerEvents="none" />}
           {robberHere && <g transform={`translate(${p.x} ${p.y - 12})`} pointerEvents="none"><RobberPiece scale={1.5} /></g>}
@@ -290,10 +285,13 @@ export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: P
         return <g key={edge.id} role={active ? "button" : undefined} tabIndex={active ? 0 : undefined}
           onKeyDown={active ? (e) => keyboard(e, click) : undefined}
           aria-label={active ? "Place a road here" : undefined}>
-          {owned && <g className="board-piece placed-road">
-            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#4a3826" strokeWidth="10.5" strokeLinecap="round" />
-            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={owned} strokeWidth="7" strokeLinecap="round" />
-            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#ffffff" strokeOpacity=".3" strokeWidth="1.8" strokeLinecap="round" />
+          {owned && <g className="board-piece placed-road" pointerEvents="none">
+            <image href={pieceSpriteSrc("road", owned)}
+              x={(a.x + b.x) / 2 - Math.hypot(b.x - a.x, b.y - a.y) / 2 - 3}
+              y={(a.y + b.y) / 2 - 6}
+              width={Math.hypot(b.x - a.x, b.y - a.y) + 6}
+              height={12} preserveAspectRatio="none"
+              transform={`rotate(${Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI} ${(a.x + b.x) / 2} ${(a.y + b.y) / 2})`} />
           </g>}
           {active && <>
             <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fff3ae" strokeWidth="8" strokeDasharray="6 5"

@@ -98,30 +98,28 @@ function TurnClock({ deadline }: { deadline: number | null }) {
 
 /* --- Resource hand ------------------------------------------------------------ */
 
-function Hand({ hand, points, devCount }: { hand: ResourceHand; points: number | null; devCount: number }) {
+function Hand({ hand }: { hand: ResourceHand }) {
   return <div className="hand" aria-label="Your resource cards">
-    {RESOURCES.map(resource => {
+    {RESOURCES.filter(resource => hand[resource] > 0).map(resource => {
       const total = hand[resource];
       // Render individual overlapping cards. Cap just the visual layers: the
       // counter always reflects the full authoritative hand, even at 30+.
-      const layers = Math.max(1, Math.min(total, 9));
-      return <div key={resource} className={"hand-stack r-" + resource + (total === 0 ? " empty" : "")}
+      const layers = Math.min(total, 9);
+      return <div key={resource} className={"hand-stack r-" + resource}
           title={`${resource}: ${total}`} role="group" aria-label={`${total} ${resource} cards`}
           style={{ ["--visible" as string]: layers }}>
         {Array.from({ length: layers }, (_, index) =>
           <div key={index} className={"hand-stack-card" + (index === layers - 1 ? " top" : "")}
             style={{ ["--layer" as string]: index }} aria-hidden="true">
-            {index === layers - 1 && <ResourceIcon resource={resource} size={27} />}
+            {index === layers - 1 && <>
+              <img className="hand-card-art" src={`/art/resources/${resource}.webp`} alt="" />
+              <span className="hand-card-name">{resource}</span>
+            </>}
           </div>)}
         <b className="hand-stack-total" key={total}>{total}</b>
       </div>;
     })}
-    <div className="hand-side">
-      <span className="hand-tokens" title="Development cards"><Scroll size={15} aria-hidden /> {devCount}</span>
-      <span className="hand-vp" title="Your victory points, including hidden cards">
-        <Crown size={15} aria-hidden /> <b>{points ?? "–"}</b><i>VP</i>
-      </span>
-    </div>
+
   </div>;
 }
 
@@ -230,12 +228,12 @@ export function GamePage() {
       : <span className="dock-wait">{mine ? "Your move" : gameOver ? "Match over" : "Waiting…"}</span>;
   const tableTools = <div className="hud-tools">
     <TurnClock deadline={lobby.turnDeadline ?? null} />
-    <button type="button" onClick={openRules} className="hud-tool" title="Rulebook" aria-label="Open rulebook"><BookOpen size={17} /></button>
+    <button type="button" onClick={openRules} className="hud-tool" title="Rulebook" aria-label="Open rulebook"><img src="/art/ui/rulebook.png" alt="" /></button>
     <button className="hud-tool" aria-label={audio ? "Mute sounds" : "Enable sounds"} title={audio ? "Mute sounds" : "Enable sounds"} onClick={toggleAudio}>
-      {audio ? <Volume2 size={17} /> : <VolumeX size={17} />}
+      <img src={audio ? "/art/ui/sound-on.png" : "/art/ui/sound-off.png"} alt="" />
     </button>
     <div className="hud-menu-wrap">
-      <button className="hud-tool" aria-label="Game menu" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu(!menu)}><span className="hud-dots" aria-hidden>•••</span></button>
+      <button className="hud-tool" aria-label="Game menu" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu(!menu)}><img src="/art/ui/menu.png" alt="" /></button>
       {menu && <div className="game-menu" role="menu">
         <button role="menuitem" onClick={() => { openRules(); setMenu(false); }}><BookOpen size={15} /> Rulebook</button>
         <button role="menuitem" onClick={() => { toggleAudio(); setMenu(false); }}>{audio ? <VolumeX size={15} /> : <Volume2 size={15} />} {audio ? "Mute sounds" : "Enable sounds"}</button>
@@ -248,16 +246,16 @@ export function GamePage() {
   return <main className="game">
     <header className="hud" aria-label="Compact game status">
       <Roster game={game} meId={auth.playerId} />
-      {tableTools}
     </header>
 
     <section className="table">
       <div className="board-area">
+        <div className="map-tools">{tableTools}</div>
         <BoardView game={game} mode={mode} selectable={allowed} onVertex={onVertex} onEdge={onEdge} onHex={onHex} />
-        <div className={"turn-plate tone-" + prompt.tone} role="status">
+        {(game.pending.type !== "none" || game.phase === "finished") && <div className={"turn-plate tone-" + prompt.tone} role="status">
           <strong>{prompt.title}</strong>
           {prompt.note && <span>{prompt.note}</span>}
-        </div>
+        </div>}
         {game.dice && <DiceTray dice={game.dice} rolling={rolling} />}
         {incomingOffers.length > 0 && !gameOver &&
           <button className="offer-note" onClick={() => togglePanel("trade")}>
@@ -283,18 +281,14 @@ export function GamePage() {
         </aside>}
       </div>
       <aside className="table-sidebar" aria-label="Players, activity and bank">
-        <div className="table-sidebar-toolbar">
-          <strong>CATAN</strong>
-          {tableTools}
-        </div>
         <section className="table-sidebar-players" aria-label="Player standings">
           <div className="table-sidebar-head"><span>PLAYERS</span><span className="sidebar-count">{game.players.length} seated</span></div>
           <Roster game={game} meId={auth.playerId} />
         </section>
         <nav className="sidebar-actions" aria-label="Game actions">
           <button className={"sidebar-action" + (panel === "build" ? " selected" : "")} title="Build" aria-label="Build" aria-pressed={panel === "build"} onClick={() => togglePanel("build")}><PieceSprite kind="settlement" color="#ae8051" size={23} /></button>
-          <button className={"sidebar-action" + (panel === "trade" ? " selected" : "")} title="Trade" aria-label="Trade" aria-pressed={panel === "trade"} onClick={() => togglePanel("trade")}><span aria-hidden="true" className="sidebar-trade-icon">⇄</span>{incomingOffers.length > 0 && <i className="dock-badge">{incomingOffers.length}</i>}</button>
-          <button className={"sidebar-action" + (panel === "cards" ? " selected" : "")} title="Development cards" aria-label="Development cards" aria-pressed={panel === "cards"} onClick={() => togglePanel("cards")}><Scroll size={21} />{devCount > 0 && <i className="dock-badge">{devCount}</i>}</button>
+          <button className={"sidebar-action" + (panel === "trade" ? " selected" : "")} title="Trade" aria-label="Trade" aria-pressed={panel === "trade"} onClick={() => togglePanel("trade")}><img className="action-icon-img" src="/art/ui/trade.png" alt="" />{incomingOffers.length > 0 && <i className="dock-badge">{incomingOffers.length}</i>}</button>
+          <button className={"sidebar-action" + (panel === "cards" ? " selected" : "")} title="Development cards" aria-label="Development cards" aria-pressed={panel === "cards"} onClick={() => togglePanel("cards")}><img className="action-icon-img" src="/art/ui/cards.png" alt="" />{devCount > 0 && <i className="dock-badge">{devCount}</i>}</button>
         </nav>
         <div className="table-sidebar-head activity-heading"><span>GAME ACTIVITY</span><span className="round-indicator">Turn {game.turnCount || "—"}</span></div>
         <div className="table-activity" aria-live="off">
@@ -317,11 +311,11 @@ export function GamePage() {
     </section>
 
     <footer className="dock">
-      <Hand hand={hand} points={game.you?.totalPoints ?? null} devCount={devCount} />
+      <Hand hand={hand} />
       <nav className="dock-actions" aria-label="Mobile game actions">
         <button className={"dock-tile" + (panel === "build" ? " open" : "")} title="Build" aria-label="Build" aria-pressed={panel === "build"} onClick={() => togglePanel("build")}> <PieceSprite kind="settlement" color="#b3855b" size={24} /></button>
-        <button className={"dock-tile" + (panel === "trade" ? " open" : "")} title="Trade" aria-label="Trade" aria-pressed={panel === "trade"} onClick={() => togglePanel("trade")}><span className="dock-tile-icon" aria-hidden>⇄</span>{incomingOffers.length > 0 && <i className="dock-badge">{incomingOffers.length}</i>}</button>
-        <button className={"dock-tile" + (panel === "cards" ? " open" : "")} title="Development cards" aria-label="Development cards" aria-pressed={panel === "cards"} onClick={() => togglePanel("cards")}><Scroll size={23} />{devCount > 0 && <i className="dock-badge">{devCount}</i>}</button>
+        <button className={"dock-tile" + (panel === "trade" ? " open" : "")} title="Trade" aria-label="Trade" aria-pressed={panel === "trade"} onClick={() => togglePanel("trade")}><img className="action-icon-img" src="/art/ui/trade.png" alt="" />{incomingOffers.length > 0 && <i className="dock-badge">{incomingOffers.length}</i>}</button>
+        <button className={"dock-tile" + (panel === "cards" ? " open" : "")} title="Development cards" aria-label="Development cards" aria-pressed={panel === "cards"} onClick={() => togglePanel("cards")}><img className="action-icon-img" src="/art/ui/cards.png" alt="" />{devCount > 0 && <i className="dock-badge">{devCount}</i>}</button>
         <button className={"dock-tile" + (panel === "log" ? " open" : "")} title="Game log" aria-label="Game log" aria-pressed={panel === "log"} onClick={() => togglePanel("log")}><History size={23} /></button>
       </nav>
       <div className="dock-primary">{renderTurnAction()}</div>

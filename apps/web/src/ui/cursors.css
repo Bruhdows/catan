@@ -1,0 +1,47 @@
+/* Kenney 1.1 CC0 cursors, tinted to the parchment tabletop palette.
+   Each URL declares the actual cursor hotspot, never a center-by-default. */
+@media (pointer: fine) {
+  html, body, #root {
+    cursor: url('/art/cursors/default.png') 2 2, auto;
+  }
+
+  /* Interactive surfaces all share the same visual click affordance. */
+  a[href], button:not(:disabled), [role='button']:not([aria-disabled='true']),
+  input[type='checkbox']:not(:disabled), input[type='radio']:not(:disabled),
+  select:not(:disabled), label:has(input:not(:disabled)) {
+    cursor: url('/art/cursors/select.png') 15 3, pointer;
+  }
+
+  input:not([type='checkbox']):not([type='radio']), textarea, [contenteditable='true'] {
+    cursor: text;
+  }
+
+  button:disabled, input:disabled, select:disabled,
+  [aria-disabled='true'], .checkbox-row input:disabled {
+    cursor: url('/art/cursors/disabled.png') 3 3, not-allowed;
+  }
+
+  /* On the island, a hand explains panning. Pressing visibly closes it. */
+  .game-board, .game-board:not(.is-placing) {
+    cursor: url('/art/cursors/grab.png') 19 18, grab;
+  }
+  .game-board:not(.is-placing):active {
+    cursor: url('/art/cursors/grabbing.png') 19 19, grabbing;
+  }
+  .game-board.is-placing {
+    cursor: url('/art/cursors/build.png') 7 6, crosshair;
+  }
+  .game-board .hex-target, .game-board .vertex-hit, .game-board .edge-hit {
+    cursor: url('/art/cursors/place.png') 20 20, crosshair;
+  }
+}
+
+/* Keep the system's accessibility cursors in high-contrast configurations. */
+@media (forced-colors: active) {
+  html, body, #root, a, button, input, select, textarea,
+  .game-board, .game-board .hex-target, .game-board .vertex-hit, .game-board .edge-hit {
+    cursor: auto;
+  }
+  button, a[href], [role='button']:not([aria-disabled='true']) { cursor: pointer; }
+  input:not([type='checkbox']):not([type='radio']), textarea { cursor: text; }
+}

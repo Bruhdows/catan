@@ -61,12 +61,29 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await expect(host.locator(".table-sidebar .roster-plate")).toHaveCount(3);
     await expect(host.locator(".hud")).toBeHidden();
     await expect(host.locator(".table-bank-item")).toHaveCount(5);
-    await expect(host.locator(".hand-stack")).toHaveCount(5);
+    // Only resources the player actually has get card stacks; never render empties.
     const handLayers = await host.locator(".hand-stack").evaluateAll(stacks => stacks.map(stack => ({
       count: Number(stack.querySelector(".hand-stack-total")?.textContent),
       layers: stack.querySelectorAll(".hand-stack-card").length,
     })));
-    for (const stack of handLayers) expect(stack.layers).toBe(Math.max(1, Math.min(stack.count, 9)));
+    expect(handLayers.length).toBeGreaterThan(0);
+    expect(handLayers.length).toBeLessThanOrEqual(5);
+    for (const stack of handLayers) {
+      expect(stack.count).toBeGreaterThan(0);
+      expect(stack.layers).toBe(Math.min(stack.count, 9));
+    }
+    await expect(host.locator(".dock .hand-vp")).toHaveCount(0);
+    await expect(host.locator(".number-token")).toHaveCount(18);
+    const panCursor = await host.locator(".game-board").evaluate(element => getComputedStyle(element).cursor);
+    expect(panCursor).toContain("/art/cursors/grab.png");
+    const tokenShapes = await host.locator(".number-token").evaluateAll(tokens => tokens.map(token => ({
+      hasSquare: !!token.querySelector('rect[width="38"][height="42"]'),
+      value: token.querySelector("text")?.textContent,
+      pips: token.querySelectorAll(".number-token-pip").length,
+    })));
+    expect(tokenShapes.every(token => token.hasSquare)).toBe(true);
+    expect(tokenShapes.find(token => token.value === "6")?.pips).toBe(5);
+    expect(tokenShapes.find(token => token.value === "8")?.pips).toBe(5);
     await expect(host.locator(".placed-road")).toHaveCount(6);
     await expect(host.locator(".placed-road[filter]")).toHaveCount(0);
     await expect(host.locator(".hud-code")).toHaveCount(0);
@@ -75,6 +92,10 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await expect(host.getByRole("button", { name: "Roll dice" })).toBeVisible();
     await host.getByRole("button", { name: "Roll dice" }).click();
     await expect(host.locator(".dice-tray")).toBeVisible();
+    await expect(host.locator(".dice-tray img.die")).toHaveCount(2);
+    const diceLoaded = await host.locator(".dice-tray img.die").evaluateAll(images =>
+      images.every(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0));
+    expect(diceLoaded).toBe(true);
     const diceBox = await host.locator(".dice-tray").boundingBox();
     const boardAreaBox = await host.locator(".board-area").boundingBox();
     expect(diceBox).not.toBeNull(); expect(boardAreaBox).not.toBeNull();

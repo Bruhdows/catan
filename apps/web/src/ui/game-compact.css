@@ -82,7 +82,7 @@
 .turn-plate strong { font: 750 13px var(--font-ui); color: #343a35; }
 .turn-plate span { font-size: 10px; }
 .dice-tray { top: 10px; right: 10px; padding: 4px 7px; gap: 3px; background: #faf9f1ef; border-radius: 7px; border-color: #c5c9c0; }
-.dice-tray svg { width: 29px; height: 29px; }
+.dice-tray .die { width: 29px; height: 29px; }
 .dice-tray b { font: 800 15px var(--font-ui); }
 .board-zoom { right: 9px; bottom: 9px; padding: 2px; border-radius: 7px; background: #faf9f1f5; border-color: #c5c9c0; }
 .board-zoom button { width: 29px; height: 29px; }
@@ -145,7 +145,7 @@
   .turn-clock svg { display: none; }
   .turn-plate { top: 7px; left: 6px; padding: 6px 8px; }
   .dice-tray { top: 7px; right: 7px; }
-  .dice-tray svg { width: 24px; height: 24px; }
+  .dice-tray .die { width: 24px; height: 24px; }
   .dock { min-height: 79px; padding: 4px 6px; gap: 3px 6px; }
   .hand { order: 1; justify-content: center; flex: 1 0 100%; gap: 4px; }
   .hand-card { width: 44px; flex: 1 1 38px; max-width: 58px; height: 34px; }
@@ -212,7 +212,7 @@
 .board-area .dice-tray { top: auto; bottom: 12px; right: 12px; padding: 8px 10px; gap: 7px;
   background: #fffaf0f5; border-radius: 10px; border: 1px solid #bdc3ba;
   box-shadow: 0 3px 14px #183a4d45; }
-.board-area .dice-tray svg { width: 64px; height: 64px; }
+.board-area .dice-tray .die { width: 64px; height: 64px; }
 .board-area .dice-tray b { font-size: 21px; margin-left: 3px; }
 .board-area .board-zoom { left: 10px; right: auto; bottom: 12px; }
 @media (max-width: 1100px) {
@@ -228,7 +228,7 @@
   .hand-stack-card svg { width: 20px; height: 20px; }
   .hand-stack-total { font-size: 9px; min-width: 16px; height: 16px; }
   .board-area .dice-tray { bottom: 9px; right: 6px; padding: 5px 7px; gap: 4px; }
-  .board-area .dice-tray svg { width: 35px; height: 35px; }
+  .board-area .dice-tray .die { width: 35px; height: 35px; }
   .board-area .dice-tray b { font-size: 16px; }
   .board-area .board-zoom { bottom: 9px; left: 6px; }
   .dock-primary { width: 108px; }
@@ -251,4 +251,60 @@
   .dock-actions { order: 2; flex: 1 1 auto; justify-content: center; gap: 5px; }
   .dock-primary { order: 3; flex: none; }
   .drawer { animation-duration: .16s; }
+}
+
+/* Artwork controls belong to the map, independent of the player rail. */
+.map-tools { position: absolute; z-index: 24; top: 10px; left: 10px; pointer-events: auto; }
+.map-tools .hud-tools { display: flex; flex-direction: row; align-items: center; gap: 5px; }
+.map-tools .hud-tool { display: grid; place-items: center; width: 37px; height: 37px;
+  border: 1px solid #d5c9af; border-radius: 8px; background: #f8f3e7ee;
+  box-shadow: 0 2px 5px #1a3f4a30; }
+.map-tools .hud-tool:hover { background: #fffaf0; border-color: #bba779; }
+.map-tools .hud-tool img { width: 23px; height: 23px; object-fit: contain; opacity: .85; }
+.map-tools .turn-clock { order: 5; background: #f8f3e7f0; border: 1px solid #d5c9af;
+  padding: 7px 10px; border-radius: 8px; font-size: 13px; }
+.board-area .turn-plate { top: 57px; left: 10px; }
+.table-sidebar-players > .table-sidebar-head:first-child { padding-top: 14px; }
+.sidebar-action .action-icon-img { width: 23px; height: 23px; object-fit: contain; }
+.dock-tile .action-icon-img { width: 21px; height: 21px; object-fit: contain; }
+
+/* Actual portrait resource cards, never empty placeholders or duplicate VP. */
+.dock { min-height: 101px; padding: 7px 16px; }
+.dock > .hand { display: flex; flex: 1; width: 100%; max-width: none;
+  min-width: 0; gap: 13px; align-items: center; justify-content: flex-start; overflow-x: auto;
+  scrollbar-width: thin; scrollbar-color: #b6ad9b transparent; }
+.hand-stack { --step: 10px; width: calc(61px + (var(--visible) - 1) * var(--step));
+  height: 86px; position: relative; flex: none; isolation: isolate; }
+.hand-stack-card { position: absolute; left: calc(var(--layer) * var(--step)); top: 0;
+  width: 61px; height: 84px; z-index: var(--layer); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  border: 1px solid #bda47e; border-radius: 7px; background: #fffaf0;
+  box-shadow: 0 2px 6px #322a202b; }
+.hand-stack-card::after { inset: 4px; border: 1px solid #ffffff99; border-radius: 4px; }
+.hand-stack-card.top { border-width: 1px; }
+.hand-card-art { width: 38px; height: 42px; object-fit: contain; z-index: 1; filter: drop-shadow(0 2px 1px #2d33202b); }
+.hand-card-name { z-index: 1; font-size: 8px; text-transform: uppercase; letter-spacing: .045em;
+  font-weight: 800; color: #5e5348; line-height: 1; }
+.hand-stack-total { bottom: -3px; right: -4px; min-width: 21px; height: 21px; font-size: 11px; }
+.hand-stack:has(.hand-stack-card:only-child) .hand-stack-total { display: none; }
+@media (max-width: 1100px) {
+  .map-tools { top: 8px; left: 8px; }
+  .game .hud .hud-tools { display: none; }
+  .dock { min-height: 91px; }
+}
+@media (max-width: 600px) {
+  .map-tools { top: 6px; left: 6px; }
+  .map-tools .hud-tools { flex-direction: row; gap: 3px; }
+  .map-tools .hud-tool { width: 30px; height: 30px; }
+  .map-tools .hud-tool img { width: 19px; height: 19px; }
+  .map-tools .turn-clock { font-size: 10px; padding: 5px 7px; }
+  .board-area .turn-plate { top: 43px; left: 6px; }
+  .dock { min-height: 100px; justify-content: center; padding: 4px 5px; }
+  .dock > .hand { order: 1; display: flex; flex: 1 0 100%; max-width: 100%; width: 100%;
+    height: 79px; justify-content: center; gap: 6px; overflow-x: auto; }
+  .hand-stack { --step: 6px; width: calc(48px + (var(--visible) - 1) * var(--step)); height: 72px; }
+  .hand-stack-card { width: 48px; height: 70px; border-radius: 6px; gap: 2px; }
+  .hand-card-art { width: 30px; height: 36px; }
+  .hand-card-name { font-size: 7px; }
+  .hand-stack-total { font-size: 10px; min-width: 18px; height: 18px; }
 }
