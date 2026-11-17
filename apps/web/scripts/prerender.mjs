@@ -7,7 +7,7 @@ const site = (process.env.SITE_URL || "https://hexhaven.bruhdows.com").replace(/
 const esc = (v) => String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 function page(slug, title, description, body) {
   const url = site + "/rules" + (slug ? "/" + slug : "");
-  const html = base.replace(/<title>[^<]*<\/title>/, "<title>" + esc(title) + " | Hexhaven</title>")
+  const html = base.replace(/<title>[^<]*<\/title>/, "<title>" + esc(title) + " | Catan</title>")
     .replace(/<meta name="description" content="[^"]*"\s*\/>/, '<meta name="description" content="' + esc(description) + '"/>')
     .replace("</head>", '<link rel="canonical" href="' + esc(url) + '"/><meta property="og:title" content="' + esc(title) + '"/></head>')
     .replace('<div id="root"></div>', '<div id="root"><main><h1>' + esc(title) + '</h1><p>' + esc(description) + '</p>' + body + '</main></div>');

@@ -5,7 +5,7 @@ import type { BoardMode } from "./board.js";
 export const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const LOBBY_CODE_LENGTH = 6;
 export const MIN_PLAYERS = 3;
-export const MAX_PLAYERS = 4;
+export const MAX_PLAYERS = 6;
 
 export type LobbyState = "lobby" | "playing" | "finished";
 

@@ -135,7 +135,7 @@
   border: 1px solid #4d2f18;
   border-radius: 18px;
   box-shadow: 0 4px 0 #4d2f18, inset 0 1px 0 rgba(255, 244, 214, 0.22), 0 30px 44px rgba(8, 42, 56, 0.5);
-  transform: rotate(-1.1deg);
+  transform: none;
 }
 /* plank seams + corner nails give the sign its wooden physicality */
 .menu-sign::before {
@@ -641,3 +641,75 @@
   .article-navigation { flex-wrap: wrap; }
   .article-navigation a { max-width: 100%; }
 }
+
+/* Centered, upright landing card with deliberately larger controls. */
+.home-page { align-items: center; justify-content: center; padding: 24px; }
+.home-page .menu-sign { width: min(100%, 480px); padding: 42px 44px 38px; transform: none; text-align: center; }
+.home-page .menu-sign h1 { font-size: clamp(48px, 6vw, 60px); }
+.home-page .menu-actions { margin-top: 30px; gap: 14px; }
+.home-page .menu-btn { min-height: 58px; font-size: 17px; }
+.home-page .menu-guide { justify-content: center; font-size: 16px; padding: 12px; }
+.lobby-layout { width: min(1140px, 100%); }
+.lobby-seats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 700px) {
+ .home-page { overflow: auto; padding: 18px; }
+ .home-page .menu-sign { padding: 34px 25px 28px; }
+ .lobby-seats { grid-template-columns: 1fr; }
+}
+
+/* Unified sea backdrop and parchment surfaces on every non-game screen. */
+.app-shell:not(.game-shell), .home-page, .entry-page, .lobby-page, .rules-page { background: radial-gradient(120% 90% at 50% 0%, #2b8fae 0%, var(--sea-700) 52%, var(--sea-900) 100%); }
+.entry-page { display: flex; justify-content: center; align-items: center; min-height: 100dvh; padding: 24px; }
+.entry-panel { width: min(100%, 520px); padding: 38px 40px; }
+.entry-panel h1 { font-size: clamp(33px, 3.6vw, 41px); }
+.entry-panel > p { font-size: 16px; }
+.entry-form { gap: 20px; }
+.lobby-page { padding-top: 44px; }
+.rules-page { min-height: 100dvh; }
+.rules-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(8, 30, 42, .72); backdrop-filter: blur(7px); display: grid; place-items: center; padding: 22px; }
+.rules-popup { width: min(940px, 100%); height: min(760px, 88dvh); display: flex; flex-direction: column; min-height: 0; background: var(--parchment); color: var(--ink); border: 1px solid #d9c9a4; border-radius: var(--radius-lg); box-shadow: var(--shadow-2); overflow: hidden; }
+.rules-popup-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 28px 14px; }
+.rules-popup-head h2 { display: flex; align-items: center; gap: 10px; font-size: 30px; color: var(--wood-deep); }
+.rules-popup-head p { margin-top: 5px; color: var(--ink-2); font-size: 14px; }
+.rules-popup-close { display: grid; place-items: center; width: 39px; height: 39px; border-radius: 10px; background: var(--paper); border: 1px solid var(--line); color: var(--ink); flex: none; }
+.rules-popup-search { display: flex; align-items: center; gap: 10px; margin: 0 28px 18px; padding: 0 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+.rules-popup-search input { flex: 1; min-width: 0; height: 45px; border: 0; background: none; outline: none; color: var(--ink); font-size: 15px; }
+.rules-popup-body { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; flex: 1; border-top: 1px solid var(--line); }
+.rules-popup-nav { overflow-y: auto; display: flex; flex-direction: column; gap: 3px; padding: 15px 10px; border-right: 1px solid var(--line); }
+.rules-popup-nav button { color: var(--ink-2); text-align: left; font-weight: 650; padding: 10px 13px; border-radius: 9px; }
+.rules-popup-nav button:hover { background: var(--paper); }
+.rules-popup-nav button.selected { background: #e7d6b1; color: var(--wood-deep); }
+.rules-popup-content { overflow-y: auto; padding: 24px 32px 38px; }
+.rules-popup-content h3 { font-size: 28px; color: var(--wood-deep); }
+.rules-popup-content h4 { font-size: 18px; margin: 23px 0 8px; }
+.rules-popup-content p { font-size: 15px; line-height: 1.7; color: var(--ink-2); }
+.rules-popup-summary { margin-top: 8px; }
+.rules-popup-foot { padding: 12px 24px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-3); }
+.rules-popup-foot a { text-decoration: underline; color: var(--wood); }
+@media (max-width: 700px) { .entry-panel { padding: 28px 24px; } .rules-overlay { padding: 10px; } .rules-popup { height: 94dvh; } .rules-popup-head { padding: 18px 16px 10px; } .rules-popup-search { margin: 0 16px 12px; } .rules-popup-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); } .rules-popup-nav { border-right: 0; border-bottom: 1px solid var(--line); flex-direction: row; overflow-x: auto; padding: 8px; } .rules-popup-nav button { white-space: nowrap; } .rules-popup-content { padding: 20px; } }
+
+.entry-panel, .lobby-main, .lobby-side { background: var(--parchment); border-color: #d9c9a4; }
+.home-page .menu-sign { transform: none; }
+/* Keep landing and entry cards in the same material system. */
+.home-page .menu-sign {
+  background: var(--parchment);
+  color: var(--ink);
+  border: 1px solid #d9c9a4;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+}
+.home-page .menu-sign::before { display: none; }
+.home-page .menu-sign h1 { color: var(--wood-deep); text-shadow: none; }
+.home-page .menu-guide { color: var(--wood); border: 0; background: none; width: 100%; }
+.home-page .menu-guide:hover { color: var(--wood-deep); }
+
+/* The main menu owns both new-game and join flows. */
+.home-page .menu-actions { text-align: left; }
+.home-page .menu-actions .field { gap: 7px; }
+.home-page .menu-actions .field-label { font-size: 14px; color: var(--ink-2); }
+.home-page .menu-actions .field input { width: 100%; min-height: 52px; font-size: 17px; }
+.home-page .menu-actions .code-field { letter-spacing: .17em; text-transform: uppercase; font-weight: 750; }
+.home-divider { display: flex; align-items: center; gap: 12px; margin: 4px 0 0; color: var(--ink-3); font-size: 13px; font-weight: 650; }
+.home-divider::before, .home-divider::after { content: ""; height: 1px; background: var(--line); flex: 1; }
+.home-page .home-spectator { margin-top: -4px; font-size: 14px; }
+.home-resume { display: inline-block; margin-top: 12px; text-decoration: underline; text-underline-offset: 3px; color: var(--wood); font-weight: 650; }

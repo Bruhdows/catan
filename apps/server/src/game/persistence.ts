@@ -60,7 +60,7 @@ export function gameFromStored(stored: StoredGame): GameState {
   if (stored.schemaVersion !== GAME_SCHEMA_VERSION) {
     throw new Error(`Unsupported game snapshot schema version ${stored.schemaVersion}`);
   }
-  const board = generateBoard(stored.boardMode, stored.seed);
+  const board = generateBoard(stored.boardMode === "fixed" && stored.players.length > 4 ? "balanced" : stored.boardMode, stored.seed, stored.players.length > 4 ? 3 : 2);
   return {
     ...(stored as unknown as Omit<GameState, "board" | "schemaVersion">),
     schemaVersion: GAME_SCHEMA_VERSION,

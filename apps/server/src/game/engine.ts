@@ -90,7 +90,7 @@ export class GameEngine {
   constructor(options: EngineOptions) {
     this.rng = options.rng ?? secureRng();
     this.now = options.now ?? Date.now;
-    const board = generateBoard(options.boardMode, options.seed);
+    const board = generateBoard(options.players.length > 4 && options.boardMode === "fixed" ? "balanced" : options.boardMode, options.seed, options.players.length > 4 ? 3 : 2);
     const desertHex = [...board.hexes.values()].find((h) => h.terrain === "desert");
     const players: PlayerGame[] = options.players.map((p, index) => ({
       id: p.id,
@@ -121,7 +121,7 @@ export class GameEngine {
       turnCount: 0,
       rev: 0,
       dice: null,
-      bank: { brick: BANK_SUPPLY, lumber: BANK_SUPPLY, wool: BANK_SUPPLY, grain: BANK_SUPPLY, ore: BANK_SUPPLY },
+      bank: { brick: options.players.length > 4 ? 38 : BANK_SUPPLY, lumber: options.players.length > 4 ? 38 : BANK_SUPPLY, wool: options.players.length > 4 ? 38 : BANK_SUPPLY, grain: options.players.length > 4 ? 38 : BANK_SUPPLY, ore: options.players.length > 4 ? 38 : BANK_SUPPLY },
       devDeck: this.shuffleDevDeck(options.deckRng ?? secureRng()),
       robberHex: desertHex?.id ?? board.topology.landHexes[0]!,
       pending: { type: "setup", step: 0, player: setupSequence[0]!, needsRoad: false, vertex: null },
@@ -469,7 +469,7 @@ export class GameEngine {
 
   private returnToBank(hand: ResourceHand): void {
     for (const r of Object.keys(hand) as Resource[]) {
-      this.state.bank[r] = Math.min(BANK_SUPPLY, this.state.bank[r] + hand[r]);
+      this.state.bank[r] = Math.min(this.state.players.length > 4 ? 38 : BANK_SUPPLY, this.state.bank[r] + hand[r]);
     }
   }
 

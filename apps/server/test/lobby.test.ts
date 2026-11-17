@@ -36,6 +36,9 @@ describe("lobby membership", () => {
 
   it("a full lobby rejects further seats", () => {
     const { lobby } = fourPlayerLobby();
+    expect(lobby.addSeat("Eve").ok).toBe(true);
+    expect(lobby.addSeat("Frank").ok).toBe(true);
+    expect(new Set([...lobby.seats.values()].map(p => p.color)).size).toBe(6);
     const extra = lobby.addSeat("Extra");
     expect(extra.ok).toBe(false);
     expect((extra as { ok: false; error: string }).error).toBe("lobby-full");
@@ -50,6 +53,16 @@ describe("lobby membership", () => {
     expect((join as { ok: false; error: string }).error).toBe("game-in-progress");
     const spec = lobby.addSpectator("Watcher");
     expect(lobby.spectators.has(spec.id)).toBe(true);
+  });
+
+  it("six ready players start with a larger island", () => {
+    const { lobby } = fourPlayerLobby();
+    expect(lobby.addSeat("Eve").ok).toBe(true);
+    expect(lobby.addSeat("Frank").ok).toBe(true);
+    readyAll(lobby);
+    expect(lobby.start(lobby.hostId)).toBe(true);
+    expect(lobby.engine!.state.players).toHaveLength(6);
+    expect(lobby.engine!.state.board.topology.landHexes).toHaveLength(37);
   });
 
   it("reconnect by token restores the original seat", () => {

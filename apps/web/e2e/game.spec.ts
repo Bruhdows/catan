@@ -105,7 +105,7 @@ test("three players create a lobby, set up the island, reconnect and read rules"
 test("homepage and rulebook work at narrow mobile widths", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Hexhaven", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Catan", level: 1 })).toBeVisible();
   await expect(page.getByText(/THE BOARD IS YOURS|ONLINE BOARD GAME|EVERY ISLAND IS DIFFERENT/)).toHaveCount(0);
   await page.screenshot({ path: "test-results/home-clean-mobile.png" });
   await page.goto("/rules");
@@ -122,12 +122,18 @@ test("homepage and rulebook work at narrow mobile widths", async ({ page }) => {
 
 test("menus contain only one functional heading and no decorative labels", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Hexhaven", level: 1 })).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "Catan", level: 1 })).toHaveCount(1);
   await expect(page.getByText(/THE BOARD IS YOURS|ONLINE BOARD GAME|EVERY ISLAND IS DIFFERENT/)).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Start a new game" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Join with a code" })).toBeVisible();
+  await expect(page.getByPlaceholder("Your nickname")).toBeVisible();
+  await expect(page.getByPlaceholder("ABC123")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start a new game" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Join game" })).toBeDisabled();
   await expect(page.getByText("Online", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: /How to play/ }).click();
+  await expect(page.getByRole("dialog", { name: "Catan rules" })).toBeVisible();
+  await page.getByRole("button", { name: "Close rules" }).click();
   await page.goto("/create");
+  await expect(page.locator(".entry-art")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Start a new game" })).toHaveCount(1);
   await expect(page.getByText("NEW GAME", { exact: true })).toHaveCount(0);
   await page.goto("/rules");

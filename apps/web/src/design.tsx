@@ -8,6 +8,8 @@ export const PLAYER_COLORS: Record<PlayerColor, string> = {
   azure: "#2f7fc9",
   amber: "#dd922b",
   ivory: "#efe6d0",
+  emerald: "#39946e",
+  violet: "#9162c8",
 };
 
 export const RESOURCE_META: Record<Resource, { label: string }> = {

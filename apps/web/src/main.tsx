@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import { SessionProvider } from "./session";
 import { HomePage, JoinPage, LobbyPage, GamePage, Shell } from "./pages";
 import { RulebookPage } from "./rulebook";
+import { RulebookModal } from "./rulebook-modal";
 import "./ui/tokens.css";
 import "./ui/base.css";
 import "./ui/game.css";
@@ -13,6 +14,7 @@ createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <SessionProvider>
+        <RulebookModal />
         <Shell>
           <Routes>
             <Route path="/" element={<HomePage />} />

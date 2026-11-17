@@ -8,6 +8,7 @@ import { PLAYER_COLORS, PlayerAvatar } from "./design";
 import { AwardIcon, DiceFace, PieceSprite, ResourceIcon } from "./assets/art";
 import { playCue } from "./sound";
 import { useSession } from "./session";
+import { openRules } from "./rulebook-modal";
 
 type Panel = "build" | "trade" | "cards" | "log" | null;
 
@@ -204,7 +205,7 @@ export function GamePage() {
       </div>
       <Roster game={game} meId={auth.playerId} />
       <div className="hud-tools">
-        <Link to="/rules" target="_blank" rel="noopener noreferrer" className="hud-tool" title="Rulebook" aria-label="Open rulebook"><BookOpen size={17} /></Link>
+        <button type="button" onClick={openRules} className="hud-tool" title="Rulebook" aria-label="Open rulebook"><BookOpen size={17} /></button>
         <button className="hud-tool" aria-label={audio ? "Mute sounds" : "Enable sounds"} title={audio ? "Mute sounds" : "Enable sounds"} onClick={toggleAudio}>
           {audio ? <Volume2 size={17} /> : <VolumeX size={17} />}
         </button>

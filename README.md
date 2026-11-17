@@ -1,6 +1,6 @@
-# Hexhaven
+# Catan
 
-An independent browser-based island trading and settlement strategy game for 3–4 friends. The project is **unofficial and not affiliated with CATAN GmbH**.
+An independent browser-based island trading and settlement strategy game for 3–6 friends. The project is **unofficial and not affiliated with CATAN GmbH**.
 
 ## Features
 

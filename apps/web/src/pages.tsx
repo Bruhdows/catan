@@ -6,11 +6,12 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { ArrowRight, BookOpen, Check, Copy, Crown, Hexagon, LogOut, Menu, Play, Users, X, WifiOff } from "lucide-react";
-import { cornerPixel, hashSeed, hexSpiral, hexToPixel, tokenPips, type Axial, type PlayerColor, type Terrain } from "@hexhaven/shared";
+import { cornerPixel, hashSeed, hexSpiral, hexToPixel, tokenPips, MAX_PLAYERS, PLAYER_COLORS as COLOR_OPTIONS, type Axial, type Terrain } from "@hexhaven/shared";
 import { FieldSelect, PlayerAvatar, PLAYER_COLORS } from "./design";
 import { PieceSprite } from "./assets/art";
 import { SeaDecor, TERRAIN_LABEL, TerrainArt } from "./assets/terrain";
 import { useSession } from "./session";
+import { openRules } from "./rulebook-modal";
 export { GamePage } from "./game-screen";
 
 /* --- Title-screen island ---------------------------------------------------- */
@@ -62,7 +63,7 @@ export function MenuIsland({ className }: { className?: string }) {
   const south = cornerPixel(center, 4, MENU_SIZE);
   const southeast = cornerPixel(center, 5, MENU_SIZE);
   return <svg className={className ?? "menu-island"} viewBox="-244 -234 488 468"
-    preserveAspectRatio="xMidYMid meet" role="img" aria-label="Illustrated Hexhaven island">
+    preserveAspectRatio="xMidYMid meet" role="img" aria-label="Illustrated Catan island">
     <defs>
       <radialGradient id="menu-sea" cx="46%" cy="36%" r="82%">
         <stop stopColor="#3d9db8" />
@@ -133,48 +134,54 @@ function hexKey(a: Axial) {
 /* --- Shell ------------------------------------------------------------------- */
 
 export function Shell({ children }: { children: ReactNode }) {
-  const { error, clearError, connected, auth } = useSession();
+  const { error, clearError } = useSession();
   const { pathname } = useLocation();
-  const [menu, setMenu] = useState(false);
-  const gameScreen = pathname.startsWith("/game/");
-  return <div className={"app-shell" + (gameScreen ? " game-shell" : "")}>
-    {!gameScreen && <header className="site-nav">
-      <Link to="/" className="brand" aria-label="Hexhaven home"><span className="brand-mark"><Hexagon size={19} strokeWidth={2.6} /></span><span>hexhaven</span></Link>
-      <nav className={menu ? "nav-links visible" : "nav-links"} aria-label="Main">
-        <Link to="/" onClick={() => setMenu(false)}>Play</Link>
-        <Link to="/rules" onClick={() => setMenu(false)}>Rules</Link>
-        {auth && <Link onClick={() => setMenu(false)} to={auth.lobby.state === "lobby" ? "/lobby/" + auth.code : "/game/" + auth.code}>Your game</Link>}
-      </nav>
-      <div className="nav-right">
-        {!connected && <span className="connection offline"><WifiOff size={14} /> Reconnecting</span>}
-        <button className="icon-button menu-toggle" onClick={() => setMenu(!menu)} aria-label="Toggle menu" aria-expanded={menu}>{menu ? <X size={18} /> : <Menu size={18} />}</button>
-      </div>
-    </header>}
+  return <div className={"app-shell" + (pathname.startsWith("/game/") ? " game-shell" : "")}>
     {error && <div className="toast" role="alert"><span>{error}</span><button type="button" onClick={clearError} aria-label="Dismiss"><X size={17} /></button></div>}
     {children}
-    {!gameScreen && <footer className="site-footer">
-      <span>Hexhaven · an independent island strategy game</span>
-      <Link to="/rules">How to play <ArrowRight size={13} /></Link>
-    </footer>}
   </div>;
 }
 
-/* --- Title screen ------------------------------------------------------------ */
-
 export function HomePage() {
+  const navigate = useNavigate();
+  const { create, join, busy, auth } = useSession();
+  const [name, setName] = useState(() => localStorage.getItem("hexhaven.name") || "");
+  const [code, setCode] = useState("");
+  const [spectator, setSpectator] = useState(false);
+  const [action, setAction] = useState<"create" | "join" | null>(null);
+
+  async function enter(type: "create" | "join") {
+    if (busy || !name.trim() || (type === "join" && code.length !== 6)) return;
+    setAction(type);
+    localStorage.setItem("hexhaven.name", name.trim());
+    try {
+      const ok = type === "create"
+        ? await create(name.trim())
+        : await join(code.trim().toUpperCase(), name.trim(), spectator);
+      if (ok) {
+        // The response updates session state before resolving.
+        const next = JSON.parse(localStorage.getItem("hexhaven.session") || "null") as { code: string; lobby: { state: string } } | null;
+        if (next) navigate((next.lobby.state === "lobby" ? "/lobby/" : "/game/") + next.code);
+      }
+    } finally { setAction(null); }
+  }
+
   return <main className="home-page">
-    <div className="menu-scene">
-      <MenuIsland />
-      <section className="menu-sign">
-        <h1>Hexhaven</h1>
-        <p>Build, trade and race to 10 points. Three to four players share one island.</p>
-        <div className="menu-actions">
-          <Link to="/create" className="button primary large menu-btn"><Play size={18} fill="currentColor" /> Start a new game</Link>
-          <Link to="/join" className="button paper large menu-btn"><Users size={18} /> Join with a code</Link>
-          <Link to="/rules" className="menu-guide"><BookOpen size={16} /> How to play <ArrowRight size={14} /></Link>
-        </div>
-      </section>
-    </div>
+    <section className="menu-sign">
+      <h1>Catan</h1>
+      {auth && <Link className="home-resume" to={(auth.lobby.state === "lobby" ? "/lobby/" : "/game/") + auth.code}>Return to your game</Link>}
+      <div className="menu-actions">
+        <label className="field"><span className="field-label">Nickname</span>
+          <input autoComplete="nickname" maxLength={20} placeholder="Your nickname" value={name} onChange={e => setName(e.target.value)} /></label>
+        <button type="button" className="button primary large menu-btn" onClick={() => void enter("create")} disabled={busy || !name.trim()}><Play size={20} fill="currentColor" /> {busy && action === "create" ? "Creating…" : "Start a new game"}</button>
+        <div className="home-divider"><span>or join a room</span></div>
+        <label className="field"><span className="field-label">Room code</span>
+          <input className="code-field" maxLength={6} inputMode="text" autoCapitalize="characters" autoComplete="off" placeholder="ABC123" value={code} onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""))} onKeyDown={e => { if (e.key === "Enter") void enter("join"); }} /></label>
+        <label className="checkbox-row home-spectator"><input type="checkbox" checked={spectator} onChange={e => setSpectator(e.target.checked)} /> Join as spectator</label>
+        <button type="button" className="button paper large menu-btn" onClick={() => void enter("join")} disabled={busy || !name.trim() || code.length !== 6}><Users size={20} /> {busy && action === "join" ? "Joining…" : "Join game"}</button>
+        <button type="button" className="menu-guide" onClick={openRules}><BookOpen size={18} /> How to play <ArrowRight size={16} /></button>
+      </div>
+    </section>
   </main>;
 }
 
@@ -198,7 +205,6 @@ export function JoinPage({ create = false }: { create?: boolean }) {
     if (ok) setSubmitted(true);
   }
   return <main className="entry-page">
-    <div className="entry-art"><MenuIsland /></div>
     <section className="entry-panel">
       <h1>{create ? "Start a new game" : "Join a game"}</h1>
       <p>{create ? "You will host the room — share the link with your friends." : "Enter the room code from your friend."}</p>
@@ -243,7 +249,7 @@ export function LobbyPage() {
         <div className="lobby-code-row">
           <div>
             <h1 className="lobby-code">Room {lobby.code}</h1>
-            <span className="lobby-seat-count">{lobby.players.length} of 4 players seated</span>
+            <span className="lobby-seat-count">{lobby.players.length} of {lobby.maxPlayers} players seated</span>
           </div>
           <button className="button ghost" onClick={async () => {
             await navigator.clipboard.writeText(share);
@@ -251,7 +257,7 @@ export function LobbyPage() {
             setTimeout(() => setCopied(false), 1700);
           }}>{copied ? <Check size={16} /> : <Copy size={16} />} {copied ? "Copied" : "Copy invite link"}</button>
         </div>
-        <div className="lobby-seats">{Array.from({ length: 4 }, (_, i) => {
+        <div className="lobby-seats">{Array.from({ length: lobby.maxPlayers }, (_, i) => {
           const p = lobby.players[i];
           return <div key={p?.id || i} className={"lobby-seat" + (!p ? " seat-empty" : "")} style={p ? { ["--pl" as string]: PLAYER_COLORS[p.color] } : undefined}>
             <span className="seat-number">{i + 1}</span>
@@ -267,7 +273,7 @@ export function LobbyPage() {
         {!auth.spectator && me && <div className="seat-controls">
           <div>
             <span className="field-label">Your color</span>
-            <div className="color-swatches">{(["crimson", "azure", "amber", "ivory"] as PlayerColor[]).map((c) =>
+            <div className="color-swatches">{COLOR_OPTIONS.map((c) =>
               <button key={c} type="button" aria-label={c} aria-pressed={me.color === c}
                 className={"color-swatch" + (me.color === c ? " selected" : "")}
                 style={{ background: PLAYER_COLORS[c] }}
@@ -280,14 +286,14 @@ export function LobbyPage() {
       <aside className="lobby-side surface">
         <div className="side-heading">
           <h2>Table settings</h2>
-          <p>Classic rules · first to 10 points wins</p>
+          <p>3–4 classic · 5–6 expanded island house rules</p>
         </div>
         <FieldSelect label="Island layout" value={lobby.settings.boardMode} disabled={!host}
           options={[{ value: "random", label: "Random island" }, { value: "balanced", label: "Balanced random" }, { value: "fixed", label: "Beginner layout" }]}
           onChange={(next) => settings({ ...lobby.settings, boardMode: next as "random" | "balanced" | "fixed" })} />
         <label className="checkbox-row"><input type="checkbox" checked={lobby.settings.allowSpectators} disabled={!host}
           onChange={(e) => settings({ ...lobby.settings, allowSpectators: e.target.checked })} /> Allow spectators</label>
-        <Link className="settings-rules-link" to="/rules"><BookOpen size={15} /> Rulebook <ArrowRight size={13} /></Link>
+        <button type="button" className="settings-rules-link" onClick={openRules}><BookOpen size={15} /> Rulebook <ArrowRight size={13} /></button>
         <div className="lobby-start">
           <p>{!connected ? "Reconnecting…" : lobby.players.length < 3 ? "Need at least 3 players" : !canStart ? "Waiting for players to ready up" : host ? "Ready to start" : "Waiting for the host"}</p>
           {host && <button className="button wood large full" disabled={!canStart || busy || !connected} onClick={() => void start()}>

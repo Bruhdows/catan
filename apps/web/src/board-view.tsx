@@ -162,7 +162,7 @@ export function BoardView({ game, mode, selectable, onVertex, onEdge, onHex }: P
     for (const id of player.cities) buildings.set(id, { color, city: true });
   }
 
-  const range = 408 / zoom;
+  const range = (game.board.landHexes.length > 19 ? 570 : 408) / zoom;
   const viewBox = `${-range + offset.x} ${-range * 0.8 + offset.y} ${range * 2} ${range * 1.6}`;
 
   const onWheel = (e: WheelEvent<SVGSVGElement>) => {

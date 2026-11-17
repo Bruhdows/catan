@@ -68,9 +68,9 @@ export function RulebookPage() {
       .sort((a,b)=>rank(a)-rank(b));
   },[query]);
   const searching=query.trim().length>0;
-  useEffect(()=>{document.title=(active?active.title+" · ":"")+"Rules | Hexhaven";window.scrollTo(0,0);},[active?.slug]);
+  useEffect(()=>{document.title=(active?active.title+" · ":"")+"Rules | Catan";window.scrollTo(0,0);},[active?.slug]);
   return <main className="rules-page">
-    <section className="rules-head"><h1>Rules</h1><p>Classic base game · 3–4 players · First to 10 points</p>
+    <section className="rules-head"><h1>Rules</h1><p>3–4 players: classic · 5–6: expanded island house rules · First to 10 points</p>
       <label className="rules-search"><Search size={18}/><input aria-label="Search rules" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search rules, trading, robber, victory…"/></label>
     </section>
     <div className={"rules-layout"+(searching?" is-searching":"")}>
@@ -90,7 +90,7 @@ export function RulebookPage() {
           <div className="rule-cards">{QUICK_LINKS.map(({slug,title,sub,icon:Icon})=><Link key={slug} to={"/rules/"+slug} className="rule-card"><strong><Icon size={17}/> {title}</strong><p>{sub}</p><ArrowRight size={16}/></Link>)}</div>
           <div className="rules-example"><strong>Building costs</strong><div className="rules-cost-grid">{COST_CARDS.map(item=><div key={item.name}><strong>{item.art} {item.name}</strong><Cost cost={item.cost}/></div>)}</div></div>
         </>}
-        <div className="rules-source"><CircleHelp size={15}/> This independently written guide summarizes the classic 3–4 player game. See the <a href="https://www.catan.com/understand-catan/game-rules" rel="noopener noreferrer" target="_blank">official CATAN rules</a> for authoritative edition-specific details.</div>
+        <div className="rules-source"><CircleHelp size={15}/> This independently written guide explains classic 3–4 player rules. Games with 5–6 players use a larger island and house rules; they do not replicate the official 5–6 player expansion. See the <a href="https://www.catan.com/understand-catan/game-rules" rel="noopener noreferrer" target="_blank">official CATAN rules</a> for authoritative edition-specific details.</div>
       </article>
     </div>
   </main>;

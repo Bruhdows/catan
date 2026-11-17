@@ -209,7 +209,7 @@ function assignTerrainAndNumbers(
   seed: string,
   topology: BoardTopology,
 ): Slot[] {
-  if (mode === "fixed") {
+  if (mode === "fixed" && landKeys.length === 19) {
     const byKey = new Map(FIXED_LAYOUT.map((s) => [hexKey(s.hex), s]));
     if (byKey.size !== landKeys.length) throw new Error("fixed layout size mismatch");
     return landKeys.map((key) => {
@@ -220,10 +220,13 @@ function assignTerrainAndNumbers(
   }
 
   const rng = mulberry32(`${mode}:${seed}`);
+  const counts = landKeys.length > 19
+    ? { forest: 8, fields: 8, pasture: 8, hills: 6, mountains: 5, desert: 2 }
+    : TERRAIN_COUNTS;
   const terrainDeck: Exclude<Terrain, "water">[] = (
-    Object.keys(TERRAIN_COUNTS) as Exclude<Terrain, "water">[]
-  ).flatMap((t) => Array.from({ length: TERRAIN_COUNTS[t] }, () => t));
-  const tokenDeck = NUMBER_TOKENS;
+    Object.keys(counts) as Exclude<Terrain, "water">[]
+  ).flatMap((t) => Array.from({ length: counts[t] }, () => t));
+  const tokenDeck = landKeys.length > 19 ? [...NUMBER_TOKENS, ...NUMBER_TOKENS.slice(0, 17)] : NUMBER_TOKENS;
 
   const isRed = (n: number | null) => n != null && RED_NUMBERS.has(n);
 

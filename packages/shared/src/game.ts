@@ -3,7 +3,7 @@ import type { Edge, Vertex } from "./geometry.js";
 import type { Resource, ResourceHand } from "./resources.js";
 
 /** Player piece colors. Names are shown alongside colors for accessibility. */
-export const PLAYER_COLORS = ["crimson", "azure", "amber", "ivory"] as const;
+export const PLAYER_COLORS = ["crimson", "azure", "amber", "ivory", "emerald", "violet"] as const;
 export type PlayerColor = (typeof PLAYER_COLORS)[number];
 
 export type DevCardType = "knight" | "roadBuilding" | "yearOfPlenty" | "monopoly" | "victoryPoint";
