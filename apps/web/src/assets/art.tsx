@@ -105,11 +105,11 @@ export const DEV_CARD_INK: Record<DevCardType, string> = {
 
 /* --- Dice -------------------------------------------------------------------- */
 
-/** CC0 Kenney dice silhouettes, shaded into a raised ivory tabletop set. */
+/** CC0 Kenney Board Game Icons dice, served straight from the vendored pack. */
 export function DiceFace({ value, size = 40, rolling = false }: {
   value: number; size?: number; rolling?: boolean;
 }) {
-  return <img src={`/art/dice/die-${Math.max(1, Math.min(6, Math.floor(value)))}.png`}
+  return <img src={`/kenney/board-game-icons/PNG/Default%20(64px)/dice_${Math.max(1, Math.min(6, Math.floor(value)))}.png`}
     width={size} height={size} alt="" aria-hidden="true"
     className={rolling ? "die rolling" : "die"}
     style={{ objectFit: "contain" }} />;

@@ -1,6 +1,43 @@
 /* Hexhaven design tokens — one source of truth for materials, color and motion. */
 
+/* Tailwind v4 is the styling engine; its preflight loads first, then the
+   hand-written component layers below. The @theme block maps the tokens into
+   utilities (bg-parchment, text-ink-2, border-line, shadow-2, …) so anything
+   written with Tailwind stays on the same materials. */
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
+
+/* Utilities (bg-parchment, text-ink-2, border-line, …) resolve to the same
+   materials the component layers use. Fonts are declared literally here and
+   become the canonical --font-ui / --font-display definitions. Radii and
+   shadows keep their plain :root vars — Tailwind's key names would collide —
+   so utilities reference them via arbitrary values (rounded-[var(--radius-lg)]). */
+@theme inline {
+  --font-ui: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --color-sea-900: var(--sea-900);
+  --color-sea-700: var(--sea-700);
+  --color-sea-500: var(--sea-500);
+  --color-sea-300: var(--sea-300);
+  --color-sand: var(--sand);
+  --color-sand-deep: var(--sand-deep);
+  --color-parchment: var(--parchment);
+  --color-parchment-2: var(--parchment-2);
+  --color-paper: var(--paper);
+  --color-wood: var(--wood);
+  --color-wood-deep: var(--wood-deep);
+  --color-wood-soft: var(--wood-soft);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-honey: var(--honey);
+  --color-honey-deep: var(--honey-deep);
+  --color-alert: var(--alert);
+  --color-alert-soft: var(--alert-soft);
+  --color-ok: var(--ok);
+}
 
 :root {
   /* Typography */
@@ -53,19 +90,32 @@
   --t-desert: #d9b877;
   --t-desert-deep: #bb9a5c;
 
-  /* Resource hues */
+  /* Resource hues — taken at the terrain's own saturated strength so the UI
+     reads as made of the island's materials, not pastel washes. */
   --r-brick: #c96a4b;
   --r-lumber: #4f9159;
   --r-wool: #8aa94f;
   --r-grain: #d9a43a;
   --r-ore: #7189a8;
+  /* Mid tints of each resource for chips and fields (vibrant, not pastel) */
+  --r-brick-soft: #f0c0ae;
+  --r-lumber-soft: #b5d4b3;
+  --r-wool-soft: #c8d9a4;
+  --r-grain-soft: #f2d795;
+  --r-ore-soft: #b9c6d9;
+  /* Dark-of-hue inks for text on the tints */
+  --r-brick-deep: #8a3f26;
+  --r-lumber-deep: #2c6a3a;
+  --r-wool-deep: #5a7226;
+  --r-grain-deep: #8a6414;
+  --r-ore-deep: #3d5168;
 
-  /* Shape, elevation, motion */
-  --radius-sm: 9px;
+  /* Shape, elevation, motion — one large, chunky radius system */
+  --radius-sm: 10px;
   --radius: 14px;
   --radius-lg: 20px;
-  --shadow-1: 0 1px 2px rgba(56, 40, 18, 0.18), 0 4px 14px rgba(18, 66, 86, 0.14);
-  --shadow-2: 0 2px 4px rgba(56, 40, 18, 0.2), 0 12px 30px rgba(13, 58, 78, 0.24);
+  --shadow-1: 0 1px 2px rgba(56, 40, 18, 0.14), 0 4px 14px rgba(18, 66, 86, 0.12);
+  --shadow-2: 0 2px 4px rgba(56, 40, 18, 0.16), 0 12px 30px rgba(13, 58, 78, 0.2);
   --dur-1: 0.12s;
   --dur-2: 0.2s;
   --dur-3: 0.35s;

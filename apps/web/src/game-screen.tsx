@@ -6,6 +6,7 @@ import { legalBoardTargets, BoardView, type BoardAction } from "./board-view";
 import { BuildPanel, CardsPanel, DiscardPicker, HistoryPanel, TradePanel } from "./game-panels";
 import { PLAYER_COLORS, PlayerAvatar } from "./design";
 import { AwardIcon, DiceFace, PieceSprite, ResourceIcon } from "./assets/art";
+import { EmoteBubble, EmotePicker, EmoteSprite } from "./assets/emotes";
 import { playCue } from "./sound";
 import { useSession } from "./session";
 import { openRules } from "./rulebook-modal";
@@ -40,13 +41,16 @@ function phasePrompt(game: GameView, meId?: string): { title: string; note?: str
 /* --- Player roster ----------------------------------------------------------- */
 
 function Roster({ game, meId }: { game: GameView; meId?: string }) {
+  const { emotes } = useSession();
   const activeId = game.pending.type === "setup" ? game.pending.player : game.players[game.turnIndex]?.id;
   return <ol className="roster" aria-label="Players and victory points">
     {game.players.map((player) => {
       const active = activeId === player.id;
+      const ping = emotes.filter((e) => e.playerId === player.id).at(-1);
       return <li key={player.id}
         className={"roster-plate" + (active ? " active" : "") + (player.id === meId ? " mine" : "") + (player.connected ? "" : " offline")}
         style={{ ["--pl" as string]: PLAYER_COLORS[player.color] }}>
+        {ping && <span className="roster-emote" key={ping.id}><EmoteBubble name={player.name} emote={ping.emote} /></span>}
         <span className="roster-marker" aria-hidden="true"><PieceSprite kind="settlement" color={PLAYER_COLORS[player.color]} size={26} /></span>
         <span className="roster-name">{player.name}</span>
         <span className="roster-awards">
@@ -100,6 +104,7 @@ function TurnClock({ deadline }: { deadline: number | null }) {
 
 function Hand({ hand }: { hand: ResourceHand }) {
   return <div className="hand" aria-label="Your resource cards">
+    {RESOURCES.every(resource => hand[resource] === 0) && <span className="hand-empty">No resource cards yet</span>}
     {RESOURCES.filter(resource => hand[resource] > 0).map(resource => {
       const total = hand[resource];
       // Render individual overlapping cards. Cap just the visual layers: the
@@ -128,14 +133,29 @@ function Hand({ hand }: { hand: ResourceHand }) {
 export function GamePage() {
   const { code } = useParams();
   const navigate = useNavigate();
-  const { auth, lobby, game, command, join, leave, reset, connected, busy } = useSession();
+  const { auth, lobby, game, command, join, leave, reset, connected, busy, emotes, emote: sendEmote } = useSession();
   const [mode, setMode] = useState<BoardAction>(null);
   const [panel, setPanel] = useState<Panel>(null);
   const [audio, setAudio] = useState(() => localStorage.getItem("hexhaven.audio") === "yes");
   const [menu, setMenu] = useState(false);
+  const [emoteOpen, setEmoteOpen] = useState(false);
   const [rolling, setRolling] = useState(false);
   const rollStart = useRef(0);
   const previous = useRef<{ seed: string; rev: number } | null>(null);
+
+  // The table has several small popovers; Escape always dismisses the active
+  // one without resetting a placement or leaving the match.
+  useEffect(() => {
+    if (!panel && !menu && !emoteOpen) return;
+    const dismiss = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setPanel(null);
+      setMenu(false);
+      setEmoteOpen(false);
+    };
+    window.addEventListener("keydown", dismiss);
+    return () => window.removeEventListener("keydown", dismiss);
+  }, [panel, menu, emoteOpen]);
 
   useEffect(() => { if (!auth && code) { const name = localStorage.getItem("hexhaven.name"); if (name) void join(code, name); } }, [auth?.code, code]);
   useEffect(() => { if (auth && lobby?.state === "lobby") navigate("/lobby/" + auth.code, { replace: true }); }, [auth?.code, lobby?.state, navigate]);
@@ -168,6 +188,15 @@ export function GamePage() {
     const t = setTimeout(() => setRolling(false), wait);
     return () => clearTimeout(t);
   }, [game?.dice, rolling]);
+
+  // A soft pluck whenever someone reacts at the table.
+  const lastEmote = useRef(0);
+  useEffect(() => {
+    const latest = emotes.at(-1);
+    if (!latest || latest.id === lastEmote.current) return;
+    lastEmote.current = latest.id;
+    if (audio) playCue("emote");
+  }, [emotes.length, audio]);
 
   const activeId = game?.pending.type === "setup" ? game.pending.player : game?.players[game.turnIndex]?.id;
   const mine = Boolean(auth && !auth.spectator && activeId === auth.playerId);
@@ -202,7 +231,7 @@ export function GamePage() {
     if (!canRoll || rolling) return;
     setRolling(true);
     rollStart.current = Date.now();
-    void send({ type: "rollDice" });
+    void send({ type: "rollDice" }).then(ok => { if (!ok) setRolling(false); });
   };
 
   if (!auth || !lobby || auth.code !== code) {
@@ -228,6 +257,13 @@ export function GamePage() {
       : <span className="dock-wait">{mine ? "Your move" : gameOver ? "Match over" : "Waiting…"}</span>;
   const tableTools = <div className="hud-tools">
     <TurnClock deadline={lobby.turnDeadline ?? null} />
+    <div className="hud-menu-wrap reaction-menu-wrap">
+      <button className="hud-tool" aria-label="Send a reaction" title="React" aria-expanded={emoteOpen} aria-haspopup="menu"
+        onClick={() => setEmoteOpen(!emoteOpen)}>
+        <EmoteSprite emote="faceHappy" size={20} />
+      </button>
+      {emoteOpen && <EmotePicker onPick={(picked) => { sendEmote(picked); setEmoteOpen(false); }} onClose={() => setEmoteOpen(false)} />}
+    </div>
     <button type="button" onClick={openRules} className="hud-tool" title="Rulebook" aria-label="Open rulebook"><img src="/art/ui/rulebook.png" alt="" /></button>
     <button className="hud-tool" aria-label={audio ? "Mute sounds" : "Enable sounds"} title={audio ? "Mute sounds" : "Enable sounds"} onClick={toggleAudio}>
       <img src={audio ? "/art/ui/sound-on.png" : "/art/ui/sound-off.png"} alt="" />
@@ -314,6 +350,10 @@ export function GamePage() {
       <Hand hand={hand} />
       <nav className="dock-actions" aria-label="Mobile game actions">
         <button className={"dock-tile" + (panel === "build" ? " open" : "")} title="Build" aria-label="Build" aria-pressed={panel === "build"} onClick={() => togglePanel("build")}> <PieceSprite kind="settlement" color="#b3855b" size={24} /></button>
+        <div className="dock-tile-wrap">
+          <button className="dock-tile" title="React" aria-label="Send a reaction" aria-expanded={emoteOpen} aria-haspopup="menu" onClick={() => setEmoteOpen(!emoteOpen)}><EmoteSprite emote="faceHappy" size={24} /></button>
+          {emoteOpen && <EmotePicker onPick={(picked) => { sendEmote(picked); setEmoteOpen(false); }} onClose={() => setEmoteOpen(false)} />}
+        </div>
         <button className={"dock-tile" + (panel === "trade" ? " open" : "")} title="Trade" aria-label="Trade" aria-pressed={panel === "trade"} onClick={() => togglePanel("trade")}><img className="action-icon-img" src="/art/ui/trade.png" alt="" />{incomingOffers.length > 0 && <i className="dock-badge">{incomingOffers.length}</i>}</button>
         <button className={"dock-tile" + (panel === "cards" ? " open" : "")} title="Development cards" aria-label="Development cards" aria-pressed={panel === "cards"} onClick={() => togglePanel("cards")}><img className="action-icon-img" src="/art/ui/cards.png" alt="" />{devCount > 0 && <i className="dock-badge">{devCount}</i>}</button>
         <button className={"dock-tile" + (panel === "log" ? " open" : "")} title="Game log" aria-label="Game log" aria-pressed={panel === "log"} onClick={() => togglePanel("log")}><History size={23} /></button>
@@ -350,7 +390,7 @@ export function GamePage() {
     {gameOver &&
       <div className="dialog-backdrop victory-backdrop" role="dialog" aria-modal="true" aria-label="Match results">
         <div className="game-dialog winner-dialog">
-          <div className="winner-crown" aria-hidden><Crown size={34} /></div>
+          <div className="winner-crown" aria-hidden><img src="/kenney/board-game-icons/PNG/Default (64px)/crown_a.png" alt="" width={34} height={34} /></div>
           <h2>{game.players.find((p) => p.id === game.winnerId)?.name ?? "A player"} wins</h2>
           <ol className="standings">
             {[...game.players].sort((a, b) => b.publicPoints - a.publicPoints).map((p, i) =>

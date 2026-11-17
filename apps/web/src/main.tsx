@@ -10,6 +10,7 @@ import "./ui/tokens.css";
 import "./ui/base.css";
 import "./ui/game.css";
 import "./ui/menu.css";
+import "./ui/menu-refinement.css";
 import "./ui/game-compact.css";
 import "./ui/cursors.css";
 

@@ -1,0 +1,151 @@
+/* Menu and lobby visual system. The board and the rulebook have their own
+   surfaces; this layer is deliberately scoped to entry and room setup. */
+.home-page, .lobby-page {
+  background:
+    radial-gradient(ellipse 1000px 570px at 50% 10%, #288baa 0%, #16708e 67%, #10435c 100%);
+}
+.home-page { position: relative; min-height: 100dvh; padding: 22px; isolation: isolate; }
+.home-page::before, .lobby-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .25;
+  background-image:
+    radial-gradient(circle at 15% 27%, #ffffff28 0 1px, transparent 2px),
+    radial-gradient(circle at 78% 62%, #ffffff22 0 1px, transparent 2px);
+  background-size: 77px 83px, 117px 97px;
+}
+.home-page .menu-sign {
+  z-index: 1;
+  width: min(100%, 460px);
+  padding: clamp(24px, 4vw, 36px) clamp(23px, 4vw, 37px) 29px;
+  background: #f9f5e9;
+  border: 1px solid #ded1b7;
+  border-top: 4px solid #a87244;
+  border-radius: 17px;
+  box-shadow: 0 23px 56px #082f464b, 0 3px 12px #082f4623;
+}
+.home-page .menu-sign h1 {
+  color: #553b29;
+  font-size: clamp(44px, 6vw, 55px);
+  line-height: 1.05;
+  letter-spacing: -.035em;
+  font-weight: 750;
+}
+.home-page .menu-actions { gap: 12px; margin-top: 26px; }
+.home-page .menu-actions .field { gap: 7px; }
+.home-page .menu-actions .field-label { color: #584b39; font-size: 12.5px; font-weight: 750; }
+.home-page .menu-actions .field input {
+  min-height: 49px; height: 49px;
+  padding-inline: 15px;
+  background: #fffcf5;
+  border: 1px solid #d9c9ae;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.home-page .menu-actions .field input::placeholder { color: #a99c88; }
+.home-page .menu-actions .field input:focus { border-color: #ac7a4a; box-shadow: 0 0 0 3px #c1955d29; }
+.home-page .menu-btn {
+  min-height: 52px;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 750;
+  box-shadow: none;
+}
+.home-page .button.primary:not(:disabled) { color: #fffbf1; background: #986138; border-color: #85512e; }
+.home-page .button.primary:not(:disabled):hover { background: #80502f; }
+.home-page .button.paper { background: #fffdf5; border: 1px solid #cdbca0; box-shadow: none; }
+.home-page .button.paper:not(:disabled):hover { background: #f5ead6; }
+.home-page .button:disabled { opacity: 1; color: #a19582; background: #e9dfcb; border: 1px solid #ded0b6; box-shadow: none; }
+.home-page .button.paper:disabled { background: #f4eee2; border-color: #e1d6c2; color: #b1a591; }
+.home-divider { color: #92826b; font-size: 12px; margin: 2px 0 0; }
+.home-divider::before, .home-divider::after { background: #e1d5c1; }
+.home-page .home-spectator { margin: 0; color: #5f5547; font-size: 13px; }
+.home-page .menu-guide { width: fit-content; margin: 4px auto 0; color: #795436; font-size: 13.5px; padding: 6px 10px; }
+.home-page .menu-guide:hover { color: #55351f; text-decoration: underline; text-underline-offset: 4px; }
+.home-resume { font-size: 13px; color: #775238; }
+
+.lobby-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 100dvh;
+  padding: clamp(18px, 3vw, 40px) 20px;
+  overflow: visible;
+}
+.lobby-layout {
+  z-index: 1;
+  width: min(1180px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(325px, .91fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.lobby-layout .surface {
+  min-width: 0;
+  padding: clamp(18px, 2.2vw, 25px);
+  background: #f9f5e9;
+  border: 1px solid #dbceb5;
+  border-radius: 15px;
+  box-shadow: 0 16px 40px #08324830;
+}
+.lobby-main { display: flex; flex-direction: column; }
+.lobby-code-row { gap: 14px; border-color: #e6d9c5; padding-bottom: 17px; }
+.lobby-code { color: #5c412c; font-size: 24px; font-weight: 750; letter-spacing: .04em; }
+.lobby-seat-count { color: #80715c; font-size: 12.5px; }
+.lobby-code-row .button { min-height: 39px; padding: 8px 13px; border: 1px solid #e1d4be; border-radius: 8px; background: #fffcf5; white-space: nowrap; }
+.lobby-code-row .button:hover { background: #f2e5cf; }
+.lobby-seats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 19px; }
+.lobby-seat { min-height: 55px; gap: 10px; padding: 7px 11px; background: #fffdf6; border: 1px solid #e9dfce; border-radius: 9px; }
+.lobby-seat::before { inset: 6px auto 6px 0; width: 3px; border-radius: 4px; }
+.lobby-seat.seat-empty { background: #f6f1e6; border: 1px dashed #dfd3bf; }
+.lobby-seat.seat-empty::before { display: none; }
+.lobby-seat .seat-number { width: 16px; font: 700 12px var(--font-ui); color: #877962; }
+.lobby-seat .empty-avatar { width: 32px; height: 32px; background: #faf5e9; border-color: #e4d9c4; border-radius: 8px; }
+.lobby-seat .empty-avatar svg { width: 17px; height: 17px; }
+.lobby-seat .seat-details strong { color: #44382b; font-size: 12px; }
+.lobby-seat.seat-empty .seat-details strong { color: #a0927e; font-weight: 600; }
+.lobby-seat .seat-ready { font-size: 10px; }
+.seat-controls { align-items: center; margin-top: auto; padding-top: 19px; border-color: #e6d9c5; }
+.color-swatches { gap: 7px; }
+.color-swatch { width: 26px; height: 26px; }
+.lobby-emote-wrap .button { min-height: 40px; }
+.lobby-side { gap: 16px; }
+.lobby-side .side-heading h2 { font-size: 23px; color: #4a3728; }
+.lobby-side .side-heading p { font-size: 12px; line-height: 1.55; color: #83745f; }
+.lobby-side .field { gap: 6px; }
+.lobby-side .field-label { font-size: 12px; color: #645743; }
+.lobby-side .field select { min-height: 43px; height: 43px; border-radius: 9px; border: 1px solid #dcd0ba; background: #fffdf6; font-size: 13px; }
+.lobby-side .checkbox-row { font-size: 13px; }
+.lobby-side .lobby-start { border-top: 1px solid #e6d9c5; padding-top: 16px; }
+.lobby-start p { font-size: 12px; color: #776651; }
+.lobby-start .button { min-height: 47px; border-radius: 8px; font-size: 14px; }
+.leave-link { z-index: 1; color: #f6e9d4; font-size: 13px; }
+.leave-link:hover { color: #fff; background: #ffffff15; }
+@media (max-width: 850px) {
+  .lobby-page { justify-content: flex-start; }
+  .lobby-layout { grid-template-columns: 1fr; max-width: 640px; }
+  .lobby-layout .surface { padding: 20px; }
+}
+@media (max-width: 550px) {
+  .home-page { padding: 13px; }
+  .home-page .menu-sign { padding: 27px 22px 24px; }
+  .home-page .menu-actions { gap: 11px; }
+  .home-page .menu-btn { min-height: 48px; }
+  .lobby-page { padding: 17px 12px 26px; }
+  .lobby-layout .surface { padding: 16px; }
+  .lobby-seats { gap: 6px; }
+  .lobby-seat { min-height: 49px; padding: 6px; gap: 7px; }
+  .lobby-seat .seat-number { width: 12px; }
+  .lobby-seat .empty-avatar { width: 25px; height: 25px; }
+  .lobby-seat .empty-avatar svg { width: 13px; height: 13px; }
+  .lobby-seat .seat-details strong { font-size: 10.5px; }
+  .lobby-seat .seat-ready { font-size: 9px; }
+  .lobby-code-row { flex-wrap: wrap; }
+  .seat-controls { flex-wrap: wrap; gap: 10px; }
+}

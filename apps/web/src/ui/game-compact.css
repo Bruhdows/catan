@@ -1,310 +1,360 @@
-/* Compact table: the island is the canvas; state lives in a narrow rail. */
+/* Catan table layout. The rules and board are separate from their visual shell.
+   This layer owns the responsive table; game.css owns reusable gameplay widgets. */
 .game {
-  --table-paper: #f4f2e9;
-  --table-border: #d2d1c6;
-  --table-ink: #43473f;
-  background: #167da5;
+  --table-surface: #f8f5eb;
+  --table-surface-muted: #eee9dc;
+  --table-edge: #d8d1bf;
+  --table-ink: #332e25;
+  --table-subtle: #746d60;
+  background: #187da1;
 }
-.game .hud { display: none; }
-.table { display: grid; grid-template-columns: minmax(0, 1fr) 266px; background: #167da5; }
-.board-area { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+
+/* Board + information rail share a single viewport, no page scrolling. */
+.game > .hud { display: none; }
+.game .table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 288px;
+  background: #167a9d;
+}
+.board-area { position: relative; min-width: 0; min-height: 0; isolation: isolate; overflow: hidden; }
 .board-area .island-stage { position: absolute; inset: 0; width: 100%; height: 100%; min-width: 0; min-height: 0; }
-.game-board { background: #167da5; }
+.game-board { background: #187da1; }
 
-/* Side panel: controls, full player roster, activity and bank in that order. */
+/* Player standings, actions, activity and supply, each with one purpose. */
 .table-sidebar {
-  z-index: 7; display: flex; flex-direction: column; position: relative;
-  height: 100%; min-height: 0; min-width: 0;
-  background: var(--table-paper); color: var(--table-ink);
-  border-left: 1px solid #c9c8bd;
+  position: relative;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--table-surface);
+  color: var(--table-ink);
+  border-left: 1px solid #c9c1ae;
+  box-shadow: -3px 0 14px #133f4d17;
 }
-.table-sidebar-toolbar {
-  z-index: 3; display: flex; align-items: center; justify-content: space-between;
-  gap: 8px; flex: none; min-height: 47px; padding: 7px 12px;
-  border-bottom: 1px solid var(--table-border); background: #ebeae0;
+.table-sidebar-players { flex: none; padding: 7px 0 10px; border-bottom: 1px solid var(--table-edge); }
+.table-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 14px;
+  color: #766d5d;
+  font: 800 10px var(--font-ui);
+  letter-spacing: .12em;
 }
-.table-sidebar-toolbar > strong { font: 750 13px var(--font-ui); letter-spacing: .11em; color: #635742; }
-.hud-tools { display: flex; align-items: center; gap: 5px; flex: none; }
-.hud-tool {
-  width: 29px; height: 29px; background: #fcfaf3;
-  border: 1px solid #d2d0c3; border-radius: 7px;
-  color: #666c62; transition: color .15s, border-color .15s, background .15s;
+.sidebar-count, .round-indicator {
+  color: #8a8376;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0;
 }
-.hud-tool:hover { background: #fffdf5; border-color: #aead9d; color: #333c38; }
-.hud-tool:focus-visible, .dock-tile:focus-visible, .board-zoom button:focus-visible { outline: 2px solid #b9843c; outline-offset: 2px; }
-.hud-dots { font-size: 11px; font-family: var(--font-ui); letter-spacing: -.07em; line-height: 1; }
-.hud-menu-wrap { z-index: 20; }
-.game-menu { top: calc(100% + 7px); right: 0; min-width: 184px; border-radius: 8px; padding: 5px; box-shadow: 0 8px 24px #222c2c26; background: #fcfaf3; }
-.game-menu button { font-size: 12px; padding: 9px 10px; }
-.turn-clock { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 750; font-variant-numeric: tabular-nums; color: #555c56; white-space: nowrap; }
-.turn-clock.urgent { color: #bd4c3f; }
-
-.table-sidebar-players { flex: none; padding-bottom: 10px; border-bottom: 1px solid var(--table-border); }
-.table-sidebar-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 12px 9px; font-size: 10px; font-weight: 800; color: #73796e; letter-spacing: .085em; }
-.sidebar-count { font-size: 10px; font-weight: 650; color: #8d9085; letter-spacing: 0; }
-.table-sidebar .roster {
-  display: flex; flex-direction: column; justify-content: start; flex: none;
-  gap: 5px; padding: 0 10px; margin: 0; min-width: 0; overflow: visible;
-}
+.table-sidebar .roster { display: flex; flex-direction: column; gap: 4px; padding: 0 9px; margin: 0; min-width: 0; overflow: visible; }
 .table-sidebar .roster-plate {
-  display: flex; align-items: center; flex: none; gap: 6px; width: 100%; min-width: 0;
-  height: 36px; padding: 4px 7px 4px 5px;
-  background: #fffdf7; border: 1px solid #dbd8cb; border-left: 3px solid var(--pl);
-  border-radius: 7px; box-shadow: none; transform: none;
+  width: 100%; min-height: 41px; height: 41px; max-width: none;
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 8px 4px 6px;
+  background: transparent;
+  border-left: 3px solid var(--pl);
+  border-radius: 7px;
+  box-shadow: none;
+  transform: none;
 }
-.table-sidebar .roster-plate.active { background: #fff5dc; border-color: var(--pl); box-shadow: 0 0 0 1px color-mix(in srgb, var(--pl) 25%, transparent); transform: none; }
+.table-sidebar .roster-plate.active {
+  background: #f7e8d3;
+  box-shadow: inset 0 0 0 1px #e0c8a4;
+  transform: none;
+}
 .table-sidebar .roster-plate.mine .roster-name { box-shadow: none; }
 .table-sidebar .roster-marker { flex: none; }
-.table-sidebar .roster-marker svg { width: 22px; height: 22px; }
-.table-sidebar .roster-name { font-size: 11.5px; flex: 1; min-width: 0; max-width: none; }
-.roster-card-count, .roster-dev-count { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #858579; font-weight: 700; flex: none; font-variant-numeric: tabular-nums; }
+.table-sidebar .roster-marker img, .table-sidebar .roster-marker svg { width: 25px; height: 25px; }
+.table-sidebar .roster-name { flex: 1; min-width: 0; max-width: none; font-size: 12px; font-weight: 750; }
+.roster-card-count, .roster-dev-count {
+  display: inline-flex; align-items: center; gap: 3px;
+  flex: none; color: #777363; font-size: 11px; font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.roster-card-count svg, .roster-dev-count svg { width: 13px; height: 13px; }
 .table-sidebar .roster-awards { gap: 2px; }
-.table-sidebar .roster-pts { display: inline-flex; align-items: center; gap: 2px; margin: 0; flex: none; }
-.table-sidebar .roster-pts svg { width: 12px; height: 12px; }
-.table-sidebar .roster-pts b { font: 800 12px var(--font-ui); color: #675840; }
+.table-sidebar .roster-pts { display: inline-flex; align-items: center; gap: 3px; flex: none; margin: 0; }
+.table-sidebar .roster-pts svg { width: 14px; height: 14px; color: #ac7e31; }
+.table-sidebar .roster-pts b { color: #5b4629; font: 800 14px var(--font-ui); font-variant-numeric: tabular-nums; }
 .table-sidebar .roster-pts i { display: none; }
 
-.activity-heading { padding-top: 11px; padding-bottom: 9px; flex: none; }
-.round-indicator { font-size: 10px; letter-spacing: 0; color: #6f7469; padding: 3px 7px; border-radius: 5px; background: #e7e6db; }
-.table-activity { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 11px 8px; scrollbar-width: thin; scrollbar-color: #c0c0b4 transparent; }
-.table-activity-line { display: flex; gap: 8px; padding: 7px 0; border-bottom: 1px solid #e0dfd5; color: #5a6158; font-size: 11px; line-height: 1.4; }
-.table-activity-line:last-child { border-bottom: none; }
-.table-activity-turn { flex: none; width: 24px; font-size: 9px; font-weight: 800; color: #a1a398; }
-.table-sidebar-bank { border-top: 1px solid var(--table-border); flex: none; padding-bottom: 10px; background: #ebeadf; }
-.table-sidebar-bank .table-sidebar-head { padding-top: 9px; padding-bottom: 6px; }
-.table-bank-resources { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 0 9px; }
-.table-bank-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; min-width: 0; background: #f9f8f0; border-radius: 5px; border: 1px solid #dddbc8; }
-.table-bank-item strong { font: 750 10px var(--font-ui); font-variant-numeric: tabular-nums; }
-.table-bank-item svg { width: 21px; height: 21px; }
+.sidebar-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  flex: none;
+  padding: 9px;
+  border-bottom: 1px solid var(--table-edge);
+  background: #f5f0e5;
+}
+.sidebar-action {
+  position: relative;
+  display: grid; place-items: center;
+  min-width: 0; height: 42px;
+  color: #666051; background: #fffdf7;
+  border: 1px solid #e3dbca;
+  border-radius: 9px;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+.sidebar-action:hover { background: #fbf2df; border-color: #c9bba0; transform: translateY(-1px); }
+.sidebar-action.selected { background: #efe0c2; border-color: #bb9e6f; box-shadow: inset 0 -2px 0 #b1874f; }
+.sidebar-action:focus-visible { outline: 2px solid #bd9047; outline-offset: 2px; }
+.sidebar-action .action-icon-img { width: 23px; height: 23px; object-fit: contain; }
+.sidebar-action .dock-badge { position: absolute; top: -4px; right: -3px; }
 
-/* The board overlays are relative to the board, not the right sidebar. */
-.turn-plate { top: 10px; left: 10px; padding: 7px 11px; border: 1px solid #c5c9c0; border-left-width: 3px; border-radius: 7px; background: #faf9f1eE; box-shadow: 0 2px 8px #23465342; max-width: 255px; }
-.turn-plate strong { font: 750 13px var(--font-ui); color: #343a35; }
-.turn-plate span { font-size: 10px; }
-.dice-tray { top: 10px; right: 10px; padding: 4px 7px; gap: 3px; background: #faf9f1ef; border-radius: 7px; border-color: #c5c9c0; }
-.dice-tray .die { width: 29px; height: 29px; }
-.dice-tray b { font: 800 15px var(--font-ui); }
-.board-zoom { right: 9px; bottom: 9px; padding: 2px; border-radius: 7px; background: #faf9f1f5; border-color: #c5c9c0; }
-.board-zoom button { width: 29px; height: 29px; }
-.placement-cancel { bottom: 9px; left: 9px; padding: 6px 10px; border-radius: 7px; }
-.offer-note { bottom: 12px; border-radius: 8px; font-size: 12px; }
-.drawer { top: 8px; right: 8px; bottom: 8px; width: min(342px, calc(100% - 16px)); border-radius: 9px; background: #f8f6ed; }
-.drawer-head { padding: 10px 14px; }
-.drawer-head h2 { font-size: 17px; }
-.drawer-body { padding: 12px 14px 14px; }
+.activity-heading { flex: none; padding-top: 12px; padding-bottom: 8px; }
+.table-activity {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 13px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #bcb7aa transparent;
+  overscroll-behavior: contain;
+}
+.table-activity-line {
+  display: flex;
+  gap: 9px;
+  padding: 9px 0;
+  border-bottom: 1px solid #e5dfd1;
+  font-size: 12px;
+  line-height: 1.46;
+  color: #5a554b;
+}
+.table-activity-line:last-child { border-bottom: 0; }
+.table-activity-turn { flex: none; width: 24px; font-size: 10px; font-weight: 800; color: #92897c; }
+.table-activity-line.activity-action .table-activity-turn { color: #56826c; }
+.table-activity-line.activity-roll .table-activity-turn { color: #337b9b; }
+.table-activity-line.activity-trade .table-activity-turn { color: #a2773a; }
 
-/* Compact resource and action shelf, with real space reserved for the island. */
-.dock { min-height: 62px; padding: 6px 11px; gap: 12px; background: #f4f2e9; border-top-color: #d2d1c6; box-shadow: 0 -1px 6px #23465329; }
-.hand { flex: 1; gap: 5px; max-width: 550px; }
-.hand-card { flex: 0 1 69px; width: 69px; min-width: 43px; max-width: 69px; height: 47px; border-radius: 7px; box-shadow: 0 1px 2px #36423713; }
-.hand-card-icon svg { width: 23px; height: 23px; }
-.hand-count { min-width: 18px; height: 18px; padding: 0 4px; right: 3px; bottom: 3px; border-radius: 5px; font-size: 10px; }
-.hand-side { gap: 4px; }
-.hand-vp, .hand-tokens { border-radius: 6px; padding: 4px 7px; }
-.hand-vp b { font: 750 14px var(--font-ui); }
-.hand-vp svg, .hand-tokens svg { width: 12px; height: 12px; }
-.hand-vp i { font-size: 9px; }
-.dock-actions { gap: 4px; }
-.dock-tile { width: 58px; height: 45px; gap: 2px; border-radius: 7px; font-size: 10px; }
-.dock-tile > svg, .dock-tile > .dock-tile-icon { width: 19px; height: 19px; font-size: 18px; }
-.dock-tile:hover { background: #eae9dd; }
-.dock-tile.open { background: #e6e5d7; border-color: #c6c5b5; box-shadow: inset 0 -2px 0 #9d9b82; }
-.dock-primary { width: 158px; }
-.primary-action { height: 43px; border-radius: 7px; font: 700 13px var(--font-ui); gap: 7px; }
+.table-sidebar-bank { flex: none; border-top: 1px solid var(--table-edge); background: #f0ece1; padding: 3px 0 9px; }
+.table-sidebar-bank .table-sidebar-head { padding-top: 8px; padding-bottom: 6px; }
+.table-bank-resources { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; padding: 0 9px; }
+.table-bank-item {
+  min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 1px 5px;
+  background: #fffaf1;
+  border: 1px solid #e1d8c4;
+  border-radius: 7px;
+}
+.table-bank-item img, .table-bank-item svg { width: 23px; height: 23px; object-fit: contain; }
+.table-bank-item strong { font: 750 12px var(--font-ui); font-variant-numeric: tabular-nums; color: #574d3c; }
+.sidebar-turn-control { flex: none; padding: 10px; background: #f0ece1; border-top: 1px solid var(--table-edge); }
+.sidebar-turn-control .primary-action { width: 100%; min-height: 43px; font-size: 13px; }
+.sidebar-turn-control .dock-wait { display: block; text-align: center; font-size: 12px; padding: 10px; }
 
-/* Smaller widths keep the entire roster above a full-width board. */
+/* One cluster of utility actions, anchored to the island rather than the rail. */
+.map-tools { position: absolute; top: 12px; left: 12px; z-index: 24; pointer-events: auto; }
+.map-tools .hud-tools { display: flex; align-items: center; flex-direction: row; gap: 6px; }
+.map-tools .hud-tool {
+  display: grid; place-items: center;
+  width: 37px; height: 37px;
+  background: #fffbf0f0;
+  border: 1px solid #e0d3b9;
+  border-radius: 9px;
+  box-shadow: 0 2px 6px #153e4a2c;
+  transition: background .15s, transform .15s;
+}
+.map-tools .hud-tool:hover { background: #ffffff; transform: translateY(-1px); }
+.map-tools .hud-tool img { width: 23px; height: 23px; object-fit: contain; opacity: .85; }
+.map-tools .turn-clock {
+  order: 5;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums;
+  padding: 8px 10px;
+  background: #fffbf0f0; border: 1px solid #e0d3b9; border-radius: 9px;
+  box-shadow: 0 2px 6px #153e4a20;
+}
+.map-tools .turn-clock.urgent { color: #bc453a; }
+.hud-menu-wrap { z-index: 20; }
+.game-menu { top: calc(100% + 8px); right: 0; min-width: 184px; padding: 5px; border-radius: 9px; background: #fffcf4; box-shadow: 0 9px 26px #1d353e3b; }
+.game-menu button { padding: 9px 11px; font-size: 12px; }
+.board-area .turn-plate {
+  top: 60px; left: 12px;
+  width: fit-content;
+  max-width: min(310px, calc(100% - 24px));
+  padding: 9px 13px;
+  background: #fffbf0f2;
+  border: 1px solid #e4d8bc;
+  border-left: 3px solid #d29b43;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px #23465329;
+}
+.turn-plate strong { font: 750 14px var(--font-ui); color: #40362c; }
+.turn-plate span { font-size: 11.5px; }
+.board-area .dice-tray {
+  top: auto; right: 12px; bottom: 12px;
+  gap: 6px; padding: 5px 9px;
+  background: #fffbf0f2;
+  border: 1px solid #e3d6be;
+  border-radius: 11px;
+  box-shadow: 0 3px 13px #1541553b;
+}
+.board-area .dice-tray .die { width: 57px; height: 57px; }
+.board-area .dice-tray b { margin: 0 4px 0 2px; font: 800 19px var(--font-ui); color: #69513a; }
+.board-area .board-zoom { left: 12px; right: auto; bottom: 12px; padding: 3px; background: #fffbf0f2; border: 1px solid #e3d6be; border-radius: 9px; }
+.board-area .board-zoom button { width: 30px; height: 30px; }
+.placement-cancel { bottom: 58px; left: 12px; border-radius: 8px; }
+.offer-note { bottom: 90px; border-radius: 9px; font-size: 12px; }
+
+/* The drawer is only as tall as its contents. It never blocks empty ocean. */
+.board-area .drawer {
+  position: absolute;
+  top: 12px; right: 12px; bottom: auto;
+  width: min(393px, calc(100% - 24px));
+  height: max-content;
+  max-height: calc(100% - 24px);
+  overflow: hidden;
+  background: #fffcf4;
+  border: 1px solid #d9cbb3;
+  border-radius: 12px;
+  box-shadow: 0 12px 34px #12394950;
+  animation: drawer-in .18s ease-out;
+}
+@keyframes drawer-in { from { opacity: .65; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+.board-area .drawer-head { flex: none; padding: 13px 16px 12px; background: #f8f2e6; border-bottom: 1px solid #e4dbc9; }
+.board-area .drawer-head h2 { font-size: 20px; line-height: 1.2; }
+.board-area .drawer-close { width: 30px; height: 30px; border-radius: 7px; }
+.board-area .drawer-body { flex: 0 1 auto; min-height: 0; overflow-y: auto; padding: 13px 14px 16px; }
+.board-area .drawer .panel-content { gap: 13px; }
+.board-area .drawer .build-row,
+.board-area .drawer .buy-dev { border: 1px solid #eae2d4; border-radius: 9px; padding: 9px 10px; background: #fffaf0; }
+.board-area .drawer .build-row:hover:not(:disabled),
+.board-area .drawer .buy-dev:hover:not(:disabled) { background: #f7ecd6; border-color: #d3b58c; }
+.board-area .drawer .build-row:disabled,
+.board-area .drawer .buy-dev:disabled { background: #f8f5ef; }
+.board-area .drawer .build-copy strong { font-size: 13.5px; }
+.board-area .drawer .build-left { font-size: 14px; }
+.board-area .drawer .pick-note { line-height: 1.5; }
+.board-area .drawer .tile-row { gap: 4px; }
+.board-area .drawer .res-tile { padding: 7px 2px 6px; }
+.board-area .drawer .stepper { justify-content: center; gap: 1px; }
+.board-area .drawer .stepper button { width: 24px; height: 28px; }
+.board-area .drawer .stepper output { width: 18px; }
+.board-area .drawer .panel-tabs button { min-height: 34px; }
+.board-area .drawer .trader { padding: 7px 4px; }
+.board-area .drawer .dev-cards:not(:empty) .dev-card { background: #fffaf0; border: 1px solid #eae2d4; }
+
+/* Resource cards are actual portrait stacks. Empty types are never rendered. */
+.game .dock {
+  min-height: 98px; flex: none;
+  justify-content: flex-start; align-items: center;
+  gap: 11px; padding: 6px 14px;
+  background: #f8f5eb;
+  border-top: 1px solid #d8d1bf;
+  box-shadow: 0 -2px 9px #0f405529;
+}
+.dock > .hand { display: flex; flex: 1; align-items: center; gap: 13px; min-width: 0; width: 100%; max-width: none; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #c6baa5 transparent; }
+.hand-stack { --step: 10px; position: relative; flex: none; width: calc(60px + (var(--visible) - 1) * var(--step)); height: 83px; isolation: isolate; }
+.hand-stack-card {
+  position: absolute; top: 0; left: calc(var(--layer) * var(--step));
+  width: 60px; height: 81px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  border: 1px solid #bba684; border-radius: 8px;
+  box-shadow: 0 2px 5px #5544312a;
+  background: #fff9ed; z-index: var(--layer);
+}
+.hand-stack.r-brick .hand-stack-card { background: #f7e5dc; border-color: #cda18b; }
+.hand-stack.r-lumber .hand-stack-card { background: #e6f0e2; border-color: #9dbb9f; }
+.hand-stack.r-wool .hand-stack-card { background: #edf3df; border-color: #b4c38c; }
+.hand-stack.r-grain .hand-stack-card { background: #fff0d0; border-color: #d4bc82; }
+.hand-stack.r-ore .hand-stack-card { background: #e9edf4; border-color: #a4afbf; }
+.hand-card-art { width: 39px; height: 41px; object-fit: contain; filter: drop-shadow(0 1px 1px #42382920); }
+.hand-card-name { font-size: 8px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #665747; }
+.hand-stack-total { position: absolute; z-index: 20; right: -4px; bottom: -4px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 5px; background: #fffaf0; border: 1px solid #d9c9ad; font: 800 11px var(--font-ui); color: #534430; box-shadow: 0 1px 3px #4e3b2728; }
+.hand-stack:has(.hand-stack-card:only-child) .hand-stack-total { display: none; }
+.hand-empty { padding: 10px 2px; color: #8e8472; font: 600 12px var(--font-ui); }
+
+/* Smaller windows: condensed standings above the map, actions below. */
+.game .dock-actions, .game .dock-primary { display: none; }
 @media (max-width: 1100px) {
-  .game .hud { display: flex; align-items: center; min-height: 57px; height: auto; padding: 6px 9px; gap: 8px; background: #f4f2e9; border-color: #d2d1c6; }
-  .table { grid-template-columns: minmax(0, 1fr); }
+  .game > .hud { display: flex; align-items: center; height: auto; min-height: 64px; padding: 5px 8px; background: #f8f5eb; border-bottom: 1px solid var(--table-edge); }
+  .game .table { grid-template-columns: minmax(0, 1fr); }
   .table-sidebar { display: none; }
-  .game .hud .roster { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); flex: 1; min-width: 0; gap: 4px; overflow: visible; }
-  .game .hud .roster-plate { display: flex; height: 24px; padding: 2px 5px; gap: 4px; flex: none; min-width: 0; max-width: none; width: 100%; border: 1px solid #d8d5c8; border-left: 3px solid var(--pl); border-radius: 5px; background: #fffdf7; transform: none; }
-  .game .hud .roster-plate.active { background: #fff5dc; box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--pl) 25%,transparent); }
-  .game .hud .roster-plate.mine .roster-name { box-shadow: none; }
-  .game .hud .roster-marker svg { width: 16px; height: 16px; }
-  .game .hud .roster-name { flex: 1; min-width: 0; max-width: none; font-size: 10px; }
+  .game .hud .roster { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; flex: 1; min-width: 0; overflow: visible; }
+  .game .hud .roster:has(> :nth-child(7)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .game .hud .roster-plate { display: flex; align-items: center; gap: 4px; height: 25px; width: 100%; min-width: 0; max-width: none; padding: 2px 5px; border-left: 3px solid var(--pl); border-radius: 5px; background: #fffaf3; box-shadow: none; transform: none; }
+  .game .hud .roster-plate.active { background: #f6e6c9; }
+  .game .hud .roster-name { flex: 1; min-width: 0; max-width: none; font-size: 11px; }
+  .game .hud .roster-marker img, .game .hud .roster-marker svg { width: 17px; height: 17px; }
   .game .hud .roster-awards, .game .hud .roster-card-count, .game .hud .roster-dev-count, .game .hud .roster-pts i { display: none; }
-  .game .hud .roster-pts { margin-left: 0; flex: none; }
-  .game .hud .roster-pts svg { width: 11px; height: 11px; }
-  .game .hud .roster-pts b { font: 750 11px var(--font-ui); color: #584c3a; }
+  .game .hud .roster-pts { flex: none; margin: 0; }
+  .game .hud .roster-pts svg { width: 12px; height: 12px; }
+  .game .hud .roster-pts b { font: 800 12px var(--font-ui); color: #5b4629; }
+  .game .dock { min-height: 95px; }
+  .game .dock-actions, .game .dock-primary { display: flex; flex: none; }
+  .game .dock-actions { gap: 4px; }
+  .game .dock-tile { width: 39px; height: 39px; border-radius: 8px; }
+  .game .dock-tile.open { background: #efe2c9; box-shadow: inset 0 -2px 0 #bb9360; }
+  .game .dock-tile .action-icon-img { width: 21px; height: 21px; object-fit: contain; }
+  .game .dock-primary { width: 128px; }
+  .game .dock-primary .primary-action { width: 100%; min-height: 39px; height: 39px; padding: 7px; border-radius: 8px; font-size: 12px; }
 }
 @media (max-width: 850px) {
-  .dock { flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
-  .hand { flex: 1; max-width: none; }
+  .game .dock { flex-wrap: wrap; justify-content: center; gap: 4px 10px; }
+  .game .dock > .hand { flex: 1 0 100%; justify-content: center; }
 }
 @media (max-width: 600px) {
-  .game .hud { min-height: 62px; padding: 4px 6px; gap: 5px; }
-  .game .hud .roster { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 3px; }
-  .game .hud .roster-plate { height: 24px; gap: 2px; padding: 1px 4px; }
+  .game > .hud { padding: 4px 6px; min-height: 59px; }
+  .game .hud .roster { gap: 3px; }
+  .game .hud .roster-plate { height: 24px; padding: 1px 4px; }
   .game .hud .roster-marker, .game .hud .roster-pts svg { display: none; }
-  .game .hud .roster-name { font-size: 9.5px; }
-  .hud-tools { flex-direction: column; gap: 2px; }
-  .game .hud .hud-tools > .hud-tool { display: none; }
-  .hud-menu-wrap .hud-tool { width: 25px; height: 24px; }
-  .turn-clock { font-size: 10px; }
-  .turn-clock svg { display: none; }
-  .turn-plate { top: 7px; left: 6px; padding: 6px 8px; }
-  .dice-tray { top: 7px; right: 7px; }
-  .dice-tray .die { width: 24px; height: 24px; }
-  .dock { min-height: 79px; padding: 4px 6px; gap: 3px 6px; }
-  .hand { order: 1; justify-content: center; flex: 1 0 100%; gap: 4px; }
-  .hand-card { width: 44px; flex: 1 1 38px; max-width: 58px; height: 34px; }
-  .hand-card-icon svg { width: 18px; height: 18px; }
-  .hand-count { bottom: 1px; right: 1px; min-width: 15px; height: 15px; font-size: 9px; }
-  .hand-side { flex-direction: row; align-items: center; }
-  .hand-vp, .hand-tokens { padding: 3px; }
-  .dock-actions { order: 2; flex: 1; justify-content: flex-start; }
-  .dock-tile { height: 32px; width: 44px; font-size: 9px; }
-  .dock-tile > svg, .dock-tile > .dock-tile-icon { width: 14px; height: 14px; font-size: 13px; }
-  .dock-primary { order: 3; width: 112px; }
-  .primary-action { height: 32px; font-size: 11px; }
-  .primary-action svg { width: 17px; height: 17px; }
-}
-
-.table-activity-line.activity-action .table-activity-turn { color: #528262; }
-.table-activity-line.activity-roll .table-activity-turn { color: #3d83a0; }
-.table-activity-line.activity-trade .table-activity-turn { color: #a17a43; }
-
-/* Each resource is represented by its individual cards, offset in a stack. */
-.hand { max-width: none; flex: 1; gap: 11px; align-items: end; }
-.hand-stack { --step: 8px; position: relative; display: block; flex: none;
-  width: calc(44px + (var(--visible) - 1) * var(--step)); height: 48px;
-  isolation: isolate; transition: width .2s ease; }
-.hand-stack-card { position: absolute; left: calc(var(--layer) * var(--step)); top: 0;
-  width: 44px; height: 46px; border-radius: 5px;
-  border: 1px solid #cfaa8c; box-shadow: 0 1px 2px #46362b32;
-  display: grid; place-items: center; background: #f7e6c8;
-  z-index: var(--layer); transition: left .18s ease, transform .18s ease; }
-.hand-stack-card::after { content: ""; position: absolute; pointer-events: none; inset: 3px;
-  border-radius: 3px; border: 1px solid #ffffff8a; }
-.hand-stack-card.top { background: #fff9ec; border-width: 1.5px; }
-.hand-stack.r-brick .hand-stack-card { border-color: #ce8c73; background-color: #f8e7df; }
-.hand-stack.r-lumber .hand-stack-card { border-color: #84a786; background-color: #e6f0e2; }
-.hand-stack.r-wool .hand-stack-card { border-color: #a0b975; background-color: #edf3df; }
-.hand-stack.r-grain .hand-stack-card { border-color: #d0b065; background-color: #fff0cf; }
-.hand-stack.r-ore .hand-stack-card { border-color: #8e9db7; background-color: #e9edf4; }
-.hand-stack-card svg { width: 25px; height: 25px; }
-.hand-stack.empty .hand-stack-card { opacity: .55; border-style: dashed; }
-.hand-stack-total { position: absolute; right: -4px; bottom: -4px; z-index: 20; display: grid;
-  min-width: 19px; height: 19px; padding: 0 4px; place-items: center;
-  font: 800 11px var(--font-ui); border-radius: 5px;
-  color: #5d4a33; background: #fffaf0; border: 1px solid #c0a782; box-shadow: 0 1px 3px #49392a30; }
-.hand-stack.empty .hand-stack-total { opacity: .85; }
-
-/* One toolbar in the desktop panel, not a second action bar. */
-.sidebar-actions { display: flex; align-items: center; justify-content: space-evenly; gap: 7px;
-  padding: 8px 12px; border-bottom: 1px solid var(--table-border); flex: none; }
-.sidebar-action { position: relative; display: grid; place-items: center; width: 100%; height: 38px;
-  border: 1px solid #d1cdbd; border-radius: 7px; background: #fbf9f1; color: #6e6958;
-  transition: background .15s, border-color .15s; }
-.sidebar-action:hover, .sidebar-action.selected { background: #eee5d3; border-color: #b4a181; color: #4b3c28; }
-.sidebar-action:focus-visible { outline: 2px solid #bd9047; outline-offset: 1px; }
-.sidebar-action .dock-badge { position: absolute; right: -3px; top: -5px; }
-.sidebar-trade-icon { font-size: 25px; line-height: 1; font-weight: 700; }
-.sidebar-turn-control { display: grid; place-items: stretch; flex: none; padding: 8px 11px;
-  border-top: 1px solid var(--table-border); background: #eae7d9; }
-.sidebar-turn-control .primary-action { width: 100%; height: 42px; }
-.sidebar-turn-control .dock-wait { text-align: center; }
-.dock-actions, .dock-primary { display: none; }
-.dock { justify-content: flex-start; gap: 14px; }
-
-/* Final dice are part of the board, large and anchored bottom-right. */
-.board-area .dice-tray { top: auto; bottom: 12px; right: 12px; padding: 8px 10px; gap: 7px;
-  background: #fffaf0f5; border-radius: 10px; border: 1px solid #bdc3ba;
-  box-shadow: 0 3px 14px #183a4d45; }
-.board-area .dice-tray .die { width: 64px; height: 64px; }
-.board-area .dice-tray b { font-size: 21px; margin-left: 3px; }
-.board-area .board-zoom { left: 10px; right: auto; bottom: 12px; }
-@media (max-width: 1100px) {
-  .sidebar-actions, .sidebar-turn-control { display: none; }
-  .dock-actions, .dock-primary { display: flex; }
-  .dock-actions .dock-tile { width: 40px; height: 40px; border-radius: 7px; }
-  .dock-actions .dock-tile > svg { width: 19px; height: 19px; }
-}
-@media (max-width: 600px) {
-  .hand { gap: 5px; }
-  .hand-stack { --step: 3px; height: 36px; width: calc(33px + (var(--visible) - 1) * var(--step)); }
-  .hand-stack-card { width: 33px; height: 34px; border-radius: 4px; }
-  .hand-stack-card svg { width: 20px; height: 20px; }
-  .hand-stack-total { font-size: 9px; min-width: 16px; height: 16px; }
-  .board-area .dice-tray { bottom: 9px; right: 6px; padding: 5px 7px; gap: 4px; }
-  .board-area .dice-tray .die { width: 35px; height: 35px; }
+  .game .hud .roster-name { font-size: 10px; }
+  .game .hud .roster-pts b { font-size: 11px; }
+  .map-tools { top: 7px; left: 7px; }
+  .map-tools .hud-tools { gap: 4px; }
+  .map-tools .hud-tool { width: 32px; height: 32px; border-radius: 7px; }
+  .map-tools .hud-tool img { width: 20px; height: 20px; }
+  .map-tools .turn-clock { padding: 6px 8px; font-size: 10px; }
+  .board-area .turn-plate { top: 46px; left: 7px; }
+  .board-area .dice-tray { bottom: 8px; right: 7px; gap: 3px; padding: 3px 5px; }
+  .board-area .dice-tray .die { width: 40px; height: 40px; }
   .board-area .dice-tray b { font-size: 16px; }
-  .board-area .board-zoom { bottom: 9px; left: 6px; }
-  .dock-primary { width: 108px; }
-}
-
-@media (max-width: 1100px) {
-  .game .hud .roster:has(> :nth-child(7)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-@media (max-width: 600px) {
-  .game .hud .roster:has(> :nth-child(7)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-
-/* Keep the hand in its own full-width row on narrow phones. The global
-   desktop hand flex rule must never override the mobile row basis. */
-@media (max-width: 600px) {
-  .dock { flex-wrap: wrap; justify-content: center; gap: 4px 6px; min-height: 88px; }
-  .dock > .hand { order: 1; flex: 1 0 100%; width: 100%; min-width: 0;
-    max-width: 100%; justify-content: center; gap: 5px;
-    overflow-x: auto; scrollbar-width: none; }
-  .dock-actions { order: 2; flex: 1 1 auto; justify-content: center; gap: 5px; }
-  .dock-primary { order: 3; flex: none; }
-  .drawer { animation-duration: .16s; }
-}
-
-/* Artwork controls belong to the map, independent of the player rail. */
-.map-tools { position: absolute; z-index: 24; top: 10px; left: 10px; pointer-events: auto; }
-.map-tools .hud-tools { display: flex; flex-direction: row; align-items: center; gap: 5px; }
-.map-tools .hud-tool { display: grid; place-items: center; width: 37px; height: 37px;
-  border: 1px solid #d5c9af; border-radius: 8px; background: #f8f3e7ee;
-  box-shadow: 0 2px 5px #1a3f4a30; }
-.map-tools .hud-tool:hover { background: #fffaf0; border-color: #bba779; }
-.map-tools .hud-tool img { width: 23px; height: 23px; object-fit: contain; opacity: .85; }
-.map-tools .turn-clock { order: 5; background: #f8f3e7f0; border: 1px solid #d5c9af;
-  padding: 7px 10px; border-radius: 8px; font-size: 13px; }
-.board-area .turn-plate { top: 57px; left: 10px; }
-.table-sidebar-players > .table-sidebar-head:first-child { padding-top: 14px; }
-.sidebar-action .action-icon-img { width: 23px; height: 23px; object-fit: contain; }
-.dock-tile .action-icon-img { width: 21px; height: 21px; object-fit: contain; }
-
-/* Actual portrait resource cards, never empty placeholders or duplicate VP. */
-.dock { min-height: 101px; padding: 7px 16px; }
-.dock > .hand { display: flex; flex: 1; width: 100%; max-width: none;
-  min-width: 0; gap: 13px; align-items: center; justify-content: flex-start; overflow-x: auto;
-  scrollbar-width: thin; scrollbar-color: #b6ad9b transparent; }
-.hand-stack { --step: 10px; width: calc(61px + (var(--visible) - 1) * var(--step));
-  height: 86px; position: relative; flex: none; isolation: isolate; }
-.hand-stack-card { position: absolute; left: calc(var(--layer) * var(--step)); top: 0;
-  width: 61px; height: 84px; z-index: var(--layer); display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 4px;
-  border: 1px solid #bda47e; border-radius: 7px; background: #fffaf0;
-  box-shadow: 0 2px 6px #322a202b; }
-.hand-stack-card::after { inset: 4px; border: 1px solid #ffffff99; border-radius: 4px; }
-.hand-stack-card.top { border-width: 1px; }
-.hand-card-art { width: 38px; height: 42px; object-fit: contain; z-index: 1; filter: drop-shadow(0 2px 1px #2d33202b); }
-.hand-card-name { z-index: 1; font-size: 8px; text-transform: uppercase; letter-spacing: .045em;
-  font-weight: 800; color: #5e5348; line-height: 1; }
-.hand-stack-total { bottom: -3px; right: -4px; min-width: 21px; height: 21px; font-size: 11px; }
-.hand-stack:has(.hand-stack-card:only-child) .hand-stack-total { display: none; }
-@media (max-width: 1100px) {
-  .map-tools { top: 8px; left: 8px; }
-  .game .hud .hud-tools { display: none; }
-  .dock { min-height: 91px; }
-}
-@media (max-width: 600px) {
-  .map-tools { top: 6px; left: 6px; }
-  .map-tools .hud-tools { flex-direction: row; gap: 3px; }
-  .map-tools .hud-tool { width: 30px; height: 30px; }
-  .map-tools .hud-tool img { width: 19px; height: 19px; }
-  .map-tools .turn-clock { font-size: 10px; padding: 5px 7px; }
-  .board-area .turn-plate { top: 43px; left: 6px; }
-  .dock { min-height: 100px; justify-content: center; padding: 4px 5px; }
-  .dock > .hand { order: 1; display: flex; flex: 1 0 100%; max-width: 100%; width: 100%;
-    height: 79px; justify-content: center; gap: 6px; overflow-x: auto; }
-  .hand-stack { --step: 6px; width: calc(48px + (var(--visible) - 1) * var(--step)); height: 72px; }
-  .hand-stack-card { width: 48px; height: 70px; border-radius: 6px; gap: 2px; }
-  .hand-card-art { width: 30px; height: 36px; }
+  .board-area .board-zoom { left: 7px; bottom: 8px; padding: 2px; }
+  .board-area .board-zoom button { width: 29px; height: 29px; }
+  .board-area .drawer {
+    top: auto; right: 8px; left: 8px; bottom: 8px;
+    width: auto; height: max-content;
+    max-height: calc(100% - 59px);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px #12394970;
+  }
+  .board-area .drawer-body { padding: 12px; }
+  .board-area .drawer-head { padding: 11px 13px; }
+  .game .dock { padding: 4px 7px; gap: 4px 6px; min-height: 115px; }
+  .game .dock > .hand { height: 75px; justify-content: center; gap: 7px; overflow-x: auto; }
+  .hand-stack { --step: 6px; width: calc(47px + (var(--visible) - 1) * var(--step)); height: 70px; }
+  .hand-stack-card { width: 47px; height: 68px; border-radius: 6px; gap: 2px; }
+  .hand-card-art { width: 31px; height: 35px; }
   .hand-card-name { font-size: 7px; }
-  .hand-stack-total { font-size: 10px; min-width: 18px; height: 18px; }
+  .hand-stack-total { min-width: 17px; height: 17px; font-size: 10px; }
+  .game .dock-actions { flex: 1; justify-content: space-around; gap: 2px; }
+  .game .dock-tile { width: 40px; height: 38px; }
+  .game .dock-actions { order: 2; }
+  .game .dock-primary { order: 3; width: 112px; }
+  .map-tools .reaction-menu-wrap { display: none; }
+  .game .dock-primary .primary-action { min-height: 38px; height: 38px; font-size: 11px; }
 }
+@media (max-height: 690px) and (max-width: 600px) {
+  .game > .hud { min-height: 54px; }
+  .game .dock > .hand { height: 63px; }
+  .game .dock { min-height: 102px; }
+  .hand-stack { height: 60px; }
+  .hand-stack-card { height: 59px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-action, .map-tools .hud-tool, .board-area .drawer { transition: none; animation: none; }
+}
+
+/* No blank full-height drawer for an empty development-card hand. */
+.dev-empty { display: flex; align-items: center; flex-direction: column; gap: 7px;
+  padding: 21px 12px 17px; text-align: center; }
+.dev-empty-icon { display: grid; place-items: center; width: 58px; height: 65px;
+  border: 1px solid #d8c39d; border-radius: 9px; background: #f6ecd4; }
+.dev-empty strong { font-size: 14px; color: #514334; }
+.dev-empty p { max-width: 240px; color: #80735e; font-size: 12px; line-height: 1.55; }

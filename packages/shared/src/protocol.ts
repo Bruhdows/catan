@@ -49,6 +49,24 @@ export interface SessionAuth {
 export type AckResult<T> = { ok: true; data: T } | { ok: false; error: string; message?: string };
 
 // ---------------------------------------------------------------------------
+// Emote reactions (CC0 Kenney Emotes Pack, Vector Style 3 sprites)
+// ---------------------------------------------------------------------------
+
+/** Curated emote names; each maps to `emote_<name>.png` inside the pack. */
+export const EMOTES = [
+  "faceHappy", "laugh", "heart", "star", "idea", "question", "exclamation", "alert",
+  "faceAngry", "anger", "faceSad", "drop", "sleep", "music", "cash", "swirl",
+] as const;
+export type EmoteName = (typeof EMOTES)[number];
+export const emoteSchema = z.enum(EMOTES);
+
+/** Broadcast table reaction; transient, never written to game state. */
+export interface EmotePing {
+  playerId: string;
+  emote: EmoteName;
+}
+
+// ---------------------------------------------------------------------------
 // Zod schemas for every client-supplied payload
 // ---------------------------------------------------------------------------
 
@@ -133,6 +151,8 @@ export interface ClientToServerEvents {
   "lobby:color": (payload: { color: PlayerColor }) => void;
   "lobby:ready": (payload: { ready: boolean }) => void;
   "lobby:kick": (payload: { playerId: string }) => void;
+  /** Broadcast a reaction emote to everyone in the room. */
+  "lobby:emote": (payload: { emote: EmoteName }) => void;
   "lobby:start": (ack: (res: AckResult<null>) => void) => void;
   "lobby:reset": (ack: (res: AckResult<null>) => void) => void;
   "game:command": (
@@ -151,5 +171,7 @@ export interface ServerToClientEvents {
   "game:event": (event: GameEvent) => void;
   /** Engine events addressed to one player only. */
   "game:private-event": (event: GameEvent) => void;
+  /** A player reacted with an emote. */
+  "lobby:emote": (ping: EmotePing) => void;
   "lobby:error": (error: { message: string }) => void;
 }

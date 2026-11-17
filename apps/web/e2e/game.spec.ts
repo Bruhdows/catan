@@ -142,6 +142,20 @@ test("three players create a lobby, set up the island, reconnect and read rules"
     await expect(host.getByText("You give", { exact: true })).toBeInViewport();
     await expect(host.getByText("You receive", { exact: true })).toBeInViewport();
     await host.screenshot({ path: "test-results/island-mobile.png" });
+    // On a compact phone the action sheet must leave the board's top controls
+    // usable and never overlap the resource/action dock.
+    await host.setViewportSize({ width: 360, height: 640 });
+    const sheet = await host.locator(".board-area .drawer").boundingBox();
+    const mapTools = await host.locator(".map-tools").boundingBox();
+    const dock = await host.locator(".dock").boundingBox();
+    expect(sheet).not.toBeNull();
+    expect(mapTools).not.toBeNull();
+    expect(dock).not.toBeNull();
+    expect(sheet!.y).toBeGreaterThanOrEqual(mapTools!.y + mapTools!.height - 1);
+    expect(sheet!.y + sheet!.height).toBeLessThanOrEqual(dock!.y + 1);
+    await expect(host.getByRole("button", { name: "Close panel" })).toBeVisible();
+    await host.getByRole("button", { name: "Close panel" }).click();
+    await expect(host.locator(".board-area .drawer")).toHaveCount(0);
     const width = await host.evaluate(() => ({ actual: document.documentElement.scrollWidth, viewport: innerWidth }));
     expect(width.actual).toBeLessThanOrEqual(width.viewport + 2);
     const stacks = await host.locator(".hand-stack").evaluateAll(items => items.map(item => {

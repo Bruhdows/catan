@@ -4,6 +4,7 @@ import {
   codeSchema,
   colorSchema,
   commandEnvelopeSchema,
+  emoteSchema,
   nameSchema,
   settingsSchema,
   type AckResult,
@@ -340,6 +341,18 @@ export function registerSocketHandlers(io: Io): void {
       if (!entry) return;
       sendGameView(socket, entry.lobby, entry.meta);
       socket.emit("lobby:state", entry.lobby.view());
+    });
+
+    socket.on("lobby:emote", (payload) => {
+      const entry = getEntry(socket.id);
+      if (!entry) return;
+      // Untrusted clients may send null or arbitrary objects; never destructure
+      // before validating the payload and the fixed emote allow-list.
+      const parsed = emoteSchema.safeParse(payload?.emote);
+      if (!parsed.success) return;
+      const emote = parsed.data;
+      if (!rateLimit(`emote:${entry.lobby.code}:${entry.meta.playerId}`, 8, 5_000)) return;
+      io.to(roomOf(entry.lobby.code)).emit("lobby:emote", { playerId: entry.meta.playerId, emote });
     });
 
     socket.on("disconnect", () => {

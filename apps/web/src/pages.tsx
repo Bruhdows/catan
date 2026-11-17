@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from "reac
 import { ArrowRight, BookOpen, Check, Copy, Crown, LogOut, Play, Users, X } from "lucide-react";
 import { BOARD_PLAYER_LIMITS, PLAYER_COLORS as COLOR_OPTIONS, resolveBoardSize } from "@hexhaven/shared";
 import { FieldSelect, PlayerAvatar, PLAYER_COLORS } from "./design";
+import { EmoteBubble, EmotePicker, EmoteSprite } from "./assets/emotes";
 import { useSession } from "./session";
 import { openRules } from "./rulebook-modal";
 export { GamePage } from "./game-screen";
@@ -68,8 +69,9 @@ export function HomePage() {
 export function LobbyPage() {
   const { code } = useParams();
   const navigate = useNavigate();
-  const { lobby, auth, connected, busy, leave, ready, color, settings, kick, start, join } = useSession();
+  const { lobby, auth, connected, busy, leave, ready, color, settings, kick, start, join, emotes, emote: sendEmote } = useSession();
   const [copied, setCopied] = useState(false);
+  const [emoteOpen, setEmoteOpen] = useState(false);
   useEffect(() => {
     if (!auth && code) { const name = localStorage.getItem("hexhaven.name") || ""; if (name) void join(code, name); }
   }, [auth?.code, code]);
@@ -101,11 +103,13 @@ export function LobbyPage() {
         </div>
         <div className="lobby-seats">{Array.from({ length: lobby.maxPlayers }, (_, i) => {
           const p = lobby.players[i];
+          const ping = p && emotes.filter((e) => e.playerId === p.id).at(-1);
           return <div key={p?.id || i} className={"lobby-seat" + (!p ? " seat-empty" : "")} style={p ? { ["--pl" as string]: PLAYER_COLORS[p.color] } : undefined}>
             <span className="seat-number">{i + 1}</span>
+            {ping && <span className="seat-emote" key={ping.id}><EmoteBubble name={p!.name} emote={ping.emote} /></span>}
             {p ? <PlayerAvatar name={p.name} color={p.color} size="lg" /> : <span className="empty-avatar"><Users size={20} /></span>}
             <div className="seat-details">
-              <strong>{p?.name ?? "Waiting for a player"}{p?.id === lobby.hostId && <Crown size={13} className="host-crown" aria-label="Host" />}</strong>
+              <strong>{p?.name ?? "Open seat"}{p?.id === lobby.hostId && <Crown size={13} className="host-crown" aria-label="Host" />}</strong>
               {p && !p.connected && <small>Offline</small>}
             </div>
             {p && <span className={"seat-ready" + (p.ready ? " is-ready" : "")}>{p.ready ? <><Check size={13} /> Ready</> : "Not ready"}</span>}
@@ -121,6 +125,13 @@ export function LobbyPage() {
                 style={{ background: PLAYER_COLORS[c] }}
                 disabled={lobby.players.some((p) => p.id !== me.id && p.color === c)}
                 onClick={() => color(c)} />)}</div>
+          </div>
+          <div className="lobby-emote-wrap">
+            <button type="button" className="button ghost" title="React" aria-label="Send a reaction"
+              aria-expanded={emoteOpen} aria-haspopup="menu" onClick={() => setEmoteOpen(!emoteOpen)}>
+              <EmoteSprite emote="faceHappy" size={18} /> React
+            </button>
+            {emoteOpen && <EmotePicker onPick={(picked) => { sendEmote(picked); setEmoteOpen(false); }} onClose={() => setEmoteOpen(false)} />}
           </div>
           <button className={"button " + (me.ready ? "ghost" : "primary")} onClick={() => ready(!me.ready)}>{me.ready ? "Cancel ready" : "Ready up"}</button>
         </div>}

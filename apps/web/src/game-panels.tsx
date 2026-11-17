@@ -270,7 +270,11 @@ export function CardsPanel({ game, meId, canPlay, send }: {
     setChoosing(null);
   };
   return <div className="panel-content">
-    {cards.length === 0 && <p className="pick-note muted">No cards yet — buy one under Build.</p>}
+    {cards.length === 0 && <div className="dev-empty">
+      <span className="dev-empty-icon" aria-hidden="true"><DevCardArt type="knight" size={38} /></span>
+      <strong>No development cards</strong>
+      <p>Buy one from Build when you have wool, grain and ore.</p>
+    </div>}
     <div className="dev-cards">
       {cards.map((card) => {
         const info = CARD_INFO[card.type];

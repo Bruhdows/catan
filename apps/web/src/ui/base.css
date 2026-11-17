@@ -29,49 +29,49 @@ p { line-height: 1.55; }
 
 /* --- Buttons ------------------------------------------------------------- */
 
+/* Buttons are cartoon pills: one flat fill with a hard candy edge that the
+   press squishes into. The offset box-shadow is that edge, not a float. */
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  min-height: 42px;
-  padding: 8px 18px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  font-weight: 650;
-  font-size: 14px;
+  min-height: 44px;
+  padding: 8px 20px;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14.5px;
   white-space: nowrap;
-  transition: background var(--dur-1), border-color var(--dur-1), transform var(--dur-1), box-shadow var(--dur-1);
+  transition: background var(--dur-1), transform var(--dur-1), box-shadow var(--dur-1), filter var(--dur-1);
 }
-.button:not(:disabled):active { transform: translateY(1px); }
+.button:not(:disabled):active { transform: translateY(2px) scale(0.98); }
 .button.primary {
-  background: linear-gradient(var(--honey), #e2982f);
-  border-color: #c8872a;
+  background: var(--honey);
   color: #4a3410;
-  box-shadow: 0 2px 0 #c8872a, var(--shadow-1);
+  box-shadow: 0 3px 0 var(--honey-deep); /* taste-skill-ignore: candy edge, not a float */
 }
-.button.primary:hover:not(:disabled) { background: linear-gradient(#f2b155, #e8a134); }
-.button.primary:not(:disabled):active { box-shadow: 0 1px 0 #c8872a; }
+.button.primary:hover:not(:disabled) { background: #f2b155; }
+.button.primary:not(:disabled):active { box-shadow: 0 1px 0 var(--honey-deep); }
 .button.wood {
-  background: linear-gradient(var(--wood), #7c4e2b);
-  border-color: var(--wood-deep);
+  background: var(--wood);
   color: #f8eeda;
-  box-shadow: 0 2px 0 var(--wood-deep), var(--shadow-1);
+  box-shadow: 0 3px 0 var(--wood-deep); /* taste-skill-ignore: candy edge, not a float */
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: 0.01em;
 }
-.button.wood:hover:not(:disabled) { background: linear-gradient(#96653b, #7c4e2b); }
+.button.wood:hover:not(:disabled) { background: #96653b; }
+.button.wood:not(:disabled):active { box-shadow: 0 1px 0 var(--wood-deep); }
 .button.ghost {
-  background: transparent;
-  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.6);
   color: var(--ink-2);
 }
-.button.ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.55); }
-.button.large { min-height: 52px; font-size: 15px; padding: 10px 24px; }
-.button.small { min-height: 32px; font-size: 12.5px; padding: 4px 11px; }
+.button.ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.85); }
+.button.large { min-height: 52px; font-size: 15.5px; padding: 10px 26px; }
+.button.small { min-height: 32px; font-size: 12.5px; padding: 4px 13px; }
 .button.full { width: 100%; }
-.button:disabled { opacity: 0.45; }
+.button:disabled { opacity: 0.45; box-shadow: none; }
 
 /* --- Fields --------------------------------------------------------------- */
 
@@ -80,16 +80,16 @@ p { line-height: 1.55; }
 .field input,
 .field select {
   width: 100%;
-  height: 44px;
-  padding: 0 13px;
+  height: 46px;
+  padding: 0 14px;
   background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
   font-weight: 600;
   outline: none;
   transition: border-color var(--dur-1), box-shadow var(--dur-1);
 }
-.field input:focus, .field select:focus { border-color: var(--wood-soft); box-shadow: 0 0 0 3px rgba(179, 133, 91, 0.18); }
+.field input:focus, .field select:focus { border-color: var(--honey); box-shadow: 0 0 0 3px rgba(234, 166, 62, 0.22); }
 .select-wrap { position: relative; display: block; }
 .select-wrap select { appearance: none; padding-right: 34px; cursor: pointer; }
 .select-wrap svg { position: absolute; right: 11px; top: 50%; translate: 0 -50%; color: var(--ink-3); pointer-events: none; }
@@ -150,11 +150,11 @@ p { line-height: 1.55; }
   display: inline-grid;
   place-items: center;
   flex-shrink: 0;
-  border-radius: 10px;
+  border-radius: 13px;
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
   background: var(--avatar-color, var(--wood));
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: inset 0 -2.5px 0 rgba(0, 0, 0, 0.22), inset 0 2px 0 rgba(255, 255, 255, 0.18);
 }
 .player-avatar-sm { width: 30px; height: 30px; font-size: 13px; }
 .player-avatar-md { width: 40px; height: 40px; font-size: 17px; }
@@ -193,3 +193,57 @@ p { line-height: 1.55; }
 .checkbox-row input[type="checkbox"]:focus-visible { outline: 3px solid var(--honey); outline-offset: 2px; }
 .checkbox-row input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
 .checkbox-row:has(input:disabled) { opacity: .72; cursor: default; }
+
+/* --- Emote reactions (Kenney Emotes Pack sprites) -------------------------- */
+
+.emote-picker {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: grid;
+  grid-template-columns: repeat(4, 40px);
+  gap: 3px;
+  padding: 7px;
+  background: var(--parchment);
+  border: 1px solid #d9c9a4;
+  border-radius: 12px;
+  box-shadow: var(--shadow-2);
+}
+.emote-picker button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  cursor: url('/art/cursors/select.png') 15 3, pointer;
+}
+.emote-picker button:hover { background: #f2e9d3; }
+.emote-picker button:active { background: #eadfc2; }
+
+/* Reaction bubbles are transparent — sprite plus a small name label — and
+   anchor above whoever reacted (roster plate in game, seat card in lobby). */
+.emote-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  animation: emote-float 4.2s ease-out forwards;
+}
+.emote-bubble img { filter: drop-shadow(0 2px 3px rgba(31, 22, 8, 0.28)); }
+.emote-bubble span {
+  font-size: 10.5px;
+  font-weight: 750;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+@keyframes emote-float {
+  0% { opacity: 0; transform: translateY(7px) scale(.82); }
+  9% { opacity: 1; transform: translateY(0) scale(1); }
+  76% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-18px); }
+}
