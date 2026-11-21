@@ -1,0 +1,1202 @@
+{
+ "url": "http://localhost:5173",
+ "at": "2026-11-17T23:23:06.408Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 1,
+   "filled": [
+    1
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 900,
+     "screens": 1,
+     "words": 20,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 4,
+     "sections": 1,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Catan",
+     "words": 1,
+     "chars": 5,
+     "lines": 1,
+     "size": 60,
+     "vw": 4.2,
+     "font": "Fraunces",
+     "weight": 900,
+     "tracking": 0.01,
+     "leading": 1.12,
+     "top": 173,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Catan",
+     "words": 1,
+     "lines": 1,
+     "size": 60,
+     "font": "Fraunces"
+    },
+    "headings": [
+     {
+      "text": "Catan",
+      "words": 1,
+      "chars": 5,
+      "lines": 1,
+      "size": 60,
+      "vw": 4.2,
+      "font": "Fraunces",
+      "weight": 900,
+      "tracking": 0.005,
+      "leading": 1.12,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.27,
+      "top": 173,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 1,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.94,
+       "mono": false
+      },
+      {
+       "family": "Fraunces",
+       "share": 0.06,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      13,
+      14,
+      16,
+      17,
+      60
+     ],
+     "sizeCount": 5,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 60,
+      "vw": 4.2,
+      "font": "Fraunces",
+      "text": "Catan"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.46,
+     "smallText": 0
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f1e7cd",
+     "bodyBgHsl": {
+      "h": 43,
+      "s": 0.56,
+      "l": 0.87
+     },
+     "dark": false,
+     "sectionBgs": [],
+     "textColors": [
+      {
+       "color": "#5d4e3c",
+       "share": 0.38
+      },
+      {
+       "color": "#4a3410",
+       "share": 0.18
+      },
+      {
+       "color": "#8d7a61",
+       "share": 0.16
+      },
+      {
+       "color": "#8a5a33",
+       "share": 0.12
+      },
+      {
+       "color": "#33291e",
+       "share": 0.1
+      }
+     ],
+     "button": {
+      "bg": "#eaa63e",
+      "hsl": {
+       "h": 36,
+       "s": 0.8,
+       "l": 0.58
+      },
+      "fg": "#4a3410"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 2,
+     "inHero": 2,
+     "radius": 9,
+     "height": 58,
+     "withShadow": 2,
+     "withGradient": 1,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Start a new game",
+      "Join game"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 3,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "section.menu-sign → rgba(56, 40, 18, 0.2) 0px 2px 4px 0px, rgba(13, 58, 78, 0.24) 0px 12px 30px 0px",
+      "button.button.primary → rgb(200, 135, 42) 0px 2px 0px 0px, rgba(56, 40, 18, 0.18) 0px 1px 2px 0px, rgba(",
+      "button.button.paper → rgb(217, 201, 164) 0px 2px 0px 0px"
+     ],
+     "gradients": 2,
+     "scrims": 0,
+     "gradientSamples": [
+      "div.app-shell → radial-gradient(120% 90% at 50% 0%, rgb(43, 143, 174) 0%, rgb(22, 104, 138) 52%, rgb(13, 70, 96) 100%)",
+      "main.home-page → radial-gradient(120% 90% at 50% 0%, rgb(43, 143, 174) 0%, rgb(22, 104, 138) 52%, rgb(13, 70, 96) 100%)"
+     ],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 1,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 1,
+     "boxRadius": 20,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": null,
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 900,
+    "margins": {
+     "left": 525,
+     "right": 525
+    },
+    "sections": [],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Catan",
+      "size": 60,
+      "top": 173,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [],
+    "leftBlocks": 0,
+    "bodySize": 16,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0.29,
+    "voidBox": {
+     "x": 0,
+     "y": 120,
+     "w": 480,
+     "h": 780
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "dark": false,
+    "ground": "#f1e7cd",
+    "sidebar": null,
+    "topbar": null,
+    "canvas": {
+     "left": 525,
+     "right": 525
+    },
+    "hero": {
+     "text": "Catan",
+     "words": 1,
+     "chars": 5,
+     "lines": 1,
+     "size": 60,
+     "vw": 4.2,
+     "font": "Fraunces",
+     "weight": 900,
+     "tracking": 0.01,
+     "leading": 1.12,
+     "top": 173,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 1,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 1,
+     "radii": [
+      [
+       20,
+       1
+      ]
+     ],
+     "heavyBorders": 1,
+     "borderSamples": [
+      "#d9c9a4 on #f8f1de (1.45:1)"
+     ],
+     "heavyShadows": 1,
+     "softShadows": 1,
+     "shadowSamples": [
+      "rgba(13, 58, 78, 0.24) 0px 12px 30px 0px"
+     ],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      13,
+      14,
+      16,
+      17,
+      60
+     ]
+    },
+    "title": {
+     "text": "Catan",
+     "size": 60,
+     "top": 173
+    },
+    "colourShare": 0.778
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 1,
+   "filled": [
+    1
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 1024,
+     "screens": 1,
+     "words": 20,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 4,
+     "sections": 1,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Catan",
+     "words": 1,
+     "chars": 5,
+     "lines": 1,
+     "size": 48,
+     "vw": 6.3,
+     "font": "Fraunces",
+     "weight": 900,
+     "tracking": 0.01,
+     "leading": 1.12,
+     "top": 241,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Catan",
+     "words": 1,
+     "lines": 1,
+     "size": 48,
+     "font": "Fraunces"
+    },
+    "headings": [
+     {
+      "text": "Catan",
+      "words": 1,
+      "chars": 5,
+      "lines": 1,
+      "size": 48,
+      "vw": 6.3,
+      "font": "Fraunces",
+      "weight": 900,
+      "tracking": 0.005,
+      "leading": 1.12,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.51,
+      "top": 241,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 1,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.94,
+       "mono": false
+      },
+      {
+       "family": "Fraunces",
+       "share": 0.06,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      13,
+      14,
+      16,
+      17,
+      48
+     ],
+     "sizeCount": 5,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 48,
+      "vw": 6.3,
+      "font": "Fraunces",
+      "text": "Catan"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.46,
+     "smallText": 0
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f1e7cd",
+     "bodyBgHsl": {
+      "h": 43,
+      "s": 0.56,
+      "l": 0.87
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#f8f1de",
+       "top": 198,
+       "hsl": {
+        "h": 44,
+        "s": 0.65,
+        "l": 0.92
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#5d4e3c",
+       "share": 0.38
+      },
+      {
+       "color": "#4a3410",
+       "share": 0.18
+      },
+      {
+       "color": "#8d7a61",
+       "share": 0.16
+      },
+      {
+       "color": "#8a5a33",
+       "share": 0.12
+      },
+      {
+       "color": "#33291e",
+       "share": 0.1
+      }
+     ],
+     "button": {
+      "bg": "#eaa63e",
+      "hsl": {
+       "h": 36,
+       "s": 0.8,
+       "l": 0.58
+      },
+      "fg": "#4a3410"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 2,
+     "inHero": 2,
+     "radius": 9,
+     "height": 58,
+     "withShadow": 2,
+     "withGradient": 1,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Start a new game",
+      "Join game"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 3,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "section.menu-sign → rgba(56, 40, 18, 0.2) 0px 2px 4px 0px, rgba(13, 58, 78, 0.24) 0px 12px 30px 0px",
+      "button.button.primary → rgb(200, 135, 42) 0px 2px 0px 0px, rgba(56, 40, 18, 0.18) 0px 1px 2px 0px, rgba(",
+      "button.button.paper → rgb(217, 201, 164) 0px 2px 0px 0px"
+     ],
+     "gradients": 3,
+     "scrims": 0,
+     "gradientSamples": [
+      "div.app-shell → radial-gradient(120% 90% at 50% 0%, rgb(43, 143, 174) 0%, rgb(22, 104, 138) 52%, rgb(13, 70, 96) 100%)",
+      "main.home-page → radial-gradient(120% 90% at 50% 0%, rgb(43, 143, 174) 0%, rgb(22, 104, 138) 52%, rgb(13, 70, 96) 100%)",
+      "button.button.primary → linear-gradient(rgb(234, 166, 62), rgb(226, 152, 47))"
+     ],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 1,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 1,
+     "boxRadius": 20,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": null,
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 1024,
+    "margins": {
+     "left": 189,
+     "right": 189
+    },
+    "sections": [],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Catan",
+      "size": 48,
+      "top": 241,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [],
+    "leftBlocks": 0,
+    "bodySize": 16,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": false,
+    "ground": "#f1e7cd",
+    "sidebar": null,
+    "topbar": null,
+    "canvas": {
+     "left": 189,
+     "right": 189
+    },
+    "hero": {
+     "text": "Catan",
+     "words": 1,
+     "chars": 5,
+     "lines": 1,
+     "size": 48,
+     "vw": 6.3,
+     "font": "Fraunces",
+     "weight": 900,
+     "tracking": 0.01,
+     "leading": 1.12,
+     "top": 241,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 1,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 1,
+     "radii": [
+      [
+       20,
+       1
+      ]
+     ],
+     "heavyBorders": 1,
+     "borderSamples": [
+      "#d9c9a4 on #f8f1de (1.45:1)"
+     ],
+     "heavyShadows": 1,
+     "softShadows": 1,
+     "shadowSamples": [
+      "rgba(13, 58, 78, 0.24) 0px 12px 30px 0px"
+     ],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      13,
+      14,
+      16,
+      17,
+      48
+     ]
+    },
+    "title": {
+     "text": "Catan",
+     "size": 48,
+     "top": 241
+    },
+    "colourShare": 0.648
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 1,
+   "filled": [
+    1
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 844,
+     "screens": 1,
+     "words": 20,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 4,
+     "sections": 1,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Catan",
+     "words": 1,
+     "chars": 5,
+     "lines": 1,
+     "size": 48,
+     "vw": 12.3,
+     "font": "Fraunces",
+     "weight": 900,
+     "tracking": 0.01,
+     "leading": 1.12,
+     "top": 152,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Catan",
+     "words": 1,
+     "lines": 1,
+     "size": 48,
+     "font": "Fraunces"
+    },
+    "headings": [
+     {
+      "text": "Catan",
+      "words": 1,
+      "chars": 5,
+      "lines": 1,
+      "size": 48,
+      "vw": 12.3,
+      "font": "Fraunces",
+      "weight": 900,
+      "tracking": 0.005,
+      "leading": 1.12,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.77,
+      "top": 152,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 1,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.94,
+       "mono": false
+      },
+      {
+       "family": "Fraunces",
+       "share": 0.06,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      13,
+      14,
+      16,
+      17,
+      48
+     ],
+     "sizeCount": 5,
+     "notLoaded": [],
+     "body": null,
+     "measureChars": null,
+     "max": {
+      "size": 48,
+      "vw": 12.3,
+      "font": "Fraunces",
+      "text": "Catan"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.46,
+     "smallText": 0
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f1e7cd",
+     "bodyBgHsl": {
+      "h": 43,
+      "s": 0.56,
+      "l": 0.87
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#f8f1de",
+       "top": 117,
+       "hsl": {
+        "h": 44,
+        "s": 0.65,
+        "l": 0.92
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#5d4e3c",
+       "share": 0.38
+      },
+      {
+       "color": "#4a3410",
+       "share": 0.18
+      },
+      {
+       "color": "#8d7a61",
+       "share": 0.16
+      },
+      {
+       "color": "#8a5a33",
+       "share": 0.12
+      },
+      {
+       "color": "#33291e",
+       "share": 0.1
+      }
+     ],
+     "button": {
+      "bg": "#eaa63e",
+      "hsl": {
+       "h": 36,
+       "s": 0.8,
+       "l": 0.58
+      },
+      "fg": "#4a3410"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 2,
+     "inHero": 2,
+     "radius": 9,
+     "height": 58,
+     "withShadow": 2,
+     "withGradient": 1,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Start a new game",
+      "Join game"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 3,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "section.menu-sign → rgba(56, 40, 18, 0.2) 0px 2px 4px 0px, rgba(13, 58, 78, 0.24) 0px 12px 30px 0px",
+      "button.button.primary → rgb(200, 135, 42) 0px 2px 0px 0px, rgba(56, 40, 18, 0.18) 0px 1px 2px 0px, rgba(",
+      "button.button.paper → rgb(217, 201, 164) 0px 2px 0px 0px"
+     ],
+     "gradients": 3,
+     "scrims": 0,
+     "gradientSamples": [
+      "div.app-shell → radial-gradient(120% 90% at 50% 0%, rgb(43, 143, 174) 0%, rgb(22, 104, 138) 52%, rgb(13, 70, 96) 100%)",
+      "main.home-page → radial-gradient(120% 90% at 50% 0%, rgb(43, 143, 174) 0%, rgb(22, 104, 138) 52%, rgb(13, 70, 96) 100%)",
+      "button.button.primary → linear-gradient(rgb(234, 166, 62), rgb(226, 152, 47))"
+     ],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 1,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 1,
+     "boxRadius": 20,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": null,
+    "fontsLoaded": []
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 844,
+    "margins": {
+     "left": 44,
+     "right": 44
+    },
+    "sections": [],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Catan",
+      "size": 48,
+      "top": 152,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [],
+    "leftBlocks": 0,
+    "bodySize": 16,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": false,
+    "ground": "#f1e7cd",
+    "sidebar": null,
+    "topbar": null,
+    "canvas": {
+     "left": 44,
+     "right": 44
+    },
+    "hero": {
+     "text": "Catan",
+     "words": 1,
+     "chars": 5,
+     "lines": 1,
+     "size": 48,
+     "vw": 12.3,
+     "font": "Fraunces",
+     "weight": 900,
+     "tracking": 0.01,
+     "leading": 1.12,
+     "top": 152,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 1,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 1,
+     "radii": [
+      [
+       20,
+       1
+      ]
+     ],
+     "heavyBorders": 1,
+     "borderSamples": [
+      "#d9c9a4 on #f8f1de (1.45:1)"
+     ],
+     "heavyShadows": 1,
+     "softShadows": 1,
+     "shadowSamples": [
+      "rgba(13, 58, 78, 0.24) 0px 12px 30px 0px"
+     ],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      13,
+      14,
+      16,
+      17,
+      48
+     ]
+    },
+    "title": {
+     "text": "Catan",
+     "size": 48,
+     "top": 152
+    },
+    "colourShare": 0.397
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "FAIL",
+   "id": "gradient",
+   "width": 1440,
+   "message": "2 gradient fill(s): div.app-shell → radial-gradient(120% 90% at 50% 0%, rgb(43, 143, 174) 0%, rgb(22, 104, 138) 52%, rgb(13, 70, 96) 100%) | main.home-page → radial-gradient(120% 90% at 50% 0%, rgb(43, 143, 174) 0%, rgb(22, 104, 138) 52%, rgb(13, 70, 96) 100%)",
+   "fix": "Use a flat colour or a real image. The only gradient allowed by default is a neutral scrim over a photo for legibility.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "button-fx",
+   "width": 1440,
+   "message": "Buttons with gradient fill and shadow/glow.",
+   "fix": "Flat fill, one colour.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "hero-void",
+   "width": 1440,
+   "message": "29% of the first screen is one empty block (480×780px at 0,120).",
+   "fix": "Place the void on purpose or fill it: move the picture, the film or one fact into it, grow the headline to meet it, or shrink the screen to its content. A void reads as placed only when something closes it on the far side and it is the screen's one rest."
+  },
+  {
+   "level": "FAIL",
+   "id": "heavy-shadow",
+   "width": 1440,
+   "message": "1 panel shadow(s) heavy enough to read as floating: rgba(13, 58, 78, 0.24) 0px 12px 30px 0px",
+   "fix": "Panels sit on the ground: separate them with a fill one step from the ground or a quiet 1px border. A shadow, if any, is under 8% black with a small blur. Real overlays (menus, dialogs, popovers) may float.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "colour-sprawl",
+   "width": 1440,
+   "message": "78% of the first screen is strongly coloured.",
+   "fix": "Keep the screen neutral and spend colour on data and status: the studied screens sit near 3%, and only tinted styles reach 10–15%, as pale tints rather than saturated fills.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "app-title-size",
+   "width": 1440,
+   "message": "The h1 is 60px (\"Catan\").",
+   "fix": "An app screen is not a landing page: the title is 18-32px (20-24px on a phone).",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "palette-cream",
+   "width": 768,
+   "message": "Yellow-cream background (section #f8f1de).",
+   "fix": "Use the drawn palette. If you want warmth, take a low-chroma stone or bone, not a yellow cream.",
+   "alsoAt": [
+    390
+   ]
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "/home/bruhdows/projects/catan/.taste-skill/before/desktop-fold.jpg",
+   "pages": [
+    "/home/bruhdows/projects/catan/.taste-skill/before/desktop-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "/home/bruhdows/projects/catan/.taste-skill/before/tablet-fold.jpg",
+   "pages": [
+    "/home/bruhdows/projects/catan/.taste-skill/before/tablet-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "/home/bruhdows/projects/catan/.taste-skill/before/mobile-fold.jpg",
+   "pages": [
+    "/home/bruhdows/projects/catan/.taste-skill/before/mobile-page-01.jpg"
+   ],
+   "film": []
+  }
+ ]
+}
